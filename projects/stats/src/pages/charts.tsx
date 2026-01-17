@@ -36,14 +36,14 @@ const DropdownOptions = [
 ];
 
 const getChart = async (type: "tracks" | "artists", config: Config) => {
-	const { "api-key": key } = config;
+	const { "api-key": key, "lastfm-only": lastfmOnly } = config;
 	if (!key) throw new Error("Missing LastFM API Key or Username");
 	if (type === "artists") {
 		const response = await lastFM.getArtistChart(key);
-		return throttledMap(response, convertArtist);
+		return throttledMap(response, (artist) => convertArtist(artist, lastfmOnly));
 	}
 	const response = await lastFM.getTrackChart(key);
-	return throttledMap(response, convertTrack);
+	return throttledMap(response, (track) => convertTrack(track, lastfmOnly));
 };
 
 const ArtistChart = ({ artists }: { artists: (LastFMMinifiedArtist | SpotifyMinifiedArtist)[] }) => {

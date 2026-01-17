@@ -14,10 +14,10 @@ import { DropdownOptions } from "./top_artists";
 import { cacher, invalidator } from "../extensions/cache";
 
 export const getTopAlbums = async (timeRange: SpotifyRange, config: Config) => {
-	const { "lastfm-user": user, "api-key": key } = config;
+	const { "lastfm-user": user, "api-key": key, "lastfm-only": lastfmOnly } = config;
 	if (!user || !key) throw new Error("Missing LastFM API Key or Username");
 	const response = await lastFM.getTopAlbums(key, user, timeRange);
-	return throttledMap(response, convertAlbum);
+	return throttledMap(response, (album) => convertAlbum(album, lastfmOnly));
 };
 
 const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {

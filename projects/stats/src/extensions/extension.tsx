@@ -97,6 +97,13 @@ class SpicetifyStats {
 				desc: "Last.fm charts your stats purely based on the streaming count, whereas Spotify factors in other variables",
 			},
 			{
+				name: "LastFM Only (No Spotify API)",
+				key: "lastfm-only",
+				type: "toggle",
+				def: false,
+				desc: "Avoid all Spotify API calls. Stats will use LastFM data only without enrichment. Useful if you're rate-limited.",
+			},
+			{
 				name: "Artists Page",
 				key: "show-artists",
 				type: "toggle",

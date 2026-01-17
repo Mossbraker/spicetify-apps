@@ -10,6 +10,7 @@ export interface Config {
 	"api-key": string | null;
 	"lastfm-user": string | null;
 	"use-lastfm": boolean;
+	"lastfm-only": boolean;
 	"show-artists": boolean;
 	"show-tracks": boolean;
 	"show-genres": boolean;
@@ -31,7 +32,7 @@ export interface LastFMMinifiedArtist {
 	name: string;
 	playcount: number;
 	uri: string;
-	image: undefined;
+	image?: string;
 	type: "lastfm";
 }
 
@@ -74,6 +75,7 @@ export interface LastFMMinifiedTrack {
 	uri: string;
 	playcount: number;
 	duration_ms: number;
+	image?: string;
 	artists: {
 		name: string;
 		uri: string;

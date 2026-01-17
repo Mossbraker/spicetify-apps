@@ -662,3 +662,10 @@ el @ xpui-modules.js:1
 v @ xpui-modules.js:1
 P @ xpui-modules.js:1
 spicetify-routes-stats.js:4 stats - topArtists rate limited (response), retrying in 20000 ms
+
+---
+
+Okay. Well, as you said before LastFM mode still makes Spotify API calls. Can you make a new, separate version, that has it's own 'Use LastFM Only' toggle that only uses LastFM?
+
+---
+

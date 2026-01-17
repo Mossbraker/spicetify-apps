@@ -15,10 +15,10 @@ import { cacher, invalidator } from "../extensions/cache";
 
 export const getTopArtists = async (timeRange: SpotifyRange, config: Config) => {
 	if (config["use-lastfm"]) {
-		const { "lastfm-user": user, "api-key": key } = config;
+		const { "lastfm-user": user, "api-key": key, "lastfm-only": lastfmOnly } = config;
 		if (!user || !key) throw new Error("Missing LastFM API Key or Username");
 		const response = await lastFM.getTopArtists(key, user, timeRange);
-		return throttledMap(response, convertArtist);
+		return throttledMap(response, (artist) => convertArtist(artist, lastfmOnly));
 	}
 	const response = await spotify.getTopArtists(timeRange);
 	return response.map(minifyArtist);

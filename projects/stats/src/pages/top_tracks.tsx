@@ -18,10 +18,10 @@ import { parseLiked } from "../utils/track_helper";
 
 export const getTopTracks = async (timeRange: SpotifyRange, config: Config) => {
 	if (config["use-lastfm"]) {
-		const { "lastfm-user": user, "api-key": key } = config;
+		const { "lastfm-user": user, "api-key": key, "lastfm-only": lastfmOnly } = config;
 		if (!user || !key) throw new Error("Missing LastFM API Key or Username");
 		const response = await lastFM.getTopTracks(key, user, timeRange);
-		return throttledMap(response, convertTrack);
+		return throttledMap(response, (track) => convertTrack(track, lastfmOnly));
 	}
 	const response = await spotify.getTopTracks(timeRange);
 	return response.map(minifyTrack);

@@ -64,7 +64,19 @@ export const minifyTrack = (track: Spotify.Track): SpotifyMinifiedTrack => ({
 	type: "spotify",
 });
 
-export const convertArtist = async (artist: LastFM.Artist) => {
+// Pure LastFM artist without Spotify lookup - avoids API calls entirely
+export const convertArtistLastFMOnly = (artist: LastFM.Artist): LastFMMinifiedArtist => ({
+	name: artist.name,
+	playcount: Number(artist.playcount),
+	uri: artist.url,
+	image: artist.image?.[2]?.["#text"] || undefined,
+	type: "lastfm",
+});
+
+export const convertArtist = async (artist: LastFM.Artist, lastfmOnly = false) => {
+	// Skip Spotify lookup if lastfm-only mode is enabled
+	if (lastfmOnly) return convertArtistLastFMOnly(artist);
+
 	const spotifyArtist = await cacher(async () => {
 		const searchRes = await searchForArtist(artist.name);
 		const spotifyArtists = searchRes.filter(
@@ -87,7 +99,19 @@ export const convertArtist = async (artist: LastFM.Artist) => {
 	} as SpotifyMinifiedArtist;
 };
 
-export const convertAlbum = async (album: LastFM.Album) => {
+// Pure LastFM album without Spotify lookup - avoids API calls entirely
+export const convertAlbumLastFMOnly = (album: LastFM.Album): LastFMMinifiedAlbum => ({
+	uri: album.url,
+	name: album.name,
+	playcount: Number(album.playcount),
+	image: album.image?.[2]?.["#text"] || undefined,
+	type: "lastfm",
+});
+
+export const convertAlbum = async (album: LastFM.Album, lastfmOnly = false) => {
+	// Skip Spotify lookup if lastfm-only mode is enabled
+	if (lastfmOnly) return convertAlbumLastFMOnly(album);
+
 	const spotifyAlbum = await cacher(async () => {
 		const searchRes = await searchForAlbum(album.name, album.artist.name);
 		return searchRes.find((a) => a.name.localeCompare(album.name, undefined, { sensitivity: "base" }) === 0);
@@ -108,7 +132,26 @@ export const convertAlbum = async (album: LastFM.Album) => {
 	} as SpotifyMinifiedAlbum;
 };
 
-export const convertTrack = async (track: LastFM.Track) => {
+// Pure LastFM track without Spotify lookup - avoids API calls entirely
+export const convertTrackLastFMOnly = (track: LastFM.Track): LastFMMinifiedTrack => ({
+	uri: track.url,
+	name: track.name,
+	playcount: Number(track.playcount),
+	duration_ms: Number(track.duration) * 1000,
+	image: track.image?.[2]?.["#text"] || undefined,
+	artists: [
+		{
+			name: track.artist.name,
+			uri: track.artist.url,
+		},
+	],
+	type: "lastfm",
+});
+
+export const convertTrack = async (track: LastFM.Track, lastfmOnly = false) => {
+	// Skip Spotify lookup if lastfm-only mode is enabled
+	if (lastfmOnly) return convertTrackLastFMOnly(track);
+
 	const spotifyTrack = await cacher(async () => {
 		const searchRes = await searchForTrack(track.name, track.artist.name);
 		return searchRes.find((t) => t.name.localeCompare(track.name, undefined, { sensitivity: "base" }) === 0);
