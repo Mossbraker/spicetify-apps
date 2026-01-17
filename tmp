@@ -669,3 +669,49 @@ Okay. Well, as you said before LastFM mode still makes Spotify API calls. Can yo
 
 ---
 
+Currently getting:
+Loading
+Please wait, this may take a moment
+
+Console:
+spicetifyWrapper.js:515 [spicetifyWrapper] Waiting for required webpack modules to load
+favicon.ico:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+xpui-modules.js:1 Error: Unexpectedly hit unreachable code! Unhandled discriminated union member: false
+    at i (xpui-modules.js:1:1037254)
+    at r (xpui-modules.js:1:1037384)
+    at xpui-modules.js:1:5452138
+    at Wa (xpui-modules.js:1:5452148)
+    at Object.factory (xpui-modules.js:1:6283397)
+    at E.resolveImpl (xpui-modules.js:1:123359)
+    at E.resolve (xpui-modules.js:1:122899)
+    at addMissingPlatformAPIs (spicetifyWrapper.js:337:52)
+r @ xpui-modules.js:1
+spicetifyWrapper.js:536 [spicetifyWrapper] All required webpack modules loaded
+guc3-spclient.spotify.com/remote-config-resolver/v3/configuration:1  Failed to load resource: the server responded with a status of 404 ()
+xpui-modules.js:1 provider:transport resolve error k Object
+f @ xpui-modules.js:1
+spicetify-routes-stats.js:4 stats - lfmTopArtists fetch time: 885.6000000089407
+
+Also, it appears the spicetify dev is very aware and grumpy about the issue and wants everyone to f off about it https://github.com/spicetify/cli/issues/3670
+
+---
+
+Sorry, I had to stop you. The:
+
+Loading
+Please wait, this may take a moment
+
+was accurate. Just took longer than I expected.
+
+But it appears the spicetify dev is very aware and grumpy about the issue and wants everyone to f off about it https://github.com/spicetify/cli/issues/3670
+
+---
+
+Artists:
+All time seems to work.
+
+---
+
+Not sure if it's fully working, but it doesn't really matter. I guess my last.fm account stopped auto-scrobbling at some point. I just reconnected my accounts now, but my history is incomplete. 
+
+Create a detailed .md with all the extensive research of everything we looked into this session. What worked, what didn't work, why, etc. Include all known issues, limitations, the spicetify dev's knowledge and opinion on it all, etc. And then commit and push to my github fork. Thank you!
