@@ -20,8 +20,36 @@ const isRateLimitError = (error: unknown): boolean => {
 };
 
 /**
+ * Try using the internal Spotify client token with direct fetch.
+ * This may bypass CosmosAsync middleware rate limiting.
+ */
+const directFetch = async <T>(url: string): Promise<T> => {
+	const token = Spicetify.Platform?.AuthorizationAPI?.getState?.()?.token?.accessToken;
+	if (!token) {
+		throw new Error("No internal token available");
+	}
+
+	const response = await fetch(url, {
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	});
+
+	if (response.status === 429) {
+		const retryAfter = response.headers.get("Retry-After");
+		throw { code: 429, message: `Rate limited. Retry after ${retryAfter || "unknown"} seconds` };
+	}
+
+	if (!response.ok) {
+		throw { code: response.status, message: response.statusText };
+	}
+
+	return response.json();
+};
+
+/**
  * Core API fetch function.
- * Uses OAuth if enabled and has valid tokens, otherwise falls back to CosmosAsync.
+ * Priority: OAuth > Direct Fetch > CosmosAsync
  */
 export const apiFetch = async <T>(name: string, url: string, log = true): Promise<T> => {
 	// Use OAuth if enabled and connected
@@ -30,6 +58,20 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 		const response = await oauthFetch<T>(url);
 		if (log) console.log("stats -", name, "fetch time (OAuth):", window.performance.now() - timeStart);
 		return response;
+	}
+
+	// Try direct fetch with internal token first (may bypass CosmosAsync rate limits)
+	const useDirectFetch = SpicetifyStats?.ConfigWrapper?.Config?.["use-direct-fetch"] ?? false;
+	if (useDirectFetch && Spicetify.Platform?.AuthorizationAPI) {
+		try {
+			const timeStart = window.performance.now();
+			const response = await directFetch<T>(url);
+			if (log) console.log("stats -", name, "fetch time (direct):", window.performance.now() - timeStart);
+			return response;
+		} catch (error) {
+			console.log("stats -", name, "direct fetch failed, falling back to CosmosAsync:", error);
+			// Fall through to CosmosAsync
+		}
 	}
 
 	// Fall back to CosmosAsync with retry logic

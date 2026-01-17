@@ -66,6 +66,14 @@ class SpicetifyStats {
 				},
 			},
 			{
+				name: "Use Direct Fetch (Experimental)",
+				key: "use-direct-fetch",
+				type: "toggle",
+				def: false,
+				desc: "Bypass CosmosAsync and use direct API calls. May help with rate limiting issues.",
+				sectionHeader: "Workarounds",
+			},
+			{
 				name: "Last.fm Api Key",
 				key: "api-key",
 				type: "text",
