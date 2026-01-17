@@ -715,3 +715,16 @@ All time seems to work.
 Not sure if it's fully working, but it doesn't really matter. I guess my last.fm account stopped auto-scrobbling at some point. I just reconnected my accounts now, but my history is incomplete. 
 
 Create a detailed .md with all the extensive research of everything we looked into this session. What worked, what didn't work, why, etc. Include all known issues, limitations, the spicetify dev's knowledge and opinion on it all, etc. And then commit and push to my github fork. Thank you!
+
+---
+
+In the issue I previously linked (https://github.com/spicetify/cli/issues/3670), the spicetify dev says:
+'Quote: "There is information on our docs about CosmosAsync that you should only use it for internal endpoints"
+
+I said what I said. I won't repeat myself. You also keep talking like it's CosmosAsync issue anyway when it's not.'
+Is this an accurate statement?
+It seems to imply the issue isn't that CosmosAsync should only be used for internal endpoints, that CosmosAsync overuse is not the cause of the 429 issues.
+
+---
+
+Okay, so it's not CosmosAsync specific. But this could still be handled better if spicetify routed all API requests, rather than allowing all extensions, custom apps, etc. to do whatever they want, right? It's not a spicetify bug, but they could make the experience better for users?

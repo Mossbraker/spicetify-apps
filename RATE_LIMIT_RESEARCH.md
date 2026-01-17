@@ -226,3 +226,30 @@ The Spotify API 429 rate limiting issue is a **platform-level problem** that can
 | `projects/stats/src/pages/top_albums.tsx` | Pass `lastfmOnly` flag |
 | `projects/stats/src/pages/charts.tsx` | Pass `lastfmOnly` flag |
 | `projects/shared/src/components/navigation/navigation_bar.tsx` | Fixed React portal null check |
+
+---
+
+**User**
+
+Okay, so it's not CosmosAsync specific. But this could still be handled better if spicetify routed all API requests, rather than allowing all extensions, custom apps, etc. to do whatever they want, right? It's not a spicetify bug, but they could make the experience better for users?
+
+---
+
+**Agent**
+
+You're right - theoretically spicetify *could* implement a centralized request manager that:
+
+1. **Queues all API requests** across extensions/apps  
+2. **Rate limits globally** (e.g., max X requests per minute to `api.spotify.com`)  
+3. **Prioritizes requests** (maybe core app over extensions)  
+4. **Shares cooldown state** (if one extension triggers 429, others back off too)
+
+**However, here's why they probably won't:**
+
+1. **Philosophy** - Spicetify is a *mod framework*, not a managed platform. It injects into Spotify and exposes APIs. What developers do with those APIs is their responsibility.  
+2. **Scope creep** - This would be a significant architectural addition requiring maintenance, testing, and ongoing support. The maintainer is clearly already overwhelmed with support requests.  
+3. **It wouldn't solve the core problem** - Even with perfect rate limiting from spicetify, if Spotify has decided to rate-limit the `/me/*` endpoints to near-zero for desktop tokens, no amount of client-side throttling will help. You can't rate-limit your way out of a ban.  
+4. **Blame shifting** - The maintainer's position is clear: *"Spotify did this, go complain to Spotify."* Building infrastructure to work around it implies accepting responsibility for it.  
+5. **The "right" solution exists** - The docs already say "use internal endpoints only." Extensions that violate this are at fault, not spicetify.
+
+**In practice:** A shared rate-limiter would help with *accidental* overload (many extensions making reasonable requests simultaneously), but wouldn't help with the current situation where Spotify is returning 429 on the *first* request. That's not a rate limit from overuse - it's a block.  
