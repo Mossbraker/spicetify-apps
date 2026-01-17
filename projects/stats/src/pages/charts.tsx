@@ -15,7 +15,7 @@ import type {
 import * as lastFM from "../api/lastfm";
 import RefreshButton from "../components/buttons/refresh_button";
 import SettingsButton from "@shared/components/settings_button";
-import { convertArtist, convertTrack } from "../utils/converter";
+import { convertArtist, convertTrack, throttledMap } from "../utils/converter";
 import useStatus from "@shared/status/useStatus";
 import { useQuery } from "@shared/types/react_query";
 import { cacher, invalidator } from "../extensions/cache";
@@ -40,10 +40,10 @@ const getChart = async (type: "tracks" | "artists", config: Config) => {
 	if (!key) throw new Error("Missing LastFM API Key or Username");
 	if (type === "artists") {
 		const response = await lastFM.getArtistChart(key);
-		return Promise.all(response.map(convertArtist));
+		return throttledMap(response, convertArtist);
 	}
 	const response = await lastFM.getTrackChart(key);
-	return Promise.all(response.map(convertTrack));
+	return throttledMap(response, convertTrack);
 };
 
 const ArtistChart = ({ artists }: { artists: (LastFMMinifiedArtist | SpotifyMinifiedArtist)[] }) => {

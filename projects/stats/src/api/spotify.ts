@@ -1,19 +1,77 @@
 import type * as Spotify from "../types/spotify";
+import { isOAuthEnabled, hasValidTokens, oauthFetch } from "./oauth";
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Retry config for rate-limited requests.
+// /me/* endpoints have stricter limits and may require longer waits.
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 5000; // Start with 5s delay for rate-limited retries
+
+// Helper to detect rate limit errors from CosmosAsync exceptions
+const isRateLimitError = (error: unknown): boolean => {
+	if (!error || typeof error !== "object") return false;
+	const e = error as Record<string, unknown>;
+	return (
+		e.code === 429 ||
+		e.status === 429 ||
+		(typeof e.message === "string" && e.message.includes("429"))
+	);
+};
+
+/**
+ * Core API fetch function.
+ * Uses OAuth if enabled and has valid tokens, otherwise falls back to CosmosAsync.
+ */
 export const apiFetch = async <T>(name: string, url: string, log = true): Promise<T> => {
-	try {
+	// Use OAuth if enabled and connected
+	if (isOAuthEnabled() && hasValidTokens()) {
 		const timeStart = window.performance.now();
-		const response = await Spicetify.CosmosAsync.get(url);
-		if (response.code || response.error)
-			throw new Error(
-				`Failed to fetch the info from server. Try again later. ${name.includes("lfm") ? "Check your LFM API key and username." : ""}`,
-			);
-		if (log) console.log("stats -", name, "fetch time:", window.performance.now() - timeStart);
+		const response = await oauthFetch<T>(url);
+		if (log) console.log("stats -", name, "fetch time (OAuth):", window.performance.now() - timeStart);
 		return response;
-	} catch (error) {
-		console.log("stats -", name, "request failed:", error);
-		throw error;
 	}
+
+	// Fall back to CosmosAsync with retry logic
+	let lastError: Error | undefined;
+
+	for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+		try {
+			const timeStart = window.performance.now();
+			const response = await Spicetify.CosmosAsync.get(url);
+
+			// Handle rate limiting (429) returned as response code
+			if (response.code === 429) {
+				if (attempt < MAX_RETRIES) {
+					const waitTime = BASE_DELAY_MS * 2 ** attempt;
+					console.log("stats -", name, "rate limited (response), retrying in", waitTime, "ms");
+					await delay(waitTime);
+					continue;
+				}
+				throw new Error("Rate limited by Spotify. Please wait a moment and try again.");
+			}
+
+			if (response.code || response.error)
+				throw new Error(
+					`Failed to fetch the info from server. Try again later. ${name.includes("lfm") ? "Check your LFM API key and username." : ""}`,
+				);
+			if (log) console.log("stats -", name, "fetch time:", window.performance.now() - timeStart);
+			return response;
+		} catch (error) {
+			// CosmosAsync may throw exceptions for 429 errors instead of returning them
+			if (isRateLimitError(error) && attempt < MAX_RETRIES) {
+				const waitTime = BASE_DELAY_MS * 2 ** attempt;
+				console.log("stats -", name, "rate limited (exception), retrying in", waitTime, "ms");
+				await delay(waitTime);
+				continue;
+			}
+			lastError = error as Error;
+			console.log("stats -", name, "request failed:", error);
+			break;
+		}
+	}
+
+	throw lastError;
 };
 
 const val = <T>(res: T | undefined) => {

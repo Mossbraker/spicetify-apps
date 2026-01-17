@@ -3,6 +3,10 @@ declare global {
 }
 
 export interface Config {
+	"oauth-client-id": string | null;
+	"use-oauth": boolean;
+	"oauth-callback": string | null;
+	"oauth-disconnect": boolean;
 	"api-key": string | null;
 	"lastfm-user": string | null;
 	"use-lastfm": boolean;

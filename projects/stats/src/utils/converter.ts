@@ -11,6 +11,22 @@ import type {
 	SpotifyMinifiedTrack,
 } from "../types/stats_types";
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Throttled batch processing to avoid Spotify API rate limits (429 errors).
+// Processes items sequentially with a delay between each to stay under rate limits.
+// /me/* endpoints have stricter limits (~5-10 req before 429), so we use 1s delay.
+const THROTTLE_DELAY_MS = 1000;
+export const throttledMap = async <T, R>(items: T[], fn: (item: T) => Promise<R>): Promise<R[]> => {
+	const results: R[] = [];
+	for (let i = 0; i < items.length; i++) {
+		results.push(await fn(items[i]));
+		// Add delay between requests to avoid rate limiting
+		if (i < items.length - 1) await delay(THROTTLE_DELAY_MS);
+	}
+	return results;
+};
+
 export const minifyArtist = (artist: Spotify.Artist): SpotifyMinifiedArtist => ({
 	id: artist.id,
 	name: artist.name,

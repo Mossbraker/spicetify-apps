@@ -2,11 +2,69 @@ import React from "react";
 import PlaylistPage from "../pages/playlist";
 import { version as STATS_VERSION } from "../../package.json";
 import ConfigWrapper from "@shared/config/config_wrapper";
+import { startAuthFlow, handleCallback, clearTokens, getConnectionStatus } from "../api/oauth";
 
 // contruct global class for stats methods
 class SpicetifyStats {
 	ConfigWrapper = new ConfigWrapper(
 		[
+			{
+				name: "Spotify Client ID",
+				key: "oauth-client-id",
+				type: "text",
+				def: null,
+				placeholder: "Enter Client ID from Spotify Developer Dashboard",
+				desc: `Create an app at developer.spotify.com/dashboard. Add redirect URI: http://localhost:5173/callback`,
+				sectionHeader: "OAuth (Bypass Rate Limits)",
+			},
+			{
+				name: "Use OAuth",
+				key: "use-oauth",
+				type: "toggle",
+				def: false,
+				desc: "Use your own Spotify Developer App instead of the built-in API",
+				callback: (enabled: boolean) => {
+					if (enabled) {
+						const status = getConnectionStatus();
+						if (!status.connected) {
+							// Start authorization if not yet connected
+							startAuthFlow();
+						}
+					}
+				},
+			},
+			{
+				name: "Paste Callback URL",
+				key: "oauth-callback",
+				type: "text",
+				def: null,
+				placeholder: "http://localhost:5173/callback?code=...",
+				desc: "After authorizing, copy the full URL from your browser and paste it here",
+				callback: async (url: string) => {
+					if (url && url.includes("code=")) {
+						const success = await handleCallback(url);
+						if (success) {
+							// Clear the callback URL field after successful auth
+							localStorage.removeItem("stats:config:oauth-callback");
+						}
+					}
+				},
+			},
+			{
+				name: "Disconnect OAuth",
+				key: "oauth-disconnect",
+				type: "toggle",
+				def: false,
+				desc: "Toggle to disconnect your Spotify Developer App",
+				callback: (value: boolean) => {
+					if (value) {
+						clearTokens();
+						Spicetify.showNotification("OAuth disconnected", false);
+						// Reset the toggle
+						localStorage.setItem("stats:config:oauth-disconnect", "false");
+					}
+				},
+			},
 			{
 				name: "Last.fm Api Key",
 				key: "api-key",

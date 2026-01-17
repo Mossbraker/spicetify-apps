@@ -7,7 +7,7 @@ import RefreshButton from "../components/buttons/refresh_button";
 import SettingsButton from "@shared/components/settings_button";
 import type { SpotifyRange } from "../types/spotify";
 import * as lastFM from "../api/lastfm";
-import { convertAlbum } from "../utils/converter";
+import { convertAlbum, throttledMap } from "../utils/converter";
 import { useQuery } from "@shared/types/react_query";
 import useStatus from "@shared/status/useStatus";
 import { DropdownOptions } from "./top_artists";
@@ -17,7 +17,7 @@ export const getTopAlbums = async (timeRange: SpotifyRange, config: Config) => {
 	const { "lastfm-user": user, "api-key": key } = config;
 	if (!user || !key) throw new Error("Missing LastFM API Key or Username");
 	const response = await lastFM.getTopAlbums(key, user, timeRange);
-	return Promise.all(response.map(convertAlbum));
+	return throttledMap(response, convertAlbum);
 };
 
 const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
