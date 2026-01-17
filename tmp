@@ -1,0 +1,664 @@
+I use the spicetify app 'Stats' in this repo and, like many users, I am getting this error:
+Error
+Failed to fetch the info from server. Try again later.
+This is reported by other users in Issue [#236](https://github.com/harbassan/spicetify-apps/issues/236) and Issue [#237](https://github.com/harbassan/spicetify-apps/issues/237).
+Any insight into cause and potential fixes?
+
+
+---
+
+You are still in planning mode while we clarify a few things.
+
+Further Considerations:
+1. Since this isn't my repo, it's hard to say. Would adding the p-limit npm package be a potential point of contention for the project owner? Should I implement a simple custom batching utility to avoid new dependencies?
+2. Yes, that sounds like a good idea.
+3. Okay, well since this isn't my project and beyond the scope of this bug, we won't worry about that.
+
+
+---
+
+Further Considerations:
+1-2. Go with whatever you think is best practice here.
+
+Please keep this in mind:
+The fix must be targeted, min diff, and make no changes to unrelated code. Where relevant, the code should be self-documenting, with comments explaining non-obvious changes (or wherever necessary). The fix should not introduce any new issues or side effects. As much as possible, the fix should follow existing code style and conventions used in the surrounding code. Since this is not my codebase, the PR should avoid any opinionated changes or refactors, and should be narrowly focused on resolving the reported problem, while being straightforward and easy to review.
+
+
+---
+
+In the Windows Spotify app, F12 does nothing.
+
+1. All pages
+2. I had my Last.fm API key and username input in the settings, but did not have 'Use Last.fm for Stats' enbabled. I tried removing my Last.fm API key and username, but this made no difference.
+3. No console with F12.
+
+
+---
+
+So, what's the best/proper fix here? I would think the main spicetify app needs to implement some sort of API routing that all extensions/custom apps are routed through. Is there a better way?
+
+---
+
+So, I tried waiting to see if the stats app will eventually work but it didn't (I didn't expect it to because I've previously had long sessions and the stats app doesn't ever work at any point.).
+
+After the previous console log I gave you, I waited ~10 min, cleared the console, and focused on Spotify window again. Here's the new log:
+
+---
+
+The website you provided is a 404 error.
+But, to chect if my account is blocked from these endpoints entirely: if I go to a website like https://www.statsforspotify.com/track/top and connect my account, all the stats work.
+
+If I disable all other extensions temporarily, is there an easy way to enable them all again? DFo I need to print out a list? Do I need to know them all and track them down manually? What's the workflow here?
+
+---
+
+Before running:
+
+```
+spicetify config extensions ""
+spicetify config custom_apps stats
+spicetify apply
+```
+
+C:\Users\hotpi>spicetify config extensions
+shuffle+
+sortByPlayCount
+fullAlbumDate
+
+C:\Users\hotpi>spicetify config custom_apps
+marketplace
+stats
+library
+new-releases
+reddit
+lyrics-plus
+
+After:
+
+C:\Users\hotpi>spicetify config extensions
+
+C:\Users\hotpi>spicetify config custom_apps
+marketplace
+stats
+library
+new-releases
+reddit
+lyrics-plus
+
+Still immidiate 429, but all my custom_apps are still installed.
+
+---
+
+Can you search the web for any info on whether Spotify is blocking these endpoints entirely for the desktop client's internal API (CosmosAsync) or not?
+
+Further Considerations:
+Let's be as conservative as possible. If we can get the stats app working at all, we can look at lowering intervals to reduce delay.
+
+---
+
+
+Further Considerations:
+1. 1s is fine for now to see if this fix even works.
+2. Okay, please verify.
+3. Is there an mcp server I can install to give you web search capability?
+
+I'll take you out of plan mode after this
+
+---
+
+I tried adding added the brave mcp server:
+$ npx -y @smithery/cli install brave
+* Install MCP server
+
+? Select client: vscode
+✔ Successfully resolved brave
+* Installing remote server. Please ensure you trust the server author, especially when sharing sensitive data.
+? Your API key (required) *******************************
+? Would you like to add optional configuration? No
+✖ Failed to install brave
+Error: Failed to save configuration to keychain: Cannot autolaunch D-Bus without X11 $DISPLAY
+
+So I manually added the info to `.vscode/mcp.json`. Not sure if this will work though, or where to put the api key.
+
+---
+
+Okay, hopefully the brave mcp server works now. limits are:
+1 request per second
+2,000 requests per month
+
+Before we leave planning mode, search the web for any info on whether Spotify is blocking these endpoints entirely for the desktop client's internal API (CosmosAsync) or not.
+
+---
+
+Okay let's try implementing with your revised steps.
+
+Once you are finished, detail how one would implement OAuth - Register a proper Spotify Web API app and use external OAuth authentication (like statsforspotify.com does - a major architectural change). This would normally be a lot of work, but with an agent like you could be quite a quick fix potentially). Also seach the web / github to see if there are any project such as or similar to statsforspotify.com with public code, which would make the implementation much quicker/easier.
+
+---
+
+Compile with the latest changes, so I can test.
+
+Re: OAuth:
+Rather than replacing the project's current method of retrieving stats with OAuth, it would be better to add an option in the Stats app's settings menu. Something like 'Use OAuth for Stats' or whatever.
+
+1. You said 'fork alihan/statify or use code from your_spotify'. Which would be the better approach?
+2. What is the best option? Are these things you can competently and securely code yourself?
+3. okay.
+
+After compile don't change any code / begin implementing OAuth.
+
+---
+
+Still straight to 429. But, as you noted, I may have up to 24h before rate limits expire.
+
+"User registers their own Spotify Developer App (free)"
+    - This would be fine if I was building the app just for myself. But if I'm pushing a PR I don't think this is user friendly enough.
+
+---
+
+Can you write me an issue for spicetify/cli that details the issue, cause, possible solutions, etc. and includes all relevant info and reliable sources?
+
+I doubt harbassan will want to commit to hosting/maintaining infrastructure.
+
+Let's plan and build the version that requires User registers their own Spotify Developer App (free). I'm going to make a fork and test it for personal use and use it if it works well.
+
+---
+
+okay lets do it. Should we fork now, or after?
+
+---
+
+If I go to https://developer.spotify.com/dashboard, I can't click 'Create app' because it is greyed out. There is a tooltip that says: 'Note: New integrations are currently on hold while we make updates to improve reliability and performance.' Does this mean no APIs for now?
+
+If so, let's push this to a new branch on my fork (https://github.com/Mossbraker/spicetify-apps)and consider an alternative approach.
+
+You said 'harbassan will want to commit to hosting/maintaining infrastructure.' If I'm building this for personal use, is this something I can host for myself only on my personal computer while I'm running spotify with spicetify on that same pc? Or am I still going to need an API key?
+
+---
+
+Are there any sites like statsforspotify.com that have an api I could use to display their stats in spotify? Could I piggyback on a site like that even if they don't have an api?
+
+I do scrobble to LastFM consistently, but haven't always, so that isn't a very good alternative.
+
+Are there any other possible hack-y workarounds?
+
+---
+
+Does this workaround seem safe, or is this something Spotify might detect, dislike, and ban an accout for?
+
+---
+
+Okay. Did you already make the changes? If so, how can I use it? Has it been compiled?
+
+---
+
+Getting error in attached image.
+
+Console:
+spicetifyWrapper.js:515 [spicetifyWrapper] Waiting for required webpack modules to load
+xpui-modules.js:1 Error: Unexpectedly hit unreachable code! Unhandled discriminated union member: false
+    at i (xpui-modules.js:1:1037254)
+    at r (xpui-modules.js:1:1037384)
+    at xpui-modules.js:1:5452138
+    at Wa (xpui-modules.js:1:5452148)
+    at Object.factory (xpui-modules.js:1:6283397)
+    at E.resolveImpl (xpui-modules.js:1:123359)
+    at E.resolve (xpui-modules.js:1:122899)
+    at addMissingPlatformAPIs (spicetifyWrapper.js:337:52)
+r @ xpui-modules.js:1
+favicon.ico:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+spicetifyWrapper.js:536 [spicetifyWrapper] All required webpack modules loaded
+guc3-spclient.spotify.com/remote-config-resolver/v3/configuration:1  Failed to load resource: the server responded with a status of 404 ()
+xpui-modules.js:1 provider:transport resolve error k Object
+f @ xpui-modules.js:1
+xpui-modules.js:1 Error: Minified React error #200; visit https://reactjs.org/docs/error-decoder.html?invariant=200 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at t.createPortal (xpui-modules.js:1:1483151)
+    at It (spicetify-routes-stats.js:4:107920)
+    at pa (xpui-modules.js:1:1416792)
+    at Tc (xpui-modules.js:1:1475797)
+    at hl (xpui-modules.js:1:1465033)
+    at fl (xpui-modules.js:1:1464961)
+    at pl (xpui-modules.js:1:1464824)
+    at tl (xpui-modules.js:1:1461659)
+    at el (xpui-modules.js:1:1460214)
+    at v (xpui-modules.js:1:4637679)Caused by: React ErrorBoundary Error: Minified React error #200; visit https://reactjs.org/docs/error-decoder.html?invariant=200 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at It (spicetify-routes-stats.js:4:107840)
+    at jt (spicetify-routes-stats.js:4:108683)
+    at div
+    at Rt (spicetify-routes-stats.js:4:110000)
+    at render
+    at R (xpui-modules.js:1:7180032)
+    at F (xpui-modules.js:1:7183698)
+    at P_ (xpui-snapshot.js:1:252720)
+    at Suspense
+    at h (xpui-modules.js:1:1529181)
+    at Suspense
+    at c (xpui-modules.js:1:4990802)
+    at l (xpui-modules.js:1:4990877)
+    at main
+    at xpui-snapshot.js:1:48904
+    at div
+    at div
+    at xpui-modules.js:1:1254070
+    at pi (xpui-modules.js:1:1254824)
+    at div
+    at div
+    at oa (xpui-snapshot.js:1:51424)
+    at div
+    at Vn (xpui-snapshot.js:1:49276)
+    at div
+    at vy (xpui-snapshot.js:1:226601)
+    at Om (xpui-snapshot.js:1:189491)
+    at s (xpui-modules.js:1:4432205)
+    at Lp (xpui-snapshot.js:1:171650)
+    at jr (xpui-snapshot.js:1:61680)
+    at l (xpui-modules.js:1:1159781)
+    at t (xpui-modules.js:1:2899397)
+    at I (xpui-modules.js:1:5077520)
+    at Suspense
+    at am
+    at a (xpui-modules.js:1:4985294)
+    at l (xpui-modules.js:1:2967193)
+    at l (xpui-modules.js:1:7970206)
+    at l (xpui-modules.js:1:8601)
+    at c (xpui-modules.js:1:7411683)
+    at Xt (xpui-snapshot.js:1:44861)
+    at Up (xpui-snapshot.js:1:175487)
+    at c (xpui-modules.js:1:1112357)
+    at Suspense
+    at tn (xpui-snapshot.js:1:45031)
+    at a (xpui-modules.js:1:1148614)
+    at a (xpui-modules.js:1:224710)
+    at l (xpui-modules.js:1:2751666)
+    at At (xpui-snapshot.js:1:42249)
+    at Xy (xpui-snapshot.js:1:234529)
+    at nx (xpui-snapshot.js:1:239305)
+    at S (xpui-modules.js:1:3843547)
+    at E (xpui-modules.js:1:2385975)
+    at l (xpui-modules.js:1:4989898)
+    at d (xpui-modules.js:1:4853103)
+    at l (xpui-modules.js:1:4849151)
+    at u (xpui-modules.js:1:4084919)
+    at m (xpui-modules.js:1:5169639)
+    at e (xpui-modules.js:1:4426535)
+    at l (xpui-modules.js:1:6806288)
+    at E (xpui-modules.js:1:7842174)
+    at le (xpui-modules.js:1:4303516)
+    at l (xpui-modules.js:1:2844645)
+    at At (xpui-snapshot.js:1:42249)
+    at l (xpui-modules.js:1:7509240)
+    at me (xpui-snapshot.js:1:27607)
+    at Mt (xpui-snapshot.js:1:42857)
+    at It (xpui-snapshot.js:1:42575)
+    at Ct (xpui-snapshot.js:1:42477)
+    at a (xpui-modules.js:1:7966317)
+    at a (xpui-modules.js:1:7262257)
+    at h (xpui-modules.js:1:3941357)
+    at s (xpui-modules.js:1:6342754)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:41115)
+    at a (xpui-modules.js:1:1039232)
+    at a (xpui-modules.js:1:1703471)
+    at a (xpui-modules.js:1:4763550)
+    at a (xpui-modules.js:1:6809594)
+    at a (xpui-modules.js:1:4095301)
+    at Ne (xpui-snapshot.js:1:29920)
+    at c (xpui-modules.js:1:7523826)
+    at _t (xpui-snapshot.js:1:42013)
+    at a (xpui-modules.js:1:2649317)
+    at Nt (xpui-snapshot.js:1:42670)
+    at a (xpui-modules.js:1:7883162)
+    at Dt (xpui-snapshot.js:1:42933)
+    at At (xpui-snapshot.js:1:42249)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:43051)
+    at z_ (xpui-snapshot.js:1:266956)
+    at j (xpui-modules.js:1:4707702)
+    at h (xpui-modules.js:1:1529181)
+    at Suspense
+    at c (xpui-modules.js:1:4990802)
+    at l (xpui-modules.js:1:4990877)
+    at s (xpui-modules.js:1:4709640)
+    at B (xpui-modules.js:1:7183067)
+    at Ut (xpui-snapshot.js:1:44039)
+    at V_ (xpui-snapshot.js:1:267099)
+    at h (xpui-modules.js:1:1529181)
+    at Suspense
+    at c (xpui-modules.js:1:4990802)
+    at l (xpui-modules.js:1:4990877)
+    at c (xpui-modules.js:1:7523826)
+ss @ xpui-modules.js:1
+xpui-modules.js:1 Error: Minified React error #200; visit https://reactjs.org/docs/error-decoder.html?invariant=200 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at t.createPortal (xpui-modules.js:1:1483151)
+    at It (spicetify-routes-stats.js:4:107920)
+    at pa (xpui-modules.js:1:1416792)
+    at Tc (xpui-modules.js:1:1475797)
+    at hl (xpui-modules.js:1:1465033)
+    at fl (xpui-modules.js:1:1464961)
+    at pl (xpui-modules.js:1:1464824)
+    at tl (xpui-modules.js:1:1461659)
+    at el (xpui-modules.js:1:1460214)
+    at v (xpui-modules.js:1:4637679)Caused by: React ErrorBoundary Error: Minified React error #200; visit https://reactjs.org/docs/error-decoder.html?invariant=200 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at It (spicetify-routes-stats.js:4:107840)
+    at jt (spicetify-routes-stats.js:4:108683)
+    at div
+    at Rt (spicetify-routes-stats.js:4:110000)
+    at render
+    at R (xpui-modules.js:1:7180032)
+    at F (xpui-modules.js:1:7183698)
+    at P_ (xpui-snapshot.js:1:252720)
+    at Suspense
+    at h (xpui-modules.js:1:1529181)
+    at Suspense
+    at c (xpui-modules.js:1:4990802)
+    at l (xpui-modules.js:1:4990877)
+    at main
+    at xpui-snapshot.js:1:48904
+    at div
+    at div
+    at xpui-modules.js:1:1254070
+    at pi (xpui-modules.js:1:1254824)
+    at div
+    at div
+    at oa (xpui-snapshot.js:1:51424)
+    at div
+    at Vn (xpui-snapshot.js:1:49276)
+    at div
+    at vy (xpui-snapshot.js:1:226601)
+    at Om (xpui-snapshot.js:1:189491)
+    at s (xpui-modules.js:1:4432205)
+    at Lp (xpui-snapshot.js:1:171650)
+    at jr (xpui-snapshot.js:1:61680)
+    at l (xpui-modules.js:1:1159781)
+    at t (xpui-modules.js:1:2899397)
+    at I (xpui-modules.js:1:5077520)
+    at Suspense
+    at am
+    at a (xpui-modules.js:1:4985294)
+    at l (xpui-modules.js:1:2967193)
+    at l (xpui-modules.js:1:7970206)
+    at l (xpui-modules.js:1:8601)
+    at c (xpui-modules.js:1:7411683)
+    at Xt (xpui-snapshot.js:1:44861)
+    at Up (xpui-snapshot.js:1:175487)
+    at c (xpui-modules.js:1:1112357)
+    at Suspense
+    at tn (xpui-snapshot.js:1:45031)
+    at a (xpui-modules.js:1:1148614)
+    at a (xpui-modules.js:1:224710)
+    at l (xpui-modules.js:1:2751666)
+    at At (xpui-snapshot.js:1:42249)
+    at Xy (xpui-snapshot.js:1:234529)
+    at nx (xpui-snapshot.js:1:239305)
+    at S (xpui-modules.js:1:3843547)
+    at E (xpui-modules.js:1:2385975)
+    at l (xpui-modules.js:1:4989898)
+    at d (xpui-modules.js:1:4853103)
+    at l (xpui-modules.js:1:4849151)
+    at u (xpui-modules.js:1:4084919)
+    at m (xpui-modules.js:1:5169639)
+    at e (xpui-modules.js:1:4426535)
+    at l (xpui-modules.js:1:6806288)
+    at E (xpui-modules.js:1:7842174)
+    at le (xpui-modules.js:1:4303516)
+    at l (xpui-modules.js:1:2844645)
+    at At (xpui-snapshot.js:1:42249)
+    at l (xpui-modules.js:1:7509240)
+    at me (xpui-snapshot.js:1:27607)
+    at Mt (xpui-snapshot.js:1:42857)
+    at It (xpui-snapshot.js:1:42575)
+    at Ct (xpui-snapshot.js:1:42477)
+    at a (xpui-modules.js:1:7966317)
+    at a (xpui-modules.js:1:7262257)
+    at h (xpui-modules.js:1:3941357)
+    at s (xpui-modules.js:1:6342754)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:41115)
+    at a (xpui-modules.js:1:1039232)
+    at a (xpui-modules.js:1:1703471)
+    at a (xpui-modules.js:1:4763550)
+    at a (xpui-modules.js:1:6809594)
+    at a (xpui-modules.js:1:4095301)
+    at Ne (xpui-snapshot.js:1:29920)
+    at c (xpui-modules.js:1:7523826)
+    at _t (xpui-snapshot.js:1:42013)
+    at a (xpui-modules.js:1:2649317)
+    at Nt (xpui-snapshot.js:1:42670)
+    at a (xpui-modules.js:1:7883162)
+    at Dt (xpui-snapshot.js:1:42933)
+    at At (xpui-snapshot.js:1:42249)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:43051)
+    at z_ (xpui-snapshot.js:1:266956)
+    at j (xpui-modules.js:1:4707702)
+    at h (xpui-modules.js:1:1529181)
+    at Suspense
+    at c (xpui-modules.js:1:4990802)
+    at l (xpui-modules.js:1:4990877)
+    at s (xpui-modules.js:1:4709640)
+    at B (xpui-modules.js:1:7183067)
+    at Ut (xpui-snapshot.js:1:44039)
+    at V_ (xpui-snapshot.js:1:267099)
+    at h (xpui-modules.js:1:1529181)
+    at Suspense
+    at c (xpui-modules.js:1:4990802)
+    at l (xpui-modules.js:1:4990877)
+    at c (xpui-modules.js:1:7523826)
+Vt @ xpui-modules.js:1
+
+I tried hitting reload a bunch of time and finally got to the loading screen once and enabled "Use Direct Fetch (Experimental)". Didn't work so I restarted. Now I keep hitting reload but still get stuck at the reload page.
+
+---
+
+Can we not fix any errors with:
+Your Spotify client version
+The spicetify-creator build process
+React version mismatches
+
+---
+
+Reload finally worked. But new console logs aren't promising:
+spicetifyWrapper.js:515 [spicetifyWrapper] Waiting for required webpack modules to load
+favicon.ico:1  GET https://xpui.app.spotify.com/favicon.ico net::ERR_NAME_NOT_RESOLVED
+xpui-modules.js:1 Error: Unexpectedly hit unreachable code! Unhandled discriminated union member: false
+    at i (xpui-modules.js:1:1037254)
+    at r (xpui-modules.js:1:1037384)
+    at xpui-modules.js:1:5452138
+    at Wa (xpui-modules.js:1:5452148)
+    at Object.factory (xpui-modules.js:1:6283397)
+    at E.resolveImpl (xpui-modules.js:1:123359)
+    at E.resolve (xpui-modules.js:1:122899)
+    at addMissingPlatformAPIs (spicetifyWrapper.js:337:52)
+r @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Wa @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+resolveImpl @ xpui-modules.js:1
+resolve @ xpui-modules.js:1
+addMissingPlatformAPIs @ spicetifyWrapper.js:337
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+(anonymous) @ spicetifyWrapper.js:345
+spicetifyWrapper.js:536 [spicetifyWrapper] All required webpack modules loaded
+xpui-modules.js:1  POST https://guc3-spclient.spotify.com/remote-config-resolver/v3/configuration 404 (Not Found)
+M @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+(anonymous) @ xpui-modules.js:1
+_tick @ xpui-modules.js:1
+start @ xpui-modules.js:1
+_sendRetriedRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+_sendRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+_dispatchFromStore @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+a @ xpui-modules.js:1
+t @ xpui-modules.js:1
+postMessage
+c @ xpui-modules.js:1
+emit @ xpui-modules.js:1
+_connectToEndpoints @ xpui-modules.js:1
+Promise.then
+_performConnect @ xpui-modules.js:1
+_connect @ xpui-modules.js:1
+connect @ xpui-modules.js:1
+ON @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+resolveImpl @ xpui-modules.js:1
+resolve @ xpui-modules.js:1
+FN @ xpui-modules.js:1
+await in FN
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+xpui-modules.js:1 provider:transport resolve error k {url: 'https://guc3-spclient.spotify.com/remote-config-resolver/v3/configuration', status: 404, headers: L, body: {…}, offline: false, …} {}
+f @ xpui-modules.js:1
+t.<computed> @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.catch
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+yc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Lc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Uc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+resolve @ xpui-modules.js:1
+FN @ xpui-modules.js:1
+await in FN
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+spicetify-routes-stats.js:4  GET https://api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=long_term 429 (Too Many Requests)
+ue @ spicetify-routes-stats.js:4
+r @ spicetify-routes-stats.js:4
+ce @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+a @ xpui-modules.js:1
+_ @ xpui-modules.js:1
+start @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+#D @ xpui-modules.js:1
+onSubscribe @ xpui-modules.js:1
+subscribe @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Ia @ xpui-modules.js:1
+Qs @ xpui-modules.js:1
+_l @ xpui-modules.js:1
+rl @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+el @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+spicetify-routes-stats.js:4 stats - topArtists direct fetch failed, falling back to CosmosAsync: {code: 429, message: 'Rate limited. Retry after 3 seconds'}
+spicetifyWrapper.js:479  GET https://api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=long_term 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:479
+r @ spicetify-routes-stats.js:4
+await in r
+ce @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+a @ xpui-modules.js:1
+_ @ xpui-modules.js:1
+start @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+#D @ xpui-modules.js:1
+onSubscribe @ xpui-modules.js:1
+subscribe @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Ia @ xpui-modules.js:1
+Qs @ xpui-modules.js:1
+_l @ xpui-modules.js:1
+rl @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+el @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+spicetify-routes-stats.js:4 stats - topArtists rate limited (response), retrying in 5000 ms
+spicetifyWrapper.js:479  GET https://api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=long_term 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:479
+r @ spicetify-routes-stats.js:4
+await in r
+ce @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+a @ xpui-modules.js:1
+_ @ xpui-modules.js:1
+start @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+#D @ xpui-modules.js:1
+onSubscribe @ xpui-modules.js:1
+subscribe @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Ia @ xpui-modules.js:1
+Qs @ xpui-modules.js:1
+_l @ xpui-modules.js:1
+rl @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+el @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+spicetify-routes-stats.js:4 stats - topArtists rate limited (response), retrying in 10000 ms
+spicetifyWrapper.js:479  GET https://api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=long_term 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:479
+r @ spicetify-routes-stats.js:4
+await in r
+ce @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+a @ xpui-modules.js:1
+_ @ xpui-modules.js:1
+start @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+#D @ xpui-modules.js:1
+onSubscribe @ xpui-modules.js:1
+subscribe @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Ia @ xpui-modules.js:1
+Qs @ xpui-modules.js:1
+_l @ xpui-modules.js:1
+rl @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+el @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+spicetify-routes-stats.js:4 stats - topArtists rate limited (response), retrying in 20000 ms

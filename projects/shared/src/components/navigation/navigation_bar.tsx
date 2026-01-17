@@ -10,6 +10,12 @@ function NavigationBar({ links, selected, storekey }: { links: string[], selecte
         Spicetify.LocalStorage.set(storekey, page);
     }
 
+    // Guard against missing portal target to prevent React error #200
+    const portalTarget = document.querySelector<HTMLDivElement>(".main-topBar-topbarContentWrapper");
+    if (!portalTarget) {
+        return null;
+    }
+
     return ReactDOM.createPortal(
         <div style={{ paddingTop: "8px", pointerEvents: "auto" }}>
             <div className="navbar-container">
@@ -20,7 +26,7 @@ function NavigationBar({ links, selected, storekey }: { links: string[], selecte
                 </div>
             </div>
         </div>,
-        document.querySelector<HTMLDivElement>(".main-topBar-topbarContentWrapper")!
+        portalTarget
     );
 };
 
