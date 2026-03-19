@@ -14,15 +14,27 @@ import { useQuery } from "@shared/types/react_query";
 import { cacher, invalidator } from "../extensions/cache";
 import { getConfigCacheKey } from "../utils/config_cache";
 
+const hasLastFmCredentials = (config: Config) => Boolean(config["api-key"] && config["lastfm-user"]);
+
+const getLastFmTopArtists = async (timeRange: SpotifyRange, config: Config, lastfmOnly: boolean) => {
+	const { "lastfm-user": user, "api-key": key } = config;
+	if (!user || !key) throw new Error("Missing LastFM API Key or Username");
+	const response = await lastFM.getTopArtists(key, user, timeRange);
+	return throttledMap(response, (artist) => convertArtist(artist, lastfmOnly));
+};
+
 export const getTopArtists = async (timeRange: SpotifyRange, config: Config) => {
 	if (config["use-lastfm"] || config["lastfm-only"]) {
-		const { "lastfm-user": user, "api-key": key, "lastfm-only": lastfmOnly } = config;
-		if (!user || !key) throw new Error("Missing LastFM API Key or Username");
-		const response = await lastFM.getTopArtists(key, user, timeRange);
-		return throttledMap(response, (artist) => convertArtist(artist, lastfmOnly));
+		return getLastFmTopArtists(timeRange, config, config["lastfm-only"]);
 	}
-	const response = await spotify.getTopArtists(timeRange);
-	return response.map(minifyArtist);
+
+	try {
+		const response = await spotify.getTopArtists(timeRange);
+		return response.map(minifyArtist);
+	} catch (error) {
+		if (!spotify.isSuppressedSpotifyError(error) || !hasLastFmCredentials(config)) throw error;
+		return getLastFmTopArtists(timeRange, config, true);
+	}
 };
 
 export const DropdownOptions = ({ config: { "use-lastfm": useLastFM, "lastfm-only": lastfmOnly } }: ConfigWrapper) =>
