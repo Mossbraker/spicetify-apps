@@ -103,7 +103,19 @@ export async function getAccessToken(): Promise<string | null> {
 	const expiresAt = localStorage.getItem(KEYS.expiresAt);
 	const refreshToken = localStorage.getItem(KEYS.refreshToken);
 
-	if (!accessToken) return null;
+	if (!accessToken) {
+		if (refreshToken) {
+			try {
+				await refreshAccessToken();
+				return localStorage.getItem(KEYS.accessToken);
+			} catch (e) {
+				console.error("stats - OAuth access token recovery failed:", e);
+				clearTokens();
+				return null;
+			}
+		}
+		return null;
+	}
 
 	// Check if token needs refresh (expires in less than 5 minutes)
 	if (expiresAt && Date.now() > parseInt(expiresAt) - 5 * 60 * 1000) {
