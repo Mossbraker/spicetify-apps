@@ -728,3 +728,1135 @@ It seems to imply the issue isn't that CosmosAsync should only be used for inter
 ---
 
 Okay, so it's not CosmosAsync specific. But this could still be handled better if spicetify routed all API requests, rather than allowing all extensions, custom apps, etc. to do whatever they want, right? It's not a spicetify bug, but they could make the experience better for users?
+
+
+---
+
+I was working with another agent to bypass Spotify's rate limits for the stats custom app for spicetify. We had fully implemented it, but I couldn't test it because Spotify had closed new app registrations at the time, but it's open again now. I'm unable to test anything though because the rate limiting prevents the app from even loading (see attached screenshot). So, I think I need to change the default settings for the stats app so it doesn't automatically try running with the rate limited API requests
+
+---
+
+I can't toggle it in the settings panel, because it does the whole immediately firing rate-limited Spotify API calls thing, preventing the settings button from showing. Do I need to do a fresh install? If so, do a rebuild with the new default setting.
+
+---
+
+In order to create an app for spotify and get an API key, I need to add Redirect URIs - what am I supposed to put here?
+
+---
+
+Can get into settings now. Attached an image of the URI it specifies. This URI isn't allowed by spotify, as it says it is not secure. I can do something like 
+http://127.0.0.1:5173/callback though
+
+---
+
+Now I'm getting:
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=short_term 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+a @ spicetify-routes-stats.js:4
+await in a
+oe @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+setTimeout
+o @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+batch @ xpui-modules.js:1
+#s @ xpui-modules.js:1
+setData @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+await in fetch
+#U @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+refetch @ xpui-modules.js:1
+onFocus @ xpui-modules.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+batch @ xpui-modules.js:1
+onFocus @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-modules.js:1
+onFocus @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+t @ xpui-modules.js:1
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=short_term 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+a @ spicetify-routes-stats.js:4
+await in a
+oe @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+setTimeout
+o @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+batch @ xpui-modules.js:1
+#s @ xpui-modules.js:1
+setData @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+await in fetch
+#U @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+refetch @ xpui-modules.js:1
+onFocus @ xpui-modules.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+batch @ xpui-modules.js:1
+onFocus @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-modules.js:1
+onFocus @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+t @ xpui-modules.js:1
+
+Is it even using the Developer API that I added?
+
+---
+
+Okay, some things are working now. The Artists and Tracks tabs both seem to work. The other 4 tabs have some issues. See below
+
+
+xpui-modules.js:1 Error: Unexpectedly hit unreachable code! Unhandled discriminated union member: false
+    at i (xpui-modules.js:1:7041740)
+    at r (xpui-modules.js:1:7041870)
+    at xpui-modules.js:1:3265101
+    at Ra (xpui-modules.js:1:3265111)
+    at Object.factory (xpui-modules.js:1:3763558)
+    at E.resolveImpl (xpui-modules.js:1:4753055)
+    at E.resolve (xpui-modules.js:1:4752595)
+    at addMissingPlatformAPIs (spicetifyWrapper.js:339:52)
+r @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Ra @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+resolveImpl @ xpui-modules.js:1
+resolve @ xpui-modules.js:1
+addMissingPlatformAPIs @ spicetifyWrapper.js:339
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+(anonymous) @ spicetifyWrapper.js:347
+extension.js:8  GET https://api.github.com/search/repositories?per_page=100&q=topic%3Aspicetify-themes 403 (Forbidden)
+(anonymous) @ extension.js:8
+aa @ extension.js:8
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+extension.js:8  GET https://api.github.com/search/repositories?per_page=100&q=topic%3Aspicetify-extensions 403 (Forbidden)
+(anonymous) @ extension.js:8
+aa @ extension.js:8
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+extension.js:8  GET https://api.github.com/search/repositories?per_page=100&q=topic%3Aspicetify-apps 403 (Forbidden)
+(anonymous) @ extension.js:8
+aa @ extension.js:8
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+xpui-modules.js:1  GET https://api.spotify.com/v1/browse/categories?limit=10&offset=0&locale=en_US&market=from_token 429 (Too Many Requests)
+M @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+(anonymous) @ xpui-modules.js:1
+_tick @ xpui-modules.js:1
+start @ xpui-modules.js:1
+_sendRetriedRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+_sendRequest @ xpui-modules.js:1
+request @ xpui-modules.js:1
+send @ xpui-modules.js:1
+send @ xpui-modules.js:1
+sa @ made-for-you-shortcut.js?time=1773892130933:14
+$t @ made-for-you-shortcut.js?time=1773892130933:1
+await in $t
+(anonymous) @ made-for-you-shortcut.js?time=1773892130933:14
+(anonymous) @ made-for-you-shortcut.js?time=1773892130933:14
+(anonymous) @ made-for-you-shortcut.js?time=1773892130933:14
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+xpui-modules.js:1  POST https://guc3-spclient.spotify.com/remote-config-resolver/v3/configuration 404 (Not Found)
+M @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+(anonymous) @ xpui-modules.js:1
+_tick @ xpui-modules.js:1
+start @ xpui-modules.js:1
+_sendRetriedRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+_sendRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+_dispatchFromStore @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+a @ xpui-modules.js:1
+t @ xpui-modules.js:1
+postMessage
+c @ xpui-modules.js:1
+emit @ xpui-modules.js:1
+_connectToEndpoints @ xpui-modules.js:1
+Promise.then
+_performConnect @ xpui-modules.js:1
+_connect @ xpui-modules.js:1
+connect @ xpui-modules.js:1
+gy @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+resolveImpl @ xpui-modules.js:1
+resolve @ xpui-modules.js:1
+My @ xpui-modules.js:1
+await in My
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+xpui-modules.js:1 provider:transport resolve error k {url: 'https://guc3-spclient.spotify.com/remote-config-resolver/v3/configuration', status: 404, headers: L, body: {…}, offline: false, …} {}
+f @ xpui-modules.js:1
+t.<computed> @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.catch
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Qs @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+oc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+_c @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+resolve @ xpui-modules.js:1
+My @ xpui-modules.js:1
+await in My
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+xpui-modules.js:1 Uncaught (in promise) Error: enqueueSnackbar called with invalid argument
+    at t.enqueueSnackbar (xpui-modules.js:1:2312774)
+    at Spicetify.showNotification (spicetifyWrapper.js:1282:24)
+    at extension.js:8:1208
+    at async aa (extension.js:8:654)
+    at async Promise.all (index 1)
+    at async extension.js:10:1460
+enqueueSnackbar @ xpui-modules.js:1
+Spicetify.showNotification @ spicetifyWrapper.js:1282
+(anonymous) @ extension.js:8
+await in (anonymous)
+aa @ extension.js:8
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+xpui-modules.js:1 Uncaught (in promise) HttpResponseError
+    at i.fromResponse (xpui-modules.js:1:4453543)
+    at e.onAfterSend (xpui-modules.js:1:6065563)
+    at xpui-modules.js:1:4991799
+    at async sa (made-for-you-shortcut.js?time=1773892130933:14:4403)
+    at async $t (made-for-you-shortcut.js?time=1773892130933:1:100026)
+    at async made-for-you-shortcut.js?time=1773892130933:14:730
+fromResponse @ xpui-modules.js:1
+e.onAfterSend @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.catch
+send @ xpui-modules.js:1
+sa @ made-for-you-shortcut.js?time=1773892130933:14
+$t @ made-for-you-shortcut.js?time=1773892130933:1
+await in $t
+(anonymous) @ made-for-you-shortcut.js?time=1773892130933:14
+(anonymous) @ made-for-you-shortcut.js?time=1773892130933:14
+(anonymous) @ made-for-you-shortcut.js?time=1773892130933:14
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/me 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+(anonymous) @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:879
+fetchUserMarket @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:890
+main @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:36193
+await in main
+(anonymous) @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:36244
+(anonymous) @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:36246
+fc210f45-cfef-49c9-bf4f-ffbc40dbb040:888 [Sort-Play] FATAL: Could not determine user's market. Track availability checks may be inaccurate.
+(anonymous) @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:888
+await in (anonymous)
+fetchUserMarket @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:890
+main @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:36193
+await in main
+(anonymous) @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:36244
+(anonymous) @ fc210f45-cfef-49c9-bf4f-ffbc40dbb040:36246
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/artists/1dfeR4HaWDbWqFHLkxsg1d?locale=EN_en 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+i @ whatsThatGenre.js?time=1773892130931:5
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+setTimeout
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+e @ whatsThatGenre.js?time=1773892130931:5
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+(anonymous) @ whatsThatGenre.js?time=1773892130931:40
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+whatsThatGenre.js?time=1773892130931:5 Uncaught (in promise) TypeError: t is not iterable
+i @ whatsThatGenre.js?time=1773892130931:5
+await in i
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+setTimeout
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+e @ whatsThatGenre.js?time=1773892130931:5
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+(anonymous) @ whatsThatGenre.js?time=1773892130931:5
+(anonymous) @ whatsThatGenre.js?time=1773892130931:40
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+spicetify-routes-stats.js:4  GET https://api.spotify.com/v1/audio-features?ids=40F3i6gKdUibqjyZdW1o4D,6FB3v4YcR57y4tXFcdxI1E,6lrQo6KAYvb92MGk6ZuZlt,2ag1oJvKdEt4JObHRcdZWE,4KULAymBBJcPRpk1yO4dOG,2WRFD9WczJ975X2K1Y9YVs,3YRNCPqg75VeZ3wtN3KY3Z,6M0IsaUX4GNyto4niSegfI,3FIvCLgCbhOW1MRnh4Wn2T,3c91jaNIbYoS4PTueNeH6q,0QZwfrjDdVGKjKfIzopBfL,1gkhXnZAFfaHB78oV8pDXV,2PLqbVr0N1QKyDAq67g43M,5aqlAwqKApcEjHWto6VNdx,5lqyqPU3JkpCbUbLmTVQPW,7fRruZ12gXGwBs0zXQ6e5V,3y4oFrifsZaSUib1QhDhmv,2QMV9Kj5BFo8kjggLVHf86,09DR0sHnQUhHOiSNttc1mv,5UW4tA4j23YL6kDfRw3rWT,12EkF8uGofptstVIX7Oc0C,3HTLIvqe7MoSlsqw2DAynt,4CD4GfHOwo5ZP4FkIMTK6j,4LKYOetuIF5c9XjeLBL9av,6QXxmGsc0A2PG3alWT5bYi,09ebrkUKSLYAycT5DVPgjg,0CGMppRyZeAXdfaBcj7cMv,0KIpuVYhKUUUpjo6H5NvBY,0PzEqBOcfOMU9FZRjeNiz0,0TPS1dKI4m27xCxm7jF7SU,0pQvGy1DmlJcBTDIyTVKUK,0wIpjjcXFgGtJUmBIRAAju,10nyNJ6zNy2YVYLrcwLccB,1AKKVEylH3YPYm64MTzl7M,1Cz7QWaBJJcabdMqZxXwj9,1HfB7BLeW5XXIJ9sjCaL5U,1fXvxcQdz9OEe5IeNHQh72,1u8c2t2Cy7UBoG4ArRcF5g,1wSioaXBQufQTA5E0XJ1mi,1zb9cdsTMrEEL2Ut8rmTb6,259UpfomIaTr9PdBvR6R1c,2ZQKQJYnXbXKrgPZ1vLmiE,2ckYkLkKMdJ856YBmWpyZC,2tMPLJ8nmRARNXC7r2hDIq,34iOH7LY3vme5rQxsVILZ4,3BYKlVp3QPrUcfnZWyqO0K,3CWkXu2k702yk8s5cdzw5O,3QfM4MDEKsi07YzqynN7EU,3ShIGvHRm0q9iIDowUMjls,3cR7U1X3jcKaws71L3gZbc 403 (Forbidden)
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+a @ spicetify-routes-stats.js:4
+se @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Je @ spicetify-routes-stats.js:4
+bt @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+spicetify-routes-stats.js:4  GET https://api.spotify.com/v1/artists?ids=3POLaElL9MR68BopYmink1 403 (Forbidden)
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+a @ spicetify-routes-stats.js:4
+ce @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+et @ spicetify-routes-stats.js:4
+bt @ spicetify-routes-stats.js:4
+await in bt
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+spicetify-routes-stats.js:4  GET https://api.spotify.com/v1/artists?ids=06HL4z0CvFAxyc27GXpf02,08GQAI4eElDnROBrJRGE0X,5e1BZulIiYWPRm8yogwUYH,7lOJ7WXyopaxri0dbOiZkd,1hLiboQ98IQWhpKeP9vRFw,12zbUHbPHL5DGuJtiUfsip,1r1uxoy19fzMxunt3ONAkG,07D1Bjaof0NFlU32KXiqUP,6ws5XBA70XgeBpnLZhQBoy,4wEVY6Zz9STrspLNOmyz50,1yAwtBaoHLEDWAnWR87hBT,40ZNYROS4zLfyyBSs2PGe2,70kkdajctXSbqSMJbQO424,3TNt4aUIxgfy9aoaft5Jj2,246dkjvS1zLTtiykXe5h60,6W1BHDF0T4a4KYcSwzD586,0JDkhL4rjiPNEp92jAgJnS,5H9IFTRxSICj24uxO15ScU,4mO4aGO6u29UyR6XLZR9XW,5uMNhVG30JzeZ5xtPb1tqR,2d6JU9LvNhZR7AAtu4x2rS,225Tr2NNMQspzjFVRneBJ8,2ye2Wgw4gimLv2eAKyk1NB,0hYxQe3AK5jBPCr5MumLHD,1M3BVQ36cqPQix8lQNCh4K,1fZpYWNWdL5Z3wrDtISFUH,2org0PubBAxTvjVvLo9PJ0,2TwOrUcYnAlIiKmVQkkoSZ,3vAaWhdBR38Q02ohXqaNHT,7GlBOeep6PqTfFi59PTUUN,1WudHeuEN3d18SXVos95mc,7vNNmjV14SKQzlQAEg0BXP,1xU878Z1QtBldR7ru9owdU,3l0CmX0FuQjFxr8SK7Vqag,53RsXctnNmj9oKXvcbvzI2,6ltzsmQQbmdoHHbLZ4ZN25,4WPY0N74T3KUja57xMQTZ3,29lz7gs8edwnnfuXW4FhMl,4Z8W4fKeB5YxbusRsdQVPb,3kjuyTCjPG1WMFCiyc5IuB,5BvJzeQpmsdsFp4HGUYUEx,4tX2TplrkIP4v05BNC903e,1G9G7WwrXka3Z1r7aIDjI7,19I4tYiChJoxEO5EuviXpz,0vW8z9pZMGCcRtGPGtyqiB,67f7GZXNMGRn98lqrtIdrN,432R46LaYsJZV2Gmc4jUV5,4SjCvf9Ctuz369ZKAnjkZP,1PrFsWVNcI16jsB84oYbAM,4yfPiAauSgUfyc4k4WtwM9 403 (Forbidden)
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+a @ spicetify-routes-stats.js:4
+ce @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+et @ spicetify-routes-stats.js:4
+bt @ spicetify-routes-stats.js:4
+await in bt
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+spicetify-routes-stats.js:4  GET https://api.spotify.com/v1/audio-features?ids=40F3i6gKdUibqjyZdW1o4D,6FB3v4YcR57y4tXFcdxI1E,6lrQo6KAYvb92MGk6ZuZlt,2ag1oJvKdEt4JObHRcdZWE,4KULAymBBJcPRpk1yO4dOG,2WRFD9WczJ975X2K1Y9YVs,3YRNCPqg75VeZ3wtN3KY3Z,6M0IsaUX4GNyto4niSegfI,3FIvCLgCbhOW1MRnh4Wn2T,3c91jaNIbYoS4PTueNeH6q,0QZwfrjDdVGKjKfIzopBfL,1gkhXnZAFfaHB78oV8pDXV,2PLqbVr0N1QKyDAq67g43M,5aqlAwqKApcEjHWto6VNdx,5lqyqPU3JkpCbUbLmTVQPW,7fRruZ12gXGwBs0zXQ6e5V,3y4oFrifsZaSUib1QhDhmv,2QMV9Kj5BFo8kjggLVHf86,09DR0sHnQUhHOiSNttc1mv,5UW4tA4j23YL6kDfRw3rWT,12EkF8uGofptstVIX7Oc0C,3HTLIvqe7MoSlsqw2DAynt,4CD4GfHOwo5ZP4FkIMTK6j,4LKYOetuIF5c9XjeLBL9av,6QXxmGsc0A2PG3alWT5bYi,09ebrkUKSLYAycT5DVPgjg,0CGMppRyZeAXdfaBcj7cMv,0KIpuVYhKUUUpjo6H5NvBY,0PzEqBOcfOMU9FZRjeNiz0,0TPS1dKI4m27xCxm7jF7SU,0pQvGy1DmlJcBTDIyTVKUK,0wIpjjcXFgGtJUmBIRAAju,10nyNJ6zNy2YVYLrcwLccB,1AKKVEylH3YPYm64MTzl7M,1Cz7QWaBJJcabdMqZxXwj9,1HfB7BLeW5XXIJ9sjCaL5U,1fXvxcQdz9OEe5IeNHQh72,1u8c2t2Cy7UBoG4ArRcF5g,1wSioaXBQufQTA5E0XJ1mi,1zb9cdsTMrEEL2Ut8rmTb6,259UpfomIaTr9PdBvR6R1c,2ZQKQJYnXbXKrgPZ1vLmiE,2ckYkLkKMdJ856YBmWpyZC,2tMPLJ8nmRARNXC7r2hDIq,34iOH7LY3vme5rQxsVILZ4,3BYKlVp3QPrUcfnZWyqO0K,3CWkXu2k702yk8s5cdzw5O,3QfM4MDEKsi07YzqynN7EU,3ShIGvHRm0q9iIDowUMjls,3cR7U1X3jcKaws71L3gZbc 403 (Forbidden)
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+a @ spicetify-routes-stats.js:4
+se @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Je @ spicetify-routes-stats.js:4
+bt @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+setTimeout
+o @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+batch @ xpui-modules.js:1
+#s @ xpui-modules.js:1
+setData @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+await in fetch
+#U @ xpui-modules.js:1
+onSubscribe @ xpui-modules.js:1
+subscribe @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+ya @ xpui-modules.js:1
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+Mixed Content: The page at '<URL>' was loaded over HTTPS, but requested an insecure resource '<URL>'. This request has been blocked; the content must be served over HTTPS. -- *this triggered 15k times from the Album tab*
+spicetify-routes-stats.js:4  GET https://api.spotify.com/v1/artists?ids=3POLaElL9MR68BopYmink1 403 (Forbidden)
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+a @ spicetify-routes-stats.js:4
+ce @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+et @ spicetify-routes-stats.js:4
+bt @ spicetify-routes-stats.js:4
+await in bt
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+setTimeout
+o @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+batch @ xpui-modules.js:1
+#s @ xpui-modules.js:1
+setData @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+await in fetch
+#U @ xpui-modules.js:1
+onSubscribe @ xpui-modules.js:1
+subscribe @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+ya @ xpui-modules.js:1
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+spicetify-routes-stats.js:4  GET https://api.spotify.com/v1/artists?ids=06HL4z0CvFAxyc27GXpf02,08GQAI4eElDnROBrJRGE0X,5e1BZulIiYWPRm8yogwUYH,7lOJ7WXyopaxri0dbOiZkd,1hLiboQ98IQWhpKeP9vRFw,12zbUHbPHL5DGuJtiUfsip,1r1uxoy19fzMxunt3ONAkG,07D1Bjaof0NFlU32KXiqUP,6ws5XBA70XgeBpnLZhQBoy,4wEVY6Zz9STrspLNOmyz50,1yAwtBaoHLEDWAnWR87hBT,40ZNYROS4zLfyyBSs2PGe2,70kkdajctXSbqSMJbQO424,3TNt4aUIxgfy9aoaft5Jj2,246dkjvS1zLTtiykXe5h60,6W1BHDF0T4a4KYcSwzD586,0JDkhL4rjiPNEp92jAgJnS,5H9IFTRxSICj24uxO15ScU,4mO4aGO6u29UyR6XLZR9XW,5uMNhVG30JzeZ5xtPb1tqR,2d6JU9LvNhZR7AAtu4x2rS,225Tr2NNMQspzjFVRneBJ8,2ye2Wgw4gimLv2eAKyk1NB,0hYxQe3AK5jBPCr5MumLHD,1M3BVQ36cqPQix8lQNCh4K,1fZpYWNWdL5Z3wrDtISFUH,2org0PubBAxTvjVvLo9PJ0,2TwOrUcYnAlIiKmVQkkoSZ,3vAaWhdBR38Q02ohXqaNHT,7GlBOeep6PqTfFi59PTUUN,1WudHeuEN3d18SXVos95mc,7vNNmjV14SKQzlQAEg0BXP,1xU878Z1QtBldR7ru9owdU,3l0CmX0FuQjFxr8SK7Vqag,53RsXctnNmj9oKXvcbvzI2,6ltzsmQQbmdoHHbLZ4ZN25,4WPY0N74T3KUja57xMQTZ3,29lz7gs8edwnnfuXW4FhMl,4Z8W4fKeB5YxbusRsdQVPb,3kjuyTCjPG1WMFCiyc5IuB,5BvJzeQpmsdsFp4HGUYUEx,4tX2TplrkIP4v05BNC903e,1G9G7WwrXka3Z1r7aIDjI7,19I4tYiChJoxEO5EuviXpz,0vW8z9pZMGCcRtGPGtyqiB,67f7GZXNMGRn98lqrtIdrN,432R46LaYsJZV2Gmc4jUV5,4SjCvf9Ctuz369ZKAnjkZP,1PrFsWVNcI16jsB84oYbAM,4yfPiAauSgUfyc4k4WtwM9 403 (Forbidden)
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+a @ spicetify-routes-stats.js:4
+ce @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+et @ spicetify-routes-stats.js:4
+bt @ spicetify-routes-stats.js:4
+await in bt
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+setTimeout
+o @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+batch @ xpui-modules.js:1
+#s @ xpui-modules.js:1
+setData @ xpui-modules.js:1
+fetch @ xpui-modules.js:1
+await in fetch
+#U @ xpui-modules.js:1
+onSubscribe @ xpui-modules.js:1
+subscribe @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+ya @ xpui-modules.js:1
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+
+Genre and Library tabs still trigger:
+xpui-modules.js:1 Error: Minified React error #31;
+
+The Genre tab triggered the following error over 5k times in a few seconds:
+spicetify-routes-stats.js:4 
+ GET https://api.spotify.com/v1/me/top/tracks?limit=50&offset=0&time_range=short_term 429 (Too Many Requests)
+(anonymous)	@	spicetify-routes-stats.js:4
+await in (anonymous)		
+a	@	spicetify-routes-stats.js:4
+oe	@	spicetify-routes-stats.js:4
+ht	@	spicetify-routes-stats.js:4
+(anonymous)	@	spicetify-routes-stats.js:4
+(anonymous)	@	spicetify-routes-stats.js:4
+queryFn	@	spicetify-routes-stats.js:4
+(anonymous)	@	spicetify-routes-stats.js:4
+(anonymous)	@	spicetify-routes-stats.js:4
+Xs	@	xpui-modules.js:1
+gl	@	xpui-modules.js:1
+(anonymous)	@	xpui-modules.js:1
+v	@	xpui-modules.js:1
+P	@	xpui-modules.js:1
+
+---
+
+I haven't had Lastfm enabled for any tests so far, and still don't. I do have an API key input in settings though for fallback.
+
+Artists and tracks seem to work fine.
+
+Library works but triggers lots of 400, 403, and 429 errors. The 'Most Frequent Artists' and 'Most Frequent Genres' sections are empty.
+
+Albums and Charts seem to just trigger a lot of 400 errors.
+
+Albums eventually falls back to scrobbles.
+
+Charts shows scrobbles not spotify data. Not sure if this was intentional or a fallback. Charts only has 'Top Artists' or 'Top Tracks', there's no timeframe range selector though - can one be added?
+
+The timeframe ranges on the tabs are 'Past Month' 'Past 6 Months' and 'All Time', can more be added (such as week, 2 weeks, year)?
+
+Genres page only shows 'Release Year Distribution' and Explicit' %. None of the other data is populated.
+
+Can you check the github projects under 'Similar Projects' in the `RATE_LIMIT_RESEARCH.md` doc for possible proper apis to use for the current issues?
+
+---
+
+Let's stop spamming API calls that just return 400, 403, and 429 errors.
+
+I guess Albums and Charts are already explicitly labelled as Last.fm-backed in the settings panel tooltips, which is good enough.
+
+I copied the updated app from https://github.com/harbassan/spicetify-apps/issues/242 to `stats/`. Is there anything useful there?
+
+Explain what a `your_spotify` integration would look like.
+
+---
+
+What are the Spotify short, medium and long time windows? https://www.statsforspotify.com calls them 4 weeks, 6 months, and 1 year. This Spicetify stats app says 1 month, 6 months, all time. https://www.statsforspotify.com has working genres.
+
+This file might have links to some useful info `.github/instructions/spotify.instructions.md`.
+
+Switching from top artists to top tracks in the charts tab often causes a crash to the 'reload page' page.
+
+xpui-modules.js:1 Error: Unexpectedly hit unreachable code! Unhandled discriminated union member: false
+    at i (xpui-modules.js:1:7041740)
+    at r (xpui-modules.js:1:7041870)
+    at xpui-modules.js:1:3265101
+    at Ra (xpui-modules.js:1:3265111)
+    at Object.factory (xpui-modules.js:1:3763558)
+    at E.resolveImpl (xpui-modules.js:1:4753055)
+    at E.resolve (xpui-modules.js:1:4752595)
+    at addMissingPlatformAPIs (spicetifyWrapper.js:339:52)
+r @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Ra @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+resolveImpl @ xpui-modules.js:1
+resolve @ xpui-modules.js:1
+addMissingPlatformAPIs @ spicetifyWrapper.js:339
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+(anonymous) @ spicetifyWrapper.js:347
+xpui-modules.js:1  GET https://api.spotify.com/v1/browse/categories?limit=10&offset=0&locale=en_US&market=from_token 429 (Too Many Requests)
+M @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+(anonymous) @ xpui-modules.js:1
+_tick @ xpui-modules.js:1
+start @ xpui-modules.js:1
+_sendRetriedRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+_sendRequest @ xpui-modules.js:1
+request @ xpui-modules.js:1
+send @ xpui-modules.js:1
+send @ xpui-modules.js:1
+sa @ made-for-you-shortcut.js?time=1773897955429:14
+$t @ made-for-you-shortcut.js?time=1773897955429:1
+await in $t
+(anonymous) @ made-for-you-shortcut.js?time=1773897955429:14
+(anonymous) @ made-for-you-shortcut.js?time=1773897955429:14
+(anonymous) @ made-for-you-shortcut.js?time=1773897955429:14
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+xpui-modules.js:1  POST https://guc3-spclient.spotify.com/remote-config-resolver/v3/configuration 404 (Not Found)
+M @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+(anonymous) @ xpui-modules.js:1
+_tick @ xpui-modules.js:1
+start @ xpui-modules.js:1
+_sendRetriedRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+_sendRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+_dispatchFromStore @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+a @ xpui-modules.js:1
+t @ xpui-modules.js:1
+postMessage
+c @ xpui-modules.js:1
+emit @ xpui-modules.js:1
+_connectToEndpoints @ xpui-modules.js:1
+Promise.then
+_performConnect @ xpui-modules.js:1
+_connect @ xpui-modules.js:1
+connect @ xpui-modules.js:1
+gy @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+resolveImpl @ xpui-modules.js:1
+resolve @ xpui-modules.js:1
+My @ xpui-modules.js:1
+await in My
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+xpui-modules.js:1 Uncaught (in promise) HttpResponseError
+    at i.fromResponse (xpui-modules.js:1:4453543)
+    at e.onAfterSend (xpui-modules.js:1:6065563)
+    at xpui-modules.js:1:4991799
+    at async sa (made-for-you-shortcut.js?time=1773897955429:14:4403)
+    at async $t (made-for-you-shortcut.js?time=1773897955429:1:100026)
+    at async made-for-you-shortcut.js?time=1773897955429:14:730
+fromResponse @ xpui-modules.js:1
+e.onAfterSend @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.catch
+send @ xpui-modules.js:1
+sa @ made-for-you-shortcut.js?time=1773897955429:14
+$t @ made-for-you-shortcut.js?time=1773897955429:1
+await in $t
+(anonymous) @ made-for-you-shortcut.js?time=1773897955429:14
+(anonymous) @ made-for-you-shortcut.js?time=1773897955429:14
+(anonymous) @ made-for-you-shortcut.js?time=1773897955429:14
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+xpui-modules.js:1 provider:transport resolve error k {url: 'https://guc3-spclient.spotify.com/remote-config-resolver/v3/configuration', status: 404, headers: L, body: {…}, offline: false, …} {}
+f @ xpui-modules.js:1
+t.<computed> @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.catch
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Qs @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+oc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+_c @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+resolve @ xpui-modules.js:1
+My @ xpui-modules.js:1
+await in My
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/artists/1dfeR4HaWDbWqFHLkxsg1d?locale=EN_en 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+i @ whatsThatGenre.js?time=1773897955428:5
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+setTimeout
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+e @ whatsThatGenre.js?time=1773897955428:5
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+(anonymous) @ whatsThatGenre.js?time=1773897955428:40
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+whatsThatGenre.js?time=1773897955428:5 Uncaught (in promise) TypeError: t is not iterable
+i @ whatsThatGenre.js?time=1773897955428:5
+await in i
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+setTimeout
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+e @ whatsThatGenre.js?time=1773897955428:5
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+(anonymous) @ whatsThatGenre.js?time=1773897955428:5
+(anonymous) @ whatsThatGenre.js?time=1773897955428:40
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+spicetify-routes-stats.js:4  GET https://api.spotify.com/v1/search?q=track:Stateside%20%2B%20Zara%20Larsson+artist:PinkPantheress&type=track&limit=50 400 (Bad Request)
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+a @ spicetify-routes-stats.js:4
+ye @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Ue @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+w @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+queryFn @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+Qc @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/me 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+(anonymous) @ 2796ddde-8d4c-4954-a462-fba138a13189:879
+fetchUserMarket @ 2796ddde-8d4c-4954-a462-fba138a13189:890
+main @ 2796ddde-8d4c-4954-a462-fba138a13189:36229
+await in main
+(anonymous) @ 2796ddde-8d4c-4954-a462-fba138a13189:36280
+(anonymous) @ 2796ddde-8d4c-4954-a462-fba138a13189:36282
+2796ddde-8d4c-4954-a462-fba138a13189:888 [Sort-Play] FATAL: Could not determine user's market. Track availability checks may be inaccurate.
+(anonymous) @ 2796ddde-8d4c-4954-a462-fba138a13189:888
+await in (anonymous)
+fetchUserMarket @ 2796ddde-8d4c-4954-a462-fba138a13189:890
+main @ 2796ddde-8d4c-4954-a462-fba138a13189:36229
+await in main
+(anonymous) @ 2796ddde-8d4c-4954-a462-fba138a13189:36280
+(anonymous) @ 2796ddde-8d4c-4954-a462-fba138a13189:36282
+
+How do the top artists and top tracks pages in the charts tab work? Switching between the two can get different results every time. And they are never sorted by most plays/scrobbles.
+
+A separate local or self-hosted backend means something that has to be running on the host machine then right? Are there free options for any sort of web hosted service?
+
+---
+
+Are there other APIs (lastfm or something else) that could be used as references against spotify top data to build top genres data?
+
+Top Artists is now sometimes displaying songs instead of artists. Seem to be fewer crashes when switching though.
+
+xpui-modules.js:1 Error: Unexpectedly hit unreachable code! Unhandled discriminated union member: false
+    at i (xpui-modules.js:1:7041740)
+    at r (xpui-modules.js:1:7041870)
+    at xpui-modules.js:1:3265101
+    at Ra (xpui-modules.js:1:3265111)
+    at Object.factory (xpui-modules.js:1:3763558)
+    at E.resolveImpl (xpui-modules.js:1:4753055)
+    at E.resolve (xpui-modules.js:1:4752595)
+    at addMissingPlatformAPIs (spicetifyWrapper.js:339:52)
+r @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Ra @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+resolveImpl @ xpui-modules.js:1
+resolve @ xpui-modules.js:1
+addMissingPlatformAPIs @ spicetifyWrapper.js:339
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+setTimeout
+addMissingPlatformAPIs @ spicetifyWrapper.js:326
+(anonymous) @ spicetifyWrapper.js:347
+xpui-modules.js:1  POST https://guc3-spclient.spotify.com/remote-config-resolver/v3/configuration 404 (Not Found)
+M @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+(anonymous) @ xpui-modules.js:1
+_tick @ xpui-modules.js:1
+start @ xpui-modules.js:1
+_sendRetriedRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+_sendRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+_dispatchFromStore @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+a @ xpui-modules.js:1
+t @ xpui-modules.js:1
+postMessage
+c @ xpui-modules.js:1
+emit @ xpui-modules.js:1
+_connectToEndpoints @ xpui-modules.js:1
+Promise.then
+_performConnect @ xpui-modules.js:1
+_connect @ xpui-modules.js:1
+connect @ xpui-modules.js:1
+gy @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+resolveImpl @ xpui-modules.js:1
+resolve @ xpui-modules.js:1
+My @ xpui-modules.js:1
+await in My
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+xpui-modules.js:1 provider:transport resolve error k {url: 'https://guc3-spclient.spotify.com/remote-config-resolver/v3/configuration', status: 404, headers: L, body: {…}, offline: false, …} {}
+f @ xpui-modules.js:1
+t.<computed> @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.catch
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Qs @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+oc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+_c @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+resolve @ xpui-modules.js:1
+My @ xpui-modules.js:1
+await in My
+(anonymous) @ xpui-snapshot.js:1
+await in (anonymous)
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+(anonymous) @ xpui-snapshot.js:1
+xpui-modules.js:1  GET https://api.spotify.com/v1/browse/categories?limit=10&offset=0&locale=en_US&market=from_token 429 (Too Many Requests)
+M @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+(anonymous) @ xpui-modules.js:1
+_tick @ xpui-modules.js:1
+start @ xpui-modules.js:1
+_sendRetriedRequest @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.then
+_sendRequest @ xpui-modules.js:1
+request @ xpui-modules.js:1
+send @ xpui-modules.js:1
+send @ xpui-modules.js:1
+sa @ made-for-you-shortcut.js?time=1773899319158:14
+$t @ made-for-you-shortcut.js?time=1773899319158:1
+await in $t
+(anonymous) @ made-for-you-shortcut.js?time=1773899319158:14
+(anonymous) @ made-for-you-shortcut.js?time=1773899319158:14
+(anonymous) @ made-for-you-shortcut.js?time=1773899319158:14
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+xpui-modules.js:1 Uncaught (in promise) HttpResponseError
+    at i.fromResponse (xpui-modules.js:1:4453543)
+    at e.onAfterSend (xpui-modules.js:1:6065563)
+    at xpui-modules.js:1:4991799
+    at async sa (made-for-you-shortcut.js?time=1773899319158:14:4403)
+    at async $t (made-for-you-shortcut.js?time=1773899319158:1:100026)
+    at async made-for-you-shortcut.js?time=1773899319158:14:730
+fromResponse @ xpui-modules.js:1
+e.onAfterSend @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Promise.catch
+send @ xpui-modules.js:1
+sa @ made-for-you-shortcut.js?time=1773899319158:14
+$t @ made-for-you-shortcut.js?time=1773899319158:1
+await in $t
+(anonymous) @ made-for-you-shortcut.js?time=1773899319158:14
+(anonymous) @ made-for-you-shortcut.js?time=1773899319158:14
+(anonymous) @ made-for-you-shortcut.js?time=1773899319158:14
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/artists/1dfeR4HaWDbWqFHLkxsg1d?locale=EN_en 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+i @ whatsThatGenre.js?time=1773899319158:5
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+setTimeout
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+e @ whatsThatGenre.js?time=1773899319158:5
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+(anonymous) @ whatsThatGenre.js?time=1773899319158:40
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+whatsThatGenre.js?time=1773899319158:5 Uncaught (in promise) TypeError: t is not iterable
+i @ whatsThatGenre.js?time=1773899319158:5
+await in i
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+setTimeout
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+e @ whatsThatGenre.js?time=1773899319158:5
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+(anonymous) @ whatsThatGenre.js?time=1773899319158:5
+(anonymous) @ whatsThatGenre.js?time=1773899319158:40
+PendingScript
+(anonymous) @ extension.js:10
+e @ extension.js:10
+await in e
+(anonymous) @ extension.js:10
+(anonymous) @ extension.js:10
+await in (anonymous)
+(anonymous) @ extension.js:10
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/me 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+(anonymous) @ e3f3444f-209c-4945-8614-586f032a1b14:879
+fetchUserMarket @ e3f3444f-209c-4945-8614-586f032a1b14:890
+main @ e3f3444f-209c-4945-8614-586f032a1b14:36229
+await in main
+(anonymous) @ e3f3444f-209c-4945-8614-586f032a1b14:36280
+(anonymous) @ e3f3444f-209c-4945-8614-586f032a1b14:36282
+e3f3444f-209c-4945-8614-586f032a1b14:888 [Sort-Play] FATAL: Could not determine user's market. Track availability checks may be inaccurate.
+(anonymous) @ e3f3444f-209c-4945-8614-586f032a1b14:888
+await in (anonymous)
+fetchUserMarket @ e3f3444f-209c-4945-8614-586f032a1b14:890
+main @ e3f3444f-209c-4945-8614-586f032a1b14:36229
+await in main
+(anonymous) @ e3f3444f-209c-4945-8614-586f032a1b14:36280
+(anonymous) @ e3f3444f-209c-4945-8614-586f032a1b14:36282
+
+
+---
+
+Okay, make the Genres tab use a fallback enrichment strategy based on Last.fm artist tags when Spotify artist metadata is blocked. It should use both top song and top artist data from the specified timeframe though, not just artist.
+
+I'd like to also add an optional toggle to the settings to include Musicbrainz genre data from the top songs and top artist data.\
+
+---
+
+The genres look like they're probably fine, no need to tighten tag exclusions. The MusicBrainz data doesn't seem to get fetched though. Nothing changes when it's enabled and no console errors.
+
+Image 1 shows a section of the Genres tab that still isn't populated.
+
+Image 2 shows 3 sections of the Library tab that aren't populated.
+
+---
+
+Images are blank in Charts Top Tracks (see image). Also blank in Charts Top Artists (image 2), and Library Most Frequent Artists (image 3).
+
+Still an unpopulated area in Genres tab (images 4 & 5). Similar area unpopulated in Library tab (image 6).
+
+---
+
+Can we get audio-features somewhere else? like MusicBrainz?
+
+Why can't we get artwork/images for charts or library but we can get them for albums?
+
+---
+
+Sure. You should also make new commits for all the changes we've been making.
+
+And create a new file in the project root documenting the various considerations made and limitations run into throughout the process. And things like `your_spotify` that were considered, the requirements of such an implementation, and why it was decided against.
+
+---
+
+Two errors:
+
+[{
+	"resource": "/workspaces/spicetify-apps/projects/stats/src/extensions/extension.tsx",
+	"owner": "typescript",
+	"code": "2554",
+	"severity": 8,
+	"message": "Expected 3-4 arguments, but got 5.",
+	"source": "ts",
+	"startLineNumber": 173,
+	"startColumn": 12,
+	"endLineNumber": 173,
+	"endColumn": 16,
+	"modelVersionId": 4,
+	"origin": "extHost2"
+}]
+
+[{
+	"resource": "/workspaces/spicetify-apps/projects/stats/src/utils/track_helper.ts",
+	"owner": "typescript",
+	"code": "2307",
+	"severity": 8,
+	"message": "Cannot find module '../../../shared/types/platform' or its corresponding type declarations.",
+	"source": "ts",
+	"startLineNumber": 5,
+	"startColumn": 68,
+	"endLineNumber": 5,
+	"endColumn": 100,
+	"modelVersionId": 7,
+	"origin": "extHost2"
+}]
