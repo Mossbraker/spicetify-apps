@@ -9,11 +9,13 @@ export interface Config {
 	"oauth-disconnect": boolean;
 	"api-key": string | null;
 	"lastfm-user": string | null;
+	"use-direct-fetch": boolean;
 	"use-lastfm": boolean;
 	"lastfm-only": boolean;
 	"use-musicbrainz-genres": boolean;
 	"show-artists": boolean;
 	"show-tracks": boolean;
+	"show-albums": boolean;
 	"show-genres": boolean;
 	"show-library": boolean;
 	"show-charts": boolean;
