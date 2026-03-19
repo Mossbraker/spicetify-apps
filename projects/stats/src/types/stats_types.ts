@@ -11,6 +11,7 @@ export interface Config {
 	"lastfm-user": string | null;
 	"use-lastfm": boolean;
 	"lastfm-only": boolean;
+	"use-musicbrainz-genres": boolean;
 	"show-artists": boolean;
 	"show-tracks": boolean;
 	"show-genres": boolean;

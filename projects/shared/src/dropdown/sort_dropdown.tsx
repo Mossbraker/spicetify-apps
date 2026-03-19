@@ -66,7 +66,7 @@ const SortDropdownMenu = (props: SortDropdownMenuProps) => {
 	};
 
 	return (
-		<ContextMenu menu={<MenuWrapper />} trigger="click">
+		<ContextMenu menu={MenuWrapper} trigger="click">
 			<button className="x-sortBox-sortDropdown" type="button" role="combobox" aria-expanded="false">
 				<TextComponent variant="mesto" semanticColor="textSubdued">
 					{activeOption.name}

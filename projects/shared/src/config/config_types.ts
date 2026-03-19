@@ -14,6 +14,7 @@ type SharedProps = {
     def: any;
     sectionHeader?: string;
     callback?: (value: any) => void;
+    initializeCallback?: boolean;
 };
 
 type ModalStructureRowProps = SharedProps &

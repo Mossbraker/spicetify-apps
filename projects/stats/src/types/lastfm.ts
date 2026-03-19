@@ -18,6 +18,12 @@ export interface TrackChartResponse {
 	tracks: TopTracks;
 }
 
+export interface ArtistTopTagsResponse {
+	toptags?: {
+		tag?: Tag[];
+	};
+}
+
 interface ResponseAttr {
 	user?: string;
 	totalPages: string;
@@ -83,6 +89,12 @@ interface ItemAttr {
 interface Image {
 	size: Size;
 	"#text": string;
+}
+
+export interface Tag {
+	count: number | string;
+	name: string;
+	url?: string;
 }
 
 enum Size {

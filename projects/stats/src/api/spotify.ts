@@ -1,12 +1,159 @@
 import type * as Spotify from "../types/spotify";
 import { isOAuthEnabled, hasValidTokens, oauthFetch } from "./oauth";
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+type SuppressedEndpoint = {
+	status: number;
+	reason: string;
+	until: number;
+};
 
-// Retry config for rate-limited requests.
-// /me/* endpoints have stricter limits and may require longer waits.
-const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 5000; // Start with 5s delay for rate-limited retries
+const ENDPOINT_SUPPRESSION_STORAGE_KEY = "stats:spotify:endpoint-suppressions";
+
+const endpointSuppressions = new Map<string, SuppressedEndpoint>();
+
+const loadSuppressions = () => {
+	if (endpointSuppressions.size > 0) return;
+
+	try {
+		const raw = localStorage.getItem(ENDPOINT_SUPPRESSION_STORAGE_KEY);
+		if (!raw) return;
+
+		const parsed = JSON.parse(raw) as Record<string, SuppressedEndpoint>;
+		const now = Date.now();
+		for (const [key, value] of Object.entries(parsed)) {
+			if (value.until > now) endpointSuppressions.set(key, value);
+		}
+	} catch {
+		localStorage.removeItem(ENDPOINT_SUPPRESSION_STORAGE_KEY);
+	}
+};
+
+const persistSuppressions = () => {
+	const now = Date.now();
+	const entries = [...endpointSuppressions.entries()].filter(([, value]) => value.until > now);
+	if (entries.length === 0) {
+		localStorage.removeItem(ENDPOINT_SUPPRESSION_STORAGE_KEY);
+		return;
+	}
+
+	localStorage.setItem(ENDPOINT_SUPPRESSION_STORAGE_KEY, JSON.stringify(Object.fromEntries(entries)));
+};
+
+const getEndpointKey = (url: string) => {
+	if (url.includes("/v1/me/top/artists")) return "me-top-artists";
+	if (url.includes("/v1/me/top/tracks")) return "me-top-tracks";
+	if (url.includes("/v1/audio-features")) return "audio-features";
+	if (url.includes("/v1/artists?ids=")) return "artist-metas";
+	if (url.includes("/v1/albums?ids=")) return "album-metas";
+	if (url.includes("/v1/tracks?ids=")) return "track-metas";
+	if (url.includes("/v1/search?") && url.includes("type=artist")) return "search-artist";
+	if (url.includes("/v1/search?") && url.includes("type=album")) return "search-album";
+	if (url.includes("/v1/search?") && url.includes("type=track")) return "search-track";
+	if (url.includes("/v1/me/tracks/contains")) return "query-liked";
+	if (url.includes("/v1/me/playlists")) return "user-playlists";
+	if (url.includes("/v1/playlists/")) return "playlist-meta";
+	return url.replace(/^https?:\/\/api\.spotify\.com\/v1\//, "").split("?")[0];
+};
+
+const getSuppressionDurationMs = (endpointKey: string, status: number, retryAfterSeconds?: number) => {
+	if (status === 429) {
+		const retryAfterMs = retryAfterSeconds ? retryAfterSeconds * 1000 : 60_000;
+		return Math.max(retryAfterMs, 15_000);
+	}
+
+	if (status === 403) {
+		if (endpointKey === "audio-features" || endpointKey === "artist-metas") return 30 * 60_000;
+		return 10 * 60_000;
+	}
+
+	if (status === 400) return 10 * 60_000;
+
+	return 60_000;
+};
+
+const buildSuppressedMessage = (endpointKey: string, suppression: SuppressedEndpoint) => {
+	const secondsRemaining = Math.max(1, Math.ceil((suppression.until - Date.now()) / 1000));
+	if (suppression.status === 429) {
+		return `Spotify rate-limited ${endpointKey}. Skipping retries for ${secondsRemaining}s.`;
+	}
+
+	return `Spotify ${endpointKey} requests are temporarily disabled after repeated ${suppression.status} responses.`;
+};
+
+const createSuppressedError = (endpointKey: string, suppression: SuppressedEndpoint) => {
+	const error = new Error(buildSuppressedMessage(endpointKey, suppression)) as Error & {
+		status?: number;
+		endpointKey?: string;
+		suppressed?: boolean;
+	};
+	error.status = suppression.status;
+	error.endpointKey = endpointKey;
+	error.suppressed = true;
+	return error;
+};
+
+const getActiveSuppression = (endpointKey: string) => {
+	loadSuppressions();
+	const suppression = endpointSuppressions.get(endpointKey);
+	if (!suppression) return null;
+	if (suppression.until <= Date.now()) {
+		endpointSuppressions.delete(endpointKey);
+		persistSuppressions();
+		return null;
+	}
+	return suppression;
+};
+
+const suppressEndpoint = (endpointKey: string, status: number, reason: string, retryAfterSeconds?: number) => {
+	const suppression = {
+		status,
+		reason,
+		until: Date.now() + getSuppressionDurationMs(endpointKey, status, retryAfterSeconds),
+	};
+	endpointSuppressions.set(endpointKey, suppression);
+	persistSuppressions();
+	return createSuppressedError(endpointKey, suppression);
+};
+
+const extractStatus = (error: unknown) => {
+	if (!error || typeof error !== "object") {
+		if (typeof error === "string") {
+			const match = error.match(/\b(400|401|403|404|429)\b/);
+			return match ? Number(match[1]) : undefined;
+		}
+		return undefined;
+	}
+
+	const e = error as Record<string, unknown>;
+	if (typeof e.code === "number") return e.code;
+	if (typeof e.status === "number") return e.status;
+	if (typeof e.message === "string") {
+		const match = e.message.match(/\b(400|401|403|404|429)\b/);
+		return match ? Number(match[1]) : undefined;
+	}
+	return undefined;
+};
+
+const extractRetryAfterSeconds = (error: unknown) => {
+	if (!error || typeof error !== "object") return undefined;
+	const e = error as Record<string, unknown>;
+	if (typeof e.retryAfter === "number") return e.retryAfter;
+	if (typeof e.message === "string") {
+		const match = e.message.match(/Retry after (\d+)/i);
+		return match ? Number(match[1]) : undefined;
+	}
+	return undefined;
+};
+
+export const clearSpotifyRequestSuppressions = () => {
+	endpointSuppressions.clear();
+	localStorage.removeItem(ENDPOINT_SUPPRESSION_STORAGE_KEY);
+};
+
+export const isSuppressedSpotifyError = (error: unknown): boolean => {
+	if (!error || typeof error !== "object") return false;
+	return Boolean((error as { suppressed?: boolean }).suppressed);
+};
 
 // Helper to detect rate limit errors from CosmosAsync exceptions
 const isRateLimitError = (error: unknown): boolean => {
@@ -37,7 +184,11 @@ const directFetch = async <T>(url: string): Promise<T> => {
 
 	if (response.status === 429) {
 		const retryAfter = response.headers.get("Retry-After");
-		throw { code: 429, message: `Rate limited. Retry after ${retryAfter || "unknown"} seconds` };
+		throw {
+			code: 429,
+			retryAfter: retryAfter ? Number(retryAfter) : undefined,
+			message: `Rate limited. Retry after ${retryAfter || "unknown"} seconds`,
+		};
 	}
 
 	if (!response.ok) {
@@ -52,12 +203,26 @@ const directFetch = async <T>(url: string): Promise<T> => {
  * Priority: OAuth > Direct Fetch > CosmosAsync
  */
 export const apiFetch = async <T>(name: string, url: string, log = true): Promise<T> => {
+	const endpointKey = getEndpointKey(url);
+	const activeSuppression = getActiveSuppression(endpointKey);
+	if (activeSuppression) {
+		throw createSuppressedError(endpointKey, activeSuppression);
+	}
+
 	// Use OAuth if enabled and connected
 	if (isOAuthEnabled() && hasValidTokens()) {
-		const timeStart = window.performance.now();
-		const response = await oauthFetch<T>(url);
-		if (log) console.log("stats -", name, "fetch time (OAuth):", window.performance.now() - timeStart);
-		return response;
+		try {
+			const timeStart = window.performance.now();
+			const response = await oauthFetch<T>(url);
+			if (log) console.log("stats -", name, "fetch time (OAuth):", window.performance.now() - timeStart);
+			return response;
+		} catch (error) {
+			const status = extractStatus(error);
+			if (status === 400 || status === 403 || status === 429) {
+				throw suppressEndpoint(endpointKey, status, name, extractRetryAfterSeconds(error));
+			}
+			throw error;
+		}
 	}
 
 	// Try direct fetch with internal token first (may bypass CosmosAsync rate limits)
@@ -69,51 +234,42 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 			if (log) console.log("stats -", name, "fetch time (direct):", window.performance.now() - timeStart);
 			return response;
 		} catch (error) {
+			const status = extractStatus(error);
+			if (status === 400 || status === 403 || status === 429) {
+				throw suppressEndpoint(endpointKey, status, name, extractRetryAfterSeconds(error));
+			}
 			console.log("stats -", name, "direct fetch failed, falling back to CosmosAsync:", error);
 			// Fall through to CosmosAsync
 		}
 	}
 
 	// Fall back to CosmosAsync with retry logic
-	let lastError: Error | undefined;
+	try {
+		const timeStart = window.performance.now();
+		const response = await Spicetify.CosmosAsync.get(url);
 
-	for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-		try {
-			const timeStart = window.performance.now();
-			const response = await Spicetify.CosmosAsync.get(url);
-
-			// Handle rate limiting (429) returned as response code
-			if (response.code === 429) {
-				if (attempt < MAX_RETRIES) {
-					const waitTime = BASE_DELAY_MS * 2 ** attempt;
-					console.log("stats -", name, "rate limited (response), retrying in", waitTime, "ms");
-					await delay(waitTime);
-					continue;
-				}
-				throw new Error("Rate limited by Spotify. Please wait a moment and try again.");
-			}
-
-			if (response.code || response.error)
-				throw new Error(
-					`Failed to fetch the info from server. Try again later. ${name.includes("lfm") ? "Check your LFM API key and username." : ""}`,
-				);
-			if (log) console.log("stats -", name, "fetch time:", window.performance.now() - timeStart);
-			return response;
-		} catch (error) {
-			// CosmosAsync may throw exceptions for 429 errors instead of returning them
-			if (isRateLimitError(error) && attempt < MAX_RETRIES) {
-				const waitTime = BASE_DELAY_MS * 2 ** attempt;
-				console.log("stats -", name, "rate limited (exception), retrying in", waitTime, "ms");
-				await delay(waitTime);
-				continue;
-			}
-			lastError = error as Error;
-			console.log("stats -", name, "request failed:", error);
-			break;
+		if (response.code === 429) {
+			throw suppressEndpoint(endpointKey, 429, name);
 		}
-	}
 
-	throw lastError;
+		if (response.code === 400 || response.code === 403) {
+			throw suppressEndpoint(endpointKey, response.code, name);
+		}
+
+		if (response.code || response.error)
+			throw new Error(
+				`Failed to fetch the info from server. Try again later. ${name.includes("lfm") ? "Check your LFM API key and username." : ""}`,
+			);
+		if (log) console.log("stats -", name, "fetch time:", window.performance.now() - timeStart);
+		return response;
+	} catch (error) {
+		const status = extractStatus(error);
+		if (status === 400 || status === 403 || status === 429 || isRateLimitError(error)) {
+			throw suppressEndpoint(endpointKey, status ?? 429, name, extractRetryAfterSeconds(error));
+		}
+		console.log("stats -", name, "request failed:", error);
+		throw error as Error;
+	}
 };
 
 const val = <T>(res: T | undefined) => {

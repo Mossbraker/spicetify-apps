@@ -6,12 +6,12 @@
  * Setup:
  * 1. Go to https://developer.spotify.com/dashboard
  * 2. Create a new app
- * 3. Add redirect URI: http://localhost:5173/callback
+ * 3. Add redirect URI: http://127.0.0.1:5173/callback
  * 4. Copy the Client ID to Stats settings
  */
 
 const STORAGE_PREFIX = "stats:oauth:";
-const REDIRECT_URI = "http://localhost:5173/callback";
+const REDIRECT_URI = "http://127.0.0.1:5173/callback";
 const SCOPES = [
 	"user-top-read",
 	"user-read-recently-played",
@@ -25,6 +25,17 @@ const KEYS = {
 	expiresAt: `${STORAGE_PREFIX}expires_at`,
 	codeVerifier: `${STORAGE_PREFIX}code_verifier`,
 };
+
+function getConfigValue<T>(key: string): T | null {
+	const value = localStorage.getItem(`stats:config:${key}`);
+	if (value === null) return null;
+
+	try {
+		return JSON.parse(value) as T;
+	} catch {
+		return value as T;
+	}
+}
 
 /**
  * Generate a random string for PKCE code verifier
@@ -66,8 +77,8 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
  * Check if OAuth is enabled and configured
  */
 export function isOAuthEnabled(): boolean {
-	const clientId = SpicetifyStats?.ConfigWrapper?.Config?.["oauth-client-id"];
-	const useOAuth = SpicetifyStats?.ConfigWrapper?.Config?.["use-oauth"];
+	const clientId = getConfigValue<string>("oauth-client-id");
+	const useOAuth = getConfigValue<boolean>("use-oauth");
 	return useOAuth && clientId && clientId.length > 0;
 }
 
@@ -77,6 +88,8 @@ export function isOAuthEnabled(): boolean {
 export function hasValidTokens(): boolean {
 	const accessToken = localStorage.getItem(KEYS.accessToken);
 	const expiresAt = localStorage.getItem(KEYS.expiresAt);
+	const refreshToken = localStorage.getItem(KEYS.refreshToken);
+	if (refreshToken) return true;
 	if (!accessToken || !expiresAt) return false;
 	// Consider token invalid if it expires in less than 5 minutes
 	return Date.now() < parseInt(expiresAt) - 5 * 60 * 1000;
@@ -114,7 +127,7 @@ export async function getAccessToken(): Promise<string | null> {
  * Initiate OAuth authorization flow
  */
 export async function startAuthFlow(): Promise<void> {
-	const clientId = SpicetifyStats?.ConfigWrapper?.Config?.["oauth-client-id"];
+	const clientId = getConfigValue<string>("oauth-client-id");
 	if (!clientId) {
 		Spicetify.showNotification("Please enter your Spotify Client ID first", true);
 		return;
@@ -169,7 +182,7 @@ export async function handleCallback(callbackUrl: string): Promise<boolean> {
 			return false;
 		}
 
-		const clientId = SpicetifyStats?.ConfigWrapper?.Config?.["oauth-client-id"];
+		const clientId = getConfigValue<string>("oauth-client-id");
 		const codeVerifier = localStorage.getItem(KEYS.codeVerifier);
 
 		if (!clientId || !codeVerifier) {
@@ -218,7 +231,7 @@ export async function handleCallback(callbackUrl: string): Promise<boolean> {
  * Refresh the access token using the refresh token
  */
 async function refreshAccessToken(): Promise<void> {
-	const clientId = SpicetifyStats?.ConfigWrapper?.Config?.["oauth-client-id"];
+	const clientId = getConfigValue<string>("oauth-client-id");
 	const refreshToken = localStorage.getItem(KEYS.refreshToken);
 
 	if (!clientId || !refreshToken) {

@@ -64,12 +64,20 @@ export const minifyTrack = (track: Spotify.Track): SpotifyMinifiedTrack => ({
 	type: "spotify",
 });
 
+const toHttpsUrl = (url?: string) => (url ? url.replace(/^http:\/\//i, "https://") : undefined);
+
+const getLastFmImage = (images?: { "#text": string }[]) => {
+	if (!images?.length) return undefined;
+	const image = [...images].reverse().find((entry) => entry?.["#text"]?.trim());
+	return toHttpsUrl(image?.["#text"]);
+};
+
 // Pure LastFM artist without Spotify lookup - avoids API calls entirely
 export const convertArtistLastFMOnly = (artist: LastFM.Artist): LastFMMinifiedArtist => ({
 	name: artist.name,
 	playcount: Number(artist.playcount),
 	uri: artist.url,
-	image: artist.image?.[2]?.["#text"] || undefined,
+	image: getLastFmImage(artist.image),
 	type: "lastfm",
 });
 
@@ -77,13 +85,18 @@ export const convertArtist = async (artist: LastFM.Artist, lastfmOnly = false) =
 	// Skip Spotify lookup if lastfm-only mode is enabled
 	if (lastfmOnly) return convertArtistLastFMOnly(artist);
 
-	const spotifyArtist = await cacher(async () => {
-		const searchRes = await searchForArtist(artist.name);
-		const spotifyArtists = searchRes.filter(
-			(a) => a.name.localeCompare(artist.name, undefined, { sensitivity: "base" }) === 0,
-		);
-		return spotifyArtists.sort((a, b) => b.popularity - a.popularity)[0];
-	})({ queryKey: ["searchForArtist", artist.name] });
+	let spotifyArtist;
+	try {
+		spotifyArtist = await cacher(async () => {
+			const searchRes = await searchForArtist(artist.name);
+			const spotifyArtists = searchRes.filter(
+				(a) => a.name.localeCompare(artist.name, undefined, { sensitivity: "base" }) === 0,
+			);
+			return spotifyArtists.sort((a, b) => b.popularity - a.popularity)[0];
+		})({ queryKey: ["searchForArtist", artist.name] });
+	} catch {
+		return convertArtistLastFMOnly(artist);
+	}
 	if (!spotifyArtist)
 		return {
 			name: artist.name,
@@ -104,7 +117,7 @@ export const convertAlbumLastFMOnly = (album: LastFM.Album): LastFMMinifiedAlbum
 	uri: album.url,
 	name: album.name,
 	playcount: Number(album.playcount),
-	image: album.image?.[2]?.["#text"] || undefined,
+	image: getLastFmImage(album.image),
 	type: "lastfm",
 });
 
@@ -112,12 +125,17 @@ export const convertAlbum = async (album: LastFM.Album, lastfmOnly = false) => {
 	// Skip Spotify lookup if lastfm-only mode is enabled
 	if (lastfmOnly) return convertAlbumLastFMOnly(album);
 
-	const spotifyAlbum = await cacher(async () => {
-		const searchRes = await searchForAlbum(album.name, album.artist.name);
-		return searchRes.find((a) => a.name.localeCompare(album.name, undefined, { sensitivity: "base" }) === 0);
-	})({
-		queryKey: ["searchForAlbum", album.name, album.artist.name],
-	});
+	let spotifyAlbum;
+	try {
+		spotifyAlbum = await cacher(async () => {
+			const searchRes = await searchForAlbum(album.name, album.artist.name);
+			return searchRes.find((a) => a.name.localeCompare(album.name, undefined, { sensitivity: "base" }) === 0);
+		})({
+			queryKey: ["searchForAlbum", album.name, album.artist.name],
+		});
+	} catch {
+		return convertAlbumLastFMOnly(album);
+	}
 	if (!spotifyAlbum)
 		return {
 			uri: album.url,
@@ -138,7 +156,7 @@ export const convertTrackLastFMOnly = (track: LastFM.Track): LastFMMinifiedTrack
 	name: track.name,
 	playcount: Number(track.playcount),
 	duration_ms: Number(track.duration) * 1000,
-	image: track.image?.[2]?.["#text"] || undefined,
+	image: getLastFmImage(track.image),
 	artists: [
 		{
 			name: track.artist.name,
@@ -152,12 +170,17 @@ export const convertTrack = async (track: LastFM.Track, lastfmOnly = false) => {
 	// Skip Spotify lookup if lastfm-only mode is enabled
 	if (lastfmOnly) return convertTrackLastFMOnly(track);
 
-	const spotifyTrack = await cacher(async () => {
-		const searchRes = await searchForTrack(track.name, track.artist.name);
-		return searchRes.find((t) => t.name.localeCompare(track.name, undefined, { sensitivity: "base" }) === 0);
-	})({
-		queryKey: ["searchForTrack", track.name, track.artist.name],
-	});
+	let spotifyTrack;
+	try {
+		spotifyTrack = await cacher(async () => {
+			const searchRes = await searchForTrack(track.name, track.artist.name);
+			return searchRes.find((t) => t.name.localeCompare(track.name, undefined, { sensitivity: "base" }) === 0);
+		})({
+			queryKey: ["searchForTrack", track.name, track.artist.name],
+		});
+	} catch {
+		return convertTrackLastFMOnly(track);
+	}
 	if (!spotifyTrack)
 		return {
 			uri: track.url,

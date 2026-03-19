@@ -12,9 +12,10 @@ import { convertArtist, minifyArtist, throttledMap } from "../utils/converter";
 import useStatus from "@shared/status/useStatus";
 import { useQuery } from "@shared/types/react_query";
 import { cacher, invalidator } from "../extensions/cache";
+import { getConfigCacheKey } from "../utils/config_cache";
 
 export const getTopArtists = async (timeRange: SpotifyRange, config: Config) => {
-	if (config["use-lastfm"]) {
+	if (config["use-lastfm"] || config["lastfm-only"]) {
 		const { "lastfm-user": user, "api-key": key, "lastfm-only": lastfmOnly } = config;
 		if (!user || !key) throw new Error("Missing LastFM API Key or Username");
 		const response = await lastFM.getTopArtists(key, user, timeRange);
@@ -24,19 +25,20 @@ export const getTopArtists = async (timeRange: SpotifyRange, config: Config) => 
 	return response.map(minifyArtist);
 };
 
-export const DropdownOptions = ({ config: { "use-lastfm": useLastFM } }: ConfigWrapper) =>
+export const DropdownOptions = ({ config: { "use-lastfm": useLastFM, "lastfm-only": lastfmOnly } }: ConfigWrapper) =>
 	[
-		useLastFM && { id: "extra_short_term", name: "Past Week" },
-		{ id: SpotifyRange.Short, name: "Past Month" },
+		(useLastFM || lastfmOnly) && { id: "extra_short_term", name: "Past Week" },
+		{ id: SpotifyRange.Short, name: "Past 4 Weeks" },
 		{ id: SpotifyRange.Medium, name: "Past 6 Months" },
-		{ id: SpotifyRange.Long, name: "All Time" },
+		{ id: SpotifyRange.Long, name: "Long Term" },
 	].filter(Boolean) as { id: string; name: string }[];
 
 const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [dropdown, activeOption] = useDropdownMenu(DropdownOptions(configWrapper), "stats:top-artists");
+	const cacheKey = getConfigCacheKey(configWrapper.config, { includeLastfmIdentity: true });
 
 	const { status, error, data, refetch } = useQuery({
-		queryKey: ["top-artists", activeOption.id],
+		queryKey: ["top-artists", activeOption.id, cacheKey],
 		queryFn: cacher(() => getTopArtists(activeOption.id as SpotifyRange, configWrapper.config)),
 	});
 
@@ -46,7 +48,7 @@ const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		lhs: ["Top Artists"],
 		rhs: [
 			dropdown,
-			<RefreshButton callback={() => invalidator(["top-artists", activeOption.id], refetch)} />,
+			<RefreshButton callback={() => invalidator(["top-artists", activeOption.id, cacheKey], refetch)} />,
 			<SettingsButton configWrapper={configWrapper} />,
 		],
 	};

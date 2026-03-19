@@ -21,6 +21,34 @@ const ExplicitBadge = React.memo(() => {
 	);
 });
 
+const TrackArtwork = ({ image, name }: { image?: string; name: string }) => {
+	const [imageFailed, setImageFailed] = React.useState(false);
+	const fallbackLabel = name
+		.split(/\s+/)
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((part) => part[0]?.toUpperCase() ?? "")
+		.join("") || "?";
+
+	if (!image || imageFailed) {
+		return <div className="stats-trackRowImageFallback">{fallbackLabel}</div>;
+	}
+
+	return (
+		<img
+			aria-hidden="false"
+			draggable="false"
+			loading="eager"
+			src={image}
+			alt=""
+			className="main-image-image main-trackList-rowImage main-image-loaded"
+			width="40"
+			height="40"
+			onError={() => setImageFailed(true)}
+		/>
+	);
+};
+
 const LikedIcon = ({ active, uri }: { active: boolean; uri: string }) => {
 	const [liked, setLiked] = React.useState<boolean>(active);
 
@@ -99,18 +127,30 @@ function playAndQueue(uri: string) {
 	Spicetify.Player.playUri(uri);
 }
 
-const MenuWrapper = React.memo((props: AlbumMenuProps) => <Spicetify.ReactComponent.AlbumMenu {...props} />);
-
 type TrackRowProps = (SpotifyMinifiedTrack | LastFMMinifiedTrack) & { index: number; uris: string[] };
 
 const TrackRow = (props: TrackRowProps) => {
+	const isSpotifyTrack = props.type === "spotify";
+	const explicit = isSpotifyTrack ? props.explicit : false;
+	const albumUri = isSpotifyTrack ? props.album.uri : undefined;
+	const albumName = isSpotifyTrack ? props.album.name : "Unknown";
+	const liked = isSpotifyTrack && "liked" in props ? Boolean(props.liked) : false;
+
+	const Menu = React.useMemo(
+		() =>
+			function Menu(menuProps: Spicetify.ReactComponent.MenuProps) {
+				return <Spicetify.ReactComponent.AlbumMenu {...menuProps} uri={props.uri} />;
+			},
+		[props.uri],
+	);
+
 	const ArtistLinks = props.artists.map((artist, index) => {
 		return <ArtistLink index={index} length={props.artists.length - 1} name={artist.name} uri={artist.uri} />;
 	});
 
 	return (
 		<>
-			<Spicetify.ReactComponent.ContextMenu menu={<MenuWrapper uri={props.uri} />} trigger="right-click">
+			<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="right-click">
 				<div role="row" aria-rowindex={2} aria-selected="false">
 					<DraggableComponent
 						uri={props.uri}
@@ -156,19 +196,7 @@ const TrackRow = (props: TrackRowProps) => {
 							</div>
 						</div>
 						<div className="main-trackList-rowSectionStart" role="gridcell" aria-colindex={2} tabIndex={-1}>
-							<img
-								aria-hidden="false"
-								draggable="false"
-								loading="eager"
-								src={
-									props.image ||
-									"https://raw.githubusercontent.com/harbassan/spicetify-apps/main/stats/src/styles/placeholder.png"
-								}
-								alt=""
-								className="main-image-image main-trackList-rowImage main-image-loaded"
-								width="40"
-								height="40"
-							/>
+							<TrackArtwork image={props.image} name={props.name} />
 							<div className="main-trackList-rowMainContent">
 								<div
 									dir="auto"
@@ -178,7 +206,7 @@ const TrackRow = (props: TrackRowProps) => {
 								>
 									{props.name}
 								</div>
-								{props.explicit &&
+								{explicit &&
 									<span
 										className="TypeElement-mesto-textSubdued TypeElement-mesto-textSubdued-type main-trackList-rowSubTitle standalone-ellipsis-one-line encore-text-body-medium encore-internal-color-text-subdued"
 										data-encore-id="text"
@@ -211,15 +239,15 @@ const TrackRow = (props: TrackRowProps) => {
 									draggable="true"
 									className="standalone-ellipsis-one-line"
 									dir="auto"
-									href={props.album?.uri}
+									href={albumUri}
 									tabIndex={-1}
 								>
-									{props.album?.name || "Unknown"}
+									{albumName}
 								</a>
 							</span>
 						</div>
 						<div className="main-trackList-rowSectionEnd" role="gridcell" aria-colindex={5} tabIndex={-1}>
-							{<LikedIcon active={props.liked || false} uri={props.uri} />}
+							{<LikedIcon active={liked} uri={props.uri} />}
 							<div
 								className="TypeElement-mesto-textSubdued TypeElement-mesto-textSubdued-type main-trackList-rowDuration"
 								data-encore-id="type"
@@ -227,7 +255,7 @@ const TrackRow = (props: TrackRowProps) => {
 								{Spicetify.Player.formatTime(props.duration_ms)}
 							</div>
 
-							<Spicetify.ReactComponent.ContextMenu menu={<MenuWrapper uri={props.uri} />} trigger="click">
+							<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="click">
 								<button
 									type="button"
 									aria-haspopup="menu"

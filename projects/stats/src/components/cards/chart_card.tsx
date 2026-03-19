@@ -18,10 +18,13 @@ const ChartLine = (name: string, value: number, limit: number, total: number) =>
 
 const ChartCard = ({ data }: { data: Record<string, number> }) => {
 	const [extended, setExtended] = React.useState(false);
+	const entries = Object.entries(data).sort(([, a], [, b]) => b - a);
 
-	const keys = Object.keys(data)
-		.sort((a, b) => data[b] - data[a])
-		.slice(0, extended ? 50 : 10);
+	if (entries.length === 0) {
+		return <div className={"main-card-card stats-genreCard stats-genreCardEmpty"}>No data available</div>;
+	}
+
+	const keys = entries.map(([key]) => key).slice(0, extended ? 50 : 10);
 
 	const total = Object.values(data).reduce((acc, curr) => acc + curr, 0);
 

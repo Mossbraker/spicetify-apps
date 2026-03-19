@@ -14,7 +14,7 @@ class SpicetifyStats {
 				type: "text",
 				def: null,
 				placeholder: "Enter Client ID from Spotify Developer Dashboard",
-				desc: `Create an app at developer.spotify.com/dashboard. Add redirect URI: http://localhost:5173/callback`,
+				desc: `Create an app at developer.spotify.com/dashboard. Add redirect URI: http://127.0.0.1:5173/callback`,
 				sectionHeader: "OAuth (Bypass Rate Limits)",
 			},
 			{
@@ -25,28 +25,22 @@ class SpicetifyStats {
 				desc: "Use your own Spotify Developer App instead of the built-in API",
 				callback: (enabled: boolean) => {
 					if (enabled) {
-						const status = getConnectionStatus();
-						if (!status.connected) {
-							// Start authorization if not yet connected
-							startAuthFlow();
-						}
+						startAuthFlow();
 					}
 				},
+				initializeCallback: false,
 			},
 			{
 				name: "Paste Callback URL",
 				key: "oauth-callback",
 				type: "text",
 				def: null,
-				placeholder: "http://localhost:5173/callback?code=...",
+				placeholder: "http://127.0.0.1:5173/callback?code=...",
 				desc: "After authorizing, copy the full URL from your browser and paste it here",
+				initializeCallback: false,
 				callback: async (url: string) => {
 					if (url && url.includes("code=")) {
-						const success = await handleCallback(url);
-						if (success) {
-							// Clear the callback URL field after successful auth
-							localStorage.removeItem("stats:config:oauth-callback");
-						}
+						await handleCallback(url);
 					}
 				},
 			},
@@ -59,11 +53,14 @@ class SpicetifyStats {
 				callback: (value: boolean) => {
 					if (value) {
 						clearTokens();
+						localStorage.setItem("stats:config:use-oauth", "false");
+						localStorage.removeItem("stats:config:oauth-callback");
 						Spicetify.showNotification("OAuth disconnected", false);
 						// Reset the toggle
 						localStorage.setItem("stats:config:oauth-disconnect", "false");
 					}
 				},
+				initializeCallback: false,
 			},
 			{
 				name: "Use Direct Fetch (Experimental)",
@@ -100,8 +97,15 @@ class SpicetifyStats {
 				name: "LastFM Only (No Spotify API)",
 				key: "lastfm-only",
 				type: "toggle",
-				def: false,
+				def: true,
 				desc: "Avoid all Spotify API calls. Stats will use LastFM data only without enrichment. Useful if you're rate-limited.",
+			},
+			{
+				name: "Include MusicBrainz Genre Tags",
+				key: "use-musicbrainz-genres",
+				type: "toggle",
+				def: false,
+				desc: "Augment genre analysis with MusicBrainz tags derived from the current timeframe's top tracks and top artists.",
 			},
 			{
 				name: "Artists Page",

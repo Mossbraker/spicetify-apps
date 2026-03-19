@@ -14,26 +14,37 @@ const val = <T>(res: T | undefined) => {
 };
 
 export const getTopTracks = (key: string, user: string, range: keyof typeof lfmperiods) => {
-	const url = `http://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user=${user}&api_key=${key}&limit=100&format=json&period=${lfmperiods[range]}`;
+	const url = `https://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user=${user}&api_key=${key}&limit=100&format=json&period=${lfmperiods[range]}`;
 	return apiFetch<LastFM.TopTracksResponse>("lfmTopTracks", url).then((res) => val(res?.toptracks?.track));
 };
 
 export const getTopArtists = (key: string, user: string, range: keyof typeof lfmperiods) => {
-	const url = `http://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user=${user}&api_key=${key}&limit=100&format=json&period=${lfmperiods[range]}`;
+	const url = `https://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user=${user}&api_key=${key}&limit=100&format=json&period=${lfmperiods[range]}`;
 	return apiFetch<LastFM.TopArtistsResponse>("lfmTopArtists", url).then((res) => val(res?.topartists?.artist));
 };
 
 export const getTopAlbums = (key: string, user: string, range: keyof typeof lfmperiods) => {
-	const url = `http://ws.audioscrobbler.com/2.0/?method=user.gettopalbums&user=${user}&api_key=${key}&limit=100&format=json&period=${lfmperiods[range]}`;
+	const url = `https://ws.audioscrobbler.com/2.0/?method=user.gettopalbums&user=${user}&api_key=${key}&limit=100&format=json&period=${lfmperiods[range]}`;
 	return apiFetch<LastFM.TopAlbumsResponse>("lfmTopAlbums", url).then((res) => val(res?.topalbums?.album));
 };
 
 export const getArtistChart = (key: string) => {
-	const url = `http://ws.audioscrobbler.com/2.0/?method=chart.gettopartists&api_key=${key}&format=json`;
+	const url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettopartists&api_key=${key}&format=json`;
 	return apiFetch<LastFM.ArtistChartResponse>("lfmArtistChart", url).then((res) => val(res?.artists?.artist));
 };
 
 export const getTrackChart = (key: string) => {
-	const url = `http://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&api_key=${key}&format=json`;
+	const url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&api_key=${key}&format=json`;
 	return apiFetch<LastFM.TrackChartResponse>("lfmTrackChart", url).then((res) => val(res?.tracks?.track));
+};
+
+export const getArtistTopTags = async (key: string, artist: string) => {
+	const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getTopTags&artist=${encodeURIComponent(artist)}&api_key=${key}&format=json`;
+	const response = await apiFetch<LastFM.ArtistTopTagsResponse>("lfmArtistTopTags", url, false);
+	return (response?.toptags?.tag ?? [])
+		.map((tag) => ({
+			name: tag.name,
+			count: Number(tag.count) || 0,
+		}))
+		.filter((tag) => tag.name);
 };

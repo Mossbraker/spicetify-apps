@@ -39,6 +39,90 @@
     font-size: 12px;
 }
 
+.stats-plain-card-wrapper {
+    position: relative;
+}
+
+.stats-plain-card {
+    background: var(--spice-card);
+    border-radius: 12px;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    min-height: 252px;
+    padding: 12px;
+    text-decoration: none;
+    transition: background-color 120ms ease;
+}
+
+.stats-plain-card:hover {
+    background: var(--spice-player);
+}
+
+.stats-plain-card-image {
+    aspect-ratio: 1 / 1;
+    background: rgba(var(--spice-rgb-selected-row), 0.12);
+    border-radius: 10px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.stats-plain-card-image.is-circular {
+    border-radius: 999px;
+}
+
+.stats-plain-card-image img,
+.stats-plain-card-imageFallback {
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+.stats-plain-card-imageFallback {
+    background: linear-gradient(135deg, rgba(var(--spice-rgb-selected-row), 0.18), rgba(var(--spice-rgb-selected-row), 0.05));
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    color: var(--spice-text);
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.stats-plain-card-imageFallbackLabel {
+    opacity: 0.8;
+}
+
+.stats-plain-card-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.stats-plain-card-title,
+.stats-plain-card-subtitle,
+.stats-plain-card-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stats-plain-card-title {
+    color: var(--spice-text);
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.stats-plain-card-subtitle,
+.stats-plain-card-meta {
+    color: var(--spice-subtext);
+    font-size: 0.85rem;
+}
+
 .page-header {
     align-content: space-between;
     align-items: center;
@@ -86,6 +170,54 @@
     }
 }
 
+.stats-native-select-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stats-native-select-label {
+    color: var(--spice-subtext);
+    font-size: 0.875rem;
+}
+
+.stats-native-select {
+    appearance: none;
+    background: var(--spice-player);
+    border: 1px solid rgba(var(--spice-rgb-selected-row), 0.35);
+    border-radius: 999px;
+    color: var(--spice-text);
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 8px 32px 8px 12px;
+}
+
+.stats-icon-button {
+    align-items: center;
+    background: var(--spice-player);
+    border: 1px solid rgba(var(--spice-rgb-selected-row), 0.35);
+    border-radius: 999px;
+    color: var(--spice-subtext);
+    cursor: pointer;
+    display: inline-flex;
+    height: 36px;
+    justify-content: center;
+    padding: 0;
+    width: 36px;
+}
+
+.stats-icon-button:hover,
+.stats-native-select:hover {
+    border-color: rgba(var(--spice-rgb-selected-row), 0.6);
+    color: var(--spice-text);
+}
+
+.stats-icon-button-svg {
+    fill: currentColor;
+    height: 16px;
+    width: 16px;
+}
+
 // make sure the popup modal close button is always clickable
 .main-trackCreditsModal-closeBtn {
     -webkit-app-region: no-drag;
@@ -98,6 +230,43 @@
     align-items: center;
     height: 56px;
     padding: 0 var(--content-spacing);
+}
+
+.stats-nav-shell {
+    margin-top: 8px;
+}
+
+.stats-nav-inline {
+    gap: 8px;
+    height: auto;
+    min-height: 48px;
+    padding-block: 8px;
+    flex-wrap: wrap;
+}
+
+.stats-nav-chip {
+    background: var(--spice-player);
+    border: 1px solid rgba(var(--spice-rgb-selected-row), 0.28);
+    border-radius: 999px;
+    color: var(--spice-subtext);
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 8px 14px;
+}
+
+.stats-nav-chip.is-active,
+.stats-nav-chip:hover {
+    background: var(--spice-card);
+    border-color: rgba(var(--spice-rgb-selected-row), 0.6);
+    color: var(--spice-text);
+}
+
+.stats-page-title {
+    color: var(--spice-text);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
 }
 
 #library-app > :first-child, #stats-app > :first-child {

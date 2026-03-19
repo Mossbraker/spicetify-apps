@@ -15,9 +15,10 @@ import { useQuery } from "@shared/types/react_query";
 import useStatus from "@shared/status/useStatus";
 import { cacher, invalidator } from "../extensions/cache";
 import { parseLiked } from "../utils/track_helper";
+import { getConfigCacheKey } from "../utils/config_cache";
 
 export const getTopTracks = async (timeRange: SpotifyRange, config: Config) => {
-	if (config["use-lastfm"]) {
+	if (config["use-lastfm"] || config["lastfm-only"]) {
 		const { "lastfm-user": user, "api-key": key, "lastfm-only": lastfmOnly } = config;
 		if (!user || !key) throw new Error("Missing LastFM API Key or Username");
 		const response = await lastFM.getTopTracks(key, user, timeRange);
@@ -29,9 +30,10 @@ export const getTopTracks = async (timeRange: SpotifyRange, config: Config) => {
 
 const TracksPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [dropdown, activeOption] = useDropdownMenu(DropdownOptions(configWrapper), "stats:top-tracks");
+	const cacheKey = getConfigCacheKey(configWrapper.config, { includeLastfmIdentity: true });
 
 	const { status, error, data, refetch } = useQuery({
-		queryKey: ["top-tracks", activeOption.id],
+		queryKey: ["top-tracks", activeOption.id, cacheKey],
 		queryFn: (props) =>
 			cacher(() => getTopTracks(activeOption.id as SpotifyRange, configWrapper.config))(props).then(parseLiked),
 	});
@@ -42,7 +44,7 @@ const TracksPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		lhs: ["Top Tracks"],
 		rhs: [
 			dropdown,
-			<RefreshButton callback={() => invalidator(["top-tracks", activeOption.id], refetch)} />,
+			<RefreshButton callback={() => invalidator(["top-tracks", activeOption.id, cacheKey], refetch)} />,
 			<SettingsButton configWrapper={configWrapper} />,
 		],
 	};

@@ -39,6 +39,21 @@
         align-items: center;
     }
 
+    .stats-trackRowImageFallback {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        background: linear-gradient(135deg, rgba(var(--spice-rgb-selected-row), 0.18), rgba(var(--spice-rgb-selected-row), 0.05));
+        color: var(--spice-text);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        flex: 0 0 40px;
+    }
+
     .stats-scrollButton {
         width: 40px;
         border-radius: 8px;
@@ -73,6 +88,12 @@
         border-radius: 8px;
         background: var(--spice-player);
         position: relative;
+    }
+
+    .stats-genreCardEmpty {
+        align-items: center;
+        color: var(--spice-subtext);
+        font-size: 0.95rem;
     }
 
     .stats-genreRow {
@@ -143,6 +164,28 @@
     .main-card-cardContainer {
         width: 100%;
         height: 100%;
+    }
+
+    .stats-statCardValue {
+        color: var(--spice-text);
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+        word-break: break-word;
+    }
+
+    .stats-statCardLabel {
+        color: var(--spice-subtext);
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-top: 6px;
+    }
+
+    .stats-shelfTitle {
+        color: var(--spice-text);
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
     }
 
 }

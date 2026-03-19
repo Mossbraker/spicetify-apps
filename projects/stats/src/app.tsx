@@ -78,7 +78,7 @@ const NavbarContainer = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 };
 
 const waitForReady = async (callback: () => void) => {
-	if (Spicetify.Platform && Spicetify.Platform.RootlistAPI && Spicetify.ReactQuery && SpicetifyStats) {
+	if (Spicetify.Platform && Spicetify.Platform.RootlistAPI && SpicetifyStats) {
 		callback();
 	} else {
 		setTimeout(() => waitForReady(callback), 1000);

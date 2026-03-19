@@ -35,15 +35,42 @@ const DropdownOptions = [
 	{ id: "tracks", name: "Top Tracks" },
 ];
 
-const getChart = async (type: "tracks" | "artists", config: Config) => {
+type ArtistChartData = {
+	kind: "artists";
+	items: (LastFMMinifiedArtist | SpotifyMinifiedArtist)[];
+};
+
+type TrackChartData = {
+	kind: "tracks";
+	items: (LastFMMinifiedTrack | SpotifyMinifiedTrack)[];
+};
+
+type ChartData = ArtistChartData | TrackChartData;
+
+const sortByPlaycount = <T extends { playcount?: number }>(items: T[]) => {
+	return [...items].sort((left, right) => (right.playcount ?? 0) - (left.playcount ?? 0));
+};
+
+const getArtistChart = async (config: Config) => {
 	const { "api-key": key, "lastfm-only": lastfmOnly } = config;
 	if (!key) throw new Error("Missing LastFM API Key or Username");
-	if (type === "artists") {
-		const response = await lastFM.getArtistChart(key);
-		return throttledMap(response, (artist) => convertArtist(artist, lastfmOnly));
-	}
+	const response = await lastFM.getArtistChart(key);
+	const items = await throttledMap(response, (artist) => convertArtist(artist, lastfmOnly));
+	return {
+		kind: "artists" as const,
+		items: sortByPlaycount(items),
+	};
+};
+
+const getTrackChart = async (config: Config) => {
+	const { "api-key": key, "lastfm-only": lastfmOnly } = config;
+	if (!key) throw new Error("Missing LastFM API Key or Username");
 	const response = await lastFM.getTrackChart(key);
-	return throttledMap(response, (track) => convertTrack(track, lastfmOnly));
+	const items = await throttledMap(response, (track) => convertTrack(track, lastfmOnly));
+	return {
+		kind: "tracks" as const,
+		items: sortByPlaycount(await parseLiked(items)),
+	};
 };
 
 const ArtistChart = ({ artists }: { artists: (LastFMMinifiedArtist | SpotifyMinifiedArtist)[] }) => {
@@ -86,13 +113,11 @@ const getDate = () => {
 
 const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [dropdown, activeOption] = useDropdownMenu(DropdownOptions, "stats:charts");
+	const isArtistChart = activeOption.id === "artists";
 
 	const { status, error, data, refetch } = useQuery({
 		queryKey: ["top-charts", activeOption.id],
-		queryFn: (props) =>
-			cacher(() => getChart(activeOption.id as "tracks" | "artists", configWrapper.config))(props).then((res) =>
-				"artists" in res[0] ? parseLiked(res) : res,
-			),
+		queryFn: (props) => (isArtistChart ? cacher(() => getArtistChart(configWrapper.config))(props) : cacher(() => getTrackChart(configWrapper.config))(props)),
 	});
 
 	const Status = useStatus(status, error);
@@ -108,20 +133,26 @@ const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	if (Status) return <PageContainer {...props}>{Status}</PageContainer>;
 
-	const items = data as NonNullable<typeof data>;
+	const chartData = data as ChartData | undefined;
+	if (!chartData || chartData.kind !== activeOption.id) {
+		return <PageContainer {...props}><div>Loading chart data...</div></PageContainer>;
+	}
+
+	const items = chartData.items;
+	if (!items.length) return <PageContainer {...props}><div>No chart data available.</div></PageContainer>;
 
 	const infoToCreatePlaylist = {
 		playlistName: `Top Track Chart - ${getDate()}`,
 		itemsUris: items.map((track) => track.uri),
 	};
 
-	if (activeOption.id === "tracks") {
+	if (!isArtistChart) {
 		// @ts-ignore
 		props.infoToCreatePlaylist = infoToCreatePlaylist;
 	}
 
 	// @ts-ignore
-	const chartToRender = activeOption.id === "artists" ? <ArtistChart artists={items} /> : <TrackChart tracks={items} />;
+	const chartToRender = isArtistChart ? <ArtistChart artists={items} /> : <TrackChart tracks={items} />;
 
 	return <PageContainer {...props}>{chartToRender}</PageContainer>;
 };
