@@ -143,6 +143,10 @@ const SliderInput = (props: SliderInputProps) => {
     );
 };
 
+const DisplayValue = (props: { value: string }) => {
+    return <div className="config-display-value">{props.value}</div>;
+};
+
 const TooltipIcon = () => {
     return (
         <svg
@@ -209,6 +213,8 @@ const ConfigModal = (props: ConfigModalProps) => {
 
         const Element = () => {
             switch (modalRow.type) {
+                case "display":
+                    return <DisplayValue value={modalRow.displayValue?.(modalConfig) ?? String(currentValue ?? "")} />;
                 case "toggle":
                     return <ToggleInput storageKey={key} value={currentValue} callback={updateItem} />;
                 case "text":
