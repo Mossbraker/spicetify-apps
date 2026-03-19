@@ -1,6 +1,8 @@
 import type * as Spotify from "../types/spotify";
 import { isOAuthEnabled, hasValidTokens, oauthFetch } from "./oauth";
 
+const SPOTIFY_API_BASE_URL = "https://api.spotify.com/";
+
 type SuppressedEndpoint = {
 	status: number;
 	reason: string;
@@ -166,6 +168,27 @@ const isRateLimitError = (error: unknown): boolean => {
 	);
 };
 
+const isSpotifyApiUrl = (url: string) => url.startsWith(SPOTIFY_API_BASE_URL);
+
+const externalFetch = async <T>(url: string): Promise<T> => {
+	const response = await fetch(url, {
+		headers: {
+			Accept: "application/json",
+		},
+	});
+
+	if (!response.ok) {
+		const retryAfter = response.headers.get("Retry-After");
+		throw {
+			code: response.status,
+			retryAfter: retryAfter ? Number(retryAfter) : undefined,
+			message: response.statusText,
+		};
+	}
+
+	return response.json();
+};
+
 /**
  * Try using the internal Spotify client token with direct fetch.
  * This may bypass CosmosAsync middleware rate limiting.
@@ -203,6 +226,13 @@ const directFetch = async <T>(url: string): Promise<T> => {
  * Priority: OAuth > Direct Fetch > CosmosAsync
  */
 export const apiFetch = async <T>(name: string, url: string, log = true): Promise<T> => {
+	if (!isSpotifyApiUrl(url)) {
+		const timeStart = window.performance.now();
+		const response = await externalFetch<T>(url);
+		if (log) console.log("stats -", name, "fetch time:", window.performance.now() - timeStart);
+		return response;
+	}
+
 	const endpointKey = getEndpointKey(url);
 	const activeSuppression = getActiveSuppression(endpointKey);
 	if (activeSuppression) {
@@ -226,7 +256,7 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 	}
 
 	// Try direct fetch with internal token first (may bypass CosmosAsync rate limits)
-	const useDirectFetch = SpicetifyStats?.ConfigWrapper?.Config?.["use-direct-fetch"] ?? false;
+	const useDirectFetch = globalThis.SpicetifyStats?.ConfigWrapper?.Config?.["use-direct-fetch"] ?? false;
 	if (useDirectFetch && Spicetify.Platform?.AuthorizationAPI) {
 		try {
 			const timeStart = window.performance.now();
