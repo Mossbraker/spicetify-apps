@@ -17,15 +17,27 @@ import { cacher, invalidator } from "../extensions/cache";
 import { parseLiked } from "../utils/track_helper";
 import { getConfigCacheKey } from "../utils/config_cache";
 
+const hasLastFmCredentials = (config: Config) => Boolean(config["api-key"] && config["lastfm-user"]);
+
+const getLastFmTopTracks = async (timeRange: SpotifyRange, config: Config, lastfmOnly: boolean) => {
+	const { "lastfm-user": user, "api-key": key } = config;
+	if (!user || !key) throw new Error("Missing LastFM API Key or Username");
+	const response = await lastFM.getTopTracks(key, user, timeRange);
+	return throttledMap(response, (track) => convertTrack(track, lastfmOnly));
+};
+
 export const getTopTracks = async (timeRange: SpotifyRange, config: Config) => {
 	if (config["use-lastfm"] || config["lastfm-only"]) {
-		const { "lastfm-user": user, "api-key": key, "lastfm-only": lastfmOnly } = config;
-		if (!user || !key) throw new Error("Missing LastFM API Key or Username");
-		const response = await lastFM.getTopTracks(key, user, timeRange);
-		return throttledMap(response, (track) => convertTrack(track, lastfmOnly));
+		return getLastFmTopTracks(timeRange, config, config["lastfm-only"]);
 	}
-	const response = await spotify.getTopTracks(timeRange);
-	return response.map(minifyTrack);
+
+	try {
+		const response = await spotify.getTopTracks(timeRange);
+		return response.map(minifyTrack);
+	} catch (error) {
+		if (!spotify.isSuppressedSpotifyError(error) || !hasLastFmCredentials(config)) throw error;
+		return getLastFmTopTracks(timeRange, config, true);
+	}
 };
 
 const TracksPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
