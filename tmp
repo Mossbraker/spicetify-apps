@@ -1860,3 +1860,231 @@ Two errors:
 	"modelVersionId": 7,
 	"origin": "extHost2"
 }]
+
+---
+
+Getting the pictured errors in the Artists, Tracks, and Genres tabs.
+
+shuffle+:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+sortByPlayCount:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+fullAlbumDate:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+xpui-modules.js:1 Error: Unexpectedly hit unreachable code! Unhandled discriminated union member: false
+    at i (xpui-modules.js:1:7041740)
+    at r (xpui-modules.js:1:7041870)
+    at xpui-modules.js:1:3265101
+    at Ra (xpui-modules.js:1:3265111)
+    at Object.factory (xpui-modules.js:1:3763558)
+    at E.resolveImpl (xpui-modules.js:1:4753055)
+    at E.resolve (xpui-modules.js:1:4752595)
+    at addMissingPlatformAPIs (spicetifyWrapper.js:339:52)
+r @ xpui-modules.js:1
+spicetify-routes-stats.js:4 Uncaught (in promise) ReferenceError: SpicetifyStats is not defined
+    at wr (spicetify-routes-stats.js:4:118648)
+    at Er (spicetify-routes-stats.js:4:118938)
+    at pa (xpui-modules.js:1:1317852)
+    at Tc (xpui-modules.js:1:1376814)
+    at ml (xpui-modules.js:1:1366050)
+    at pl (xpui-modules.js:1:1365978)
+    at dl (xpui-modules.js:1:1365841)
+    at Qc (xpui-modules.js:1:1361004)
+    at v (xpui-modules.js:1:4174275)
+    at MessagePort.P (xpui-modules.js:1:4174807)
+api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=short_term:1  Failed to load resource: the server responded with a status of 429 ()
+api.spotify.com/v1/me/top/tracks?limit=50&offset=0&time_range=short_term:1  Failed to load resource: the server responded with a status of 429 ()
+guc3-spclient.spotify.com/remote-config-resolver/v3/configuration:1  Failed to load resource: the server responded with a status of 404 ()
+xpui-modules.js:1 provider:transport resolve error k Object
+f @ xpui-modules.js:1
+api.spotify.com/v1/me:1  Failed to load resource: the server responded with a status of 429 ()
+01500caf-c7f8-4423-bc0b-322011108e0c:888 [Sort-Play] FATAL: Could not determine user's market. Track availability checks may be inaccurate.
+(anonymous) @ 01500caf-c7f8-4423-bc0b-322011108e0c:888
+api.spotify.com/v1/browse/categories?limit=10&offset=0&locale=en_US&market=from_token:1  Failed to load resource: the server responded with a status of 429 ()
+xpui-modules.js:1 Uncaught (in promise) HttpResponseError
+    at i.fromResponse (xpui-modules.js:1:4453543)
+    at e.onAfterSend (xpui-modules.js:1:6065563)
+    at xpui-modules.js:1:4991799
+    at async sa (made-for-you-shortcut.js?time=1773939279932:14:4403)
+    at async $t (made-for-you-shortcut.js?time=1773939279932:1:100026)
+    at async made-for-you-shortcut.js?time=1773939279932:14:730
+api.spotify.com/v1/artists/4Ui2kfOqGujY81UcPrb5KE?locale=EN_en:1  Failed to load resource: the server responded with a status of 429 ()
+whatsThatGenre.js?time=1773939279932:5 Uncaught (in promise) TypeError: t is not iterable
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=long_term 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+a @ spicetify-routes-stats.js:4
+he @ spicetify-routes-stats.js:4
+Xe @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/me/top/tracks?limit=50&offset=0&time_range=long_term 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+a @ spicetify-routes-stats.js:4
+de @ spicetify-routes-stats.js:4
+Ht @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+queryFn @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/search?q=album:Days%20Are%20Gone+artist:HAIM&type=album&limit=50 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+a @ spicetify-routes-stats.js:4
+be @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+qe @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+f @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/search?q=track:Stateside%20%2B%20Zara%20Larsson+artist:PinkPantheress&type=track&limit=50 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+a @ spicetify-routes-stats.js:4
+ye @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Ke @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+f @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+queryFn @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/audio-features?ids=3y4oFrifsZaSUib1QhDhmv,5ciSr1SyZUQrxySlxZhdhg,2tgQaL85WoRfgEa4hFQgrE,0fbR95FEaJUxiQYaqZZukv,2S6yBUXa5KddBV0CqBkcP1,0ahcTCz4kcic6vfIEIlFkq,13aiI2D4nrdD2sxXvCKn40,2S2fa3WH0w1TMdRwh3drEg,3aFMz2anc9vurZw6bPunI6,0NslHuacjxQYfUTOW3HCIV,64DpBZj4IlDFzCwxTq7azl,0hDQV9X1Da5JrwhK8gu86p,3B3eOgLJSqPEA0RfboIQVM,65aZDJQwNllPxuLPixJ4YO,7ojaBbxzyoqpvFycrhjyxq,3l3SbRkrK1aQ5Dk1h7vroV,56NkIxSZZiMpFP5ZNSxtnT,6exdwZ3EOSCjb11bd6k6Np,4absiGHMelB8eH976ytjBj,7kzKAuUzOITUauHAhoMoxA,4IvZLDtwBHmBmwgDIUbuwa,2wXZeaK0rXF3qrs7ernZ2L,6Zgd7SomLTZkL1WPh4CUnV,57Xjny5yNzAcsxnusKmAfA,7jIAttgQTpLDoNtykIQXjH,6UIxGIqWlO5wsddY44AV1R,0EKUJ4OqrNWaHpNPODNTaf,4iG2gAwKXsOcijVaVXzRPW,21Qsj3cMVCx2xF2EVVNbEu,34q2Y1O5zMeuBhX4WYn0aZ,0epAG0WWRlDMsMFJiE5c6I,1AEiKr56njftNDp67QCnHH,2LMloFiV7DHpBhITOaBSam,78Gzxi27GuNHTfkn2BylG4,6xAa0kGkTLU22ZyoHOCHgi,5cy5IStIn7OSHDEIgXeDyq,4fPBB44eDH71YohayI4eKV,4NnWuGQujzWUEg0uZokO5M,2YIOkqKgg3jZEFoL5qcEPT,6u0x5ad9ewHvs3z6u9Oe3c,3FtYbEfBqAlGO46NUDQSAt,0jBE7Fn78EAvmIs3dCd6GO,0ritgEzDOsxbd2IfYX96S9,4yY8JqTOQyi7K4O1QcQtBG,1fEGtTZjrjJW8eUeewnNJR,2Hr51Yy9FBqye5FJrEH8bK,5TS9LZZ3nf3W0EPZKZiYFX,5fj76kVAnqRKKhAw5d06jj,3lMOJhsiPBc5q0dGP73EaZ,5bVOX6eyHsML2sB4aMlZEi,3DQVgcqaP3iSMbaKsd57l5,19Shlms2uTnOjIUg50TXzd,57rAvblBMBmdPBugRF1T77,2Pdo1VvYDB9FqeuNx8D1FW,0lngUitwRDbvZ5yVO76dVN,1FvDJ9KGxcqwv1utyPL3JZ,2DBlfjL5chsdeULzhTp5K8,4vjvx7Zxkb4AltGcZ0BBvI,4oXg7xT4ksBxHTx8PcmSXw,1hmgNEcsynNHU1AN9MTxgp,3U5JVgI2x4rDyHGObzJfNf,2l57cfmCnOkwNX1tky02n1,3YQpycN8xEdHVo8qt0ahcI,1I97UEdJWw7uXtlpgGVMIp,0P4Te8j7vGE8A4GUPLcD6f,6oNvmplQGUkmAh441Teows,4a17WC0Cf5hSKFD6ts57mk,7jvtmQ3onpWeUm7dyFSSSc,6SEROp4snffbCv7VMAI6KN,0xaz4gPfYbdp8s4dHTI5Gm,55N8cxpE1QDoeaaNqUnoZ2,4sDbTF1BfdDiuWVEMFbEm2,5YoBEhJWkFwT0zsWD2rUst,1yWIsH3TC51gmzvQxZNCQC,0a9LL4ETCcFGsrrfI1oOm5,0Oi6TiuKVXRBS0191bEqnu,5zb7npjQqoJ7Kcpq4yD9qn,60s0QWaOZ2UTzqdIHBCt3x,3mFzIFFFmEXTQs6BDAK2ZZ,16e1DJIznzArBOCSomdvSn,6ah4KE4F2xwbS1qByjFmZj,6ar3x1gVqkABR1x6zQI9yH,7haAXAH1qACjdmLQKBYxCZ,5UW4tA4j23YL6kDfRw3rWT,2QMV9Kj5BFo8kjggLVHf86,3a9P1PqOV6gr4A9ywDZ7mg,4KVYz4U1Vm3pvjhhhS1E6s,7oFZxS78UzYI3VBivyrmDx,39lgO3AGc8pt7SM4VuB0Mh,2uvcftCCrCr2pprXUJ6Vjr,557ohTjqc5tofLMZJOCcOn,5DqrMSaG6KXa9PWlnnKJyb,056mbYcqyQo86Rfr9XfyYm,0cAFtuZPD4sKl0X1R3dFin,0TFTAtCYhp2tQ9KcJIZb55,7qjZnBKE73H4Oxkopwulqe,5T8OICEqdqbx8Uz7L5abkH,2dono2Koz7DEvGwxUsmMLq,2B664ulJSVBd6B8SAY3Wux,2SeDdNjPvN3uwkolnG2ODi 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+a @ spicetify-routes-stats.js:4
+ve @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+wt @ spicetify-routes-stats.js:4
+Tt @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/artists?ids=5e1BZulIiYWPRm8yogwUYH,5o206eFLx38glA2bb4zqIU,53RsXctnNmj9oKXvcbvzI2,3kjuyTCjPG1WMFCiyc5IuB,6FBDaR13swtiWwGhX1WQsP,2olXFp5y1AwrgJA9YSV4Sn,0epOFNiUfyON9EYx7Tpr6V,1yAwtBaoHLEDWAnWR87hBT,08GQAI4eElDnROBrJRGE0X,4aP1lp10BRYZO658B2NwkG,0XSqX2PB3C5dTMv7SZaxSm,0vW8z9pZMGCcRtGPGtyqiB,246dkjvS1zLTtiykXe5h60,3KDpcZPHxvsaVk5PReoGqh,4WPY0N74T3KUja57xMQTZ3,19I4tYiChJoxEO5EuviXpz,7wGrLSB3v7jkV3fSsjYwtv,2ye2Wgw4gimLv2eAKyk1NB,7lOJ7WXyopaxri0dbOiZkd,2qc41rNTtdLK0tV3mJn2Pm,6tbjWDEIzxoDsBA1FuhfPW,2EO56JK4txid1Pss9GVbOL,4Z8W4fKeB5YxbusRsdQVPb,3TNt4aUIxgfy9aoaft5Jj2,6XYvaoDGE0VmRt83Jss9Sn,4M5nCE77Qaxayuhp3fVn4V,06HL4z0CvFAxyc27GXpf02,6zvul52xwTWzilBZl6BUbT,2uYWxilOVlUdk4oV9DvwqK,4mO4aGO6u29UyR6XLZR9XW,7K3zpFXBvPcvzhj7zlGJdO,6Jrxnp0JgqmeUX1veU591p,5GHv1pBOWOQxIE6WQBq88Q,29lz7gs8edwnnfuXW4FhMl,1HY2Jd0NmPuamShAr6KMms,5lJ4XQ2hlPlxACN7q3xKL1,2cCUtGK9sDU2EoElnk0GNB,4wEVY6Zz9STrspLNOmyz50,1nJvji2KIlWSseXRSlNYsC,4tX2TplrkIP4v05BNC903e,0oSGxfWSnnOXhD2fKuz2Gy,0K1q0nXQ8is36PzOKAMbNe,4QCflfSOonkybNw5D7GqGk,1r1uxoy19fzMxunt3ONAkG,053q0ukIDRgzwTr4vNSwab,24XtlMhEMNdi822vi0MhY1,0OSABE1yGiZK2ALQDJ0SeO,3WrFJ7ztbogyGnTHbHJFl2,6kFay2DQ5aZfeu5OsrF3Pw,3iOvXCl6edW5Um0fXEBRXy 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+a @ spicetify-routes-stats.js:4
+ge @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+It @ spicetify-routes-stats.js:4
+Tt @ spicetify-routes-stats.js:4
+await in Tt
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+spicetify-routes-stats.js:4  GET https://musicbrainz.org/ws/2/artist/a96ac800-bfcb-412a-8a63-0a98df600700?inc=genres+tags&fmt=json 503 (Service Unavailable)
+vt @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+_t @ spicetify-routes-stats.js:4
+Nt @ spicetify-routes-stats.js:4
+await in Nt
+It @ spicetify-routes-stats.js:4
+await in It
+Tt @ spicetify-routes-stats.js:4
+await in Tt
+(anonymous) @ spicetify-routes-stats.js:4
+await in (anonymous)
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+Xs @ xpui-modules.js:1
+gl @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+il @ xpui-modules.js:1
+Br @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+
+---
+
+Is it even using the OAuth? My spotify developer dashboard shows 0 everything (weekly users, monthly users, api calls by endpoint, users by country). Not sure the dashboard update frequency though.
+
+---
+
+So, it looked like I was still connected in settings. But not all commands in the console returned true - the second and third commands returned null.
+
+Clicking refresh would cause:
+spicetifyWrapper.js:481  GET https://api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=long_term 429 (Too Many Requests)
+(anonymous) @ spicetifyWrapper.js:481
+a @ spicetify-routes-stats.js:4
+ve @ spicetify-routes-stats.js:4
+at @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+(anonymous) @ spicetify-routes-stats.js:4
+w @ spicetify-routes-stats.js:4
+callback @ spicetify-routes-stats.js:4
+onClick @ spicetify-routes-stats.js:4
+we @ xpui-modules.js:1
+Ve @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+Di @ xpui-modules.js:1
+wi @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+rl @ xpui-modules.js:1
+Pe @ xpui-modules.js:1
+Vi @ xpui-modules.js:1
+Kt @ xpui-modules.js:1
+Yt @ xpui-modules.js:1
+
+So, I disabled use OAuth and reenabled it and completed the PKCE flow and pasted the callback URL, and got the Successfully connected to Spotify! notification. Now it's working again.
+
+How do I make sure OAuth doesn't just stop working again?
