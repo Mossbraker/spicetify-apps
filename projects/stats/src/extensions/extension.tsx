@@ -4,6 +4,20 @@ import { version as STATS_VERSION } from "../../package.json";
 import ConfigWrapper from "@shared/config/config_wrapper";
 import { startAuthFlow, handleCallback, clearTokens, getConnectionStatus } from "../api/oauth";
 
+const getOAuthStatusLabel = () => {
+	const { connected, expiresAt } = getConnectionStatus();
+	const hasRefreshToken = Boolean(localStorage.getItem("stats:oauth:refresh_token"));
+
+	if (!connected && !hasRefreshToken) return "Disconnected";
+	if (!connected && hasRefreshToken) return "Refresh token available; access token will be restored on next request";
+	if (!expiresAt) return hasRefreshToken ? "Connected; refresh token available" : "Connected; no refresh token stored";
+
+	const expiresText = expiresAt.toLocaleString();
+	return hasRefreshToken
+		? `Connected; access token expires ${expiresText}; refresh token available`
+		: `Connected; access token expires ${expiresText}; no refresh token stored`;
+};
+
 // contruct global class for stats methods
 class SpicetifyStats {
 	ConfigWrapper = new ConfigWrapper(
@@ -61,6 +75,14 @@ class SpicetifyStats {
 					}
 				},
 				initializeCallback: false,
+			},
+			{
+				name: "OAuth Status",
+				key: "oauth-status",
+				type: "display",
+				def: null,
+				desc: "Shows whether Stats currently has a usable access token and whether a refresh token is stored for automatic recovery.",
+				displayValue: getOAuthStatusLabel,
 			},
 			{
 				name: "Use Direct Fetch (Experimental)",
@@ -154,7 +176,7 @@ window.SpicetifyStats = new SpicetifyStats();
 	if (!version || version !== STATS_VERSION) {
 		for (let i = 0; i < localStorage.length; i++) {
 			const key = localStorage.key(i) as string;
-			if (key.startsWith("stats:") && !key.startsWith("stats:config:")) {
+			if (key.startsWith("stats:") && !key.startsWith("stats:config:") && !key.startsWith("stats:oauth:")) {
 				localStorage.removeItem(key);
 			}
 		}
