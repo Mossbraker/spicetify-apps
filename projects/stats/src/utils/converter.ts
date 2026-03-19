@@ -85,6 +85,8 @@ export const convertArtist = async (artist: LastFM.Artist, lastfmOnly = false) =
 	// Skip Spotify lookup if lastfm-only mode is enabled
 	if (lastfmOnly) return convertArtistLastFMOnly(artist);
 
+	const fallbackImage = getLastFmImage(artist.image);
+
 	let spotifyArtist;
 	try {
 		spotifyArtist = await cacher(async () => {
@@ -97,18 +99,14 @@ export const convertArtist = async (artist: LastFM.Artist, lastfmOnly = false) =
 	} catch {
 		return convertArtistLastFMOnly(artist);
 	}
-	if (!spotifyArtist)
-		return {
-			name: artist.name,
-			playcount: Number(artist.playcount),
-			uri: artist.url,
-			type: "lastfm",
-		} as LastFMMinifiedArtist;
+	if (!spotifyArtist) return convertArtistLastFMOnly(artist);
 	set(`artist-${spotifyArtist.id}`, spotifyArtist);
+	const minifiedArtist = minifyArtist(spotifyArtist);
 	return {
-		...minifyArtist(spotifyArtist),
+		...minifiedArtist,
 		playcount: Number(artist.playcount),
 		name: artist.name,
+		image: minifiedArtist.image ?? fallbackImage,
 	} as SpotifyMinifiedArtist;
 };
 
@@ -170,6 +168,8 @@ export const convertTrack = async (track: LastFM.Track, lastfmOnly = false) => {
 	// Skip Spotify lookup if lastfm-only mode is enabled
 	if (lastfmOnly) return convertTrackLastFMOnly(track);
 
+	const fallbackImage = getLastFmImage(track.image);
+
 	let spotifyTrack;
 	try {
 		spotifyTrack = await cacher(async () => {
@@ -181,23 +181,12 @@ export const convertTrack = async (track: LastFM.Track, lastfmOnly = false) => {
 	} catch {
 		return convertTrackLastFMOnly(track);
 	}
-	if (!spotifyTrack)
-		return {
-			uri: track.url,
-			name: track.name,
-			playcount: Number(track.playcount),
-			duration_ms: Number(track.duration) * 1000,
-			artists: [
-				{
-					name: track.artist.name,
-					uri: track.artist.url,
-				},
-			],
-			type: "lastfm",
-		} as LastFMMinifiedTrack;
+	if (!spotifyTrack) return convertTrackLastFMOnly(track);
+	const minifiedTrack = minifyTrack(spotifyTrack);
 	return {
-		...minifyTrack(spotifyTrack),
+		...minifiedTrack,
 		playcount: Number(track.playcount),
 		name: track.name,
+		image: minifiedTrack.image ?? fallbackImage,
 	} as SpotifyMinifiedTrack;
 };
