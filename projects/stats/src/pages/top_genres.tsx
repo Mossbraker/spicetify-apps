@@ -170,19 +170,15 @@ const parseTracks = async (
 
 	const artistSignals = buildArtistSignals(tracks, topArtists);
 
-	if (trackIDs.length === 0) {
-		return {
-			analysis: { ...(await getMeanAudioFeatures([])), popularity: 0, explicit: 0 },
-			genres: {},
-			releaseYears: {},
-		};
-	}
-
-	explicit = explicit / trackIDs.length;
-	popularity = popularity / trackIDs.length;
-
-	const audioFeatures = await getMeanAudioFeatures(trackIDs);
-	const analysis = { ...audioFeatures, popularity, explicit };
+	const analysis =
+		trackIDs.length === 0
+			? { ...(await getMeanAudioFeatures([])), popularity: 0, explicit: 0 }
+			: await (async () => {
+				explicit = explicit / trackIDs.length;
+				popularity = popularity / trackIDs.length;
+				const audioFeatures = await getMeanAudioFeatures(trackIDs);
+				return { ...audioFeatures, popularity, explicit };
+			})();
 	const spotifyGenres = await getSpotifyGenres(artistSignals);
 	const shouldUseLastFmFallback = Object.keys(spotifyGenres).length === 0 && Boolean(config["api-key"]);
 	const lastFmGenres = shouldUseLastFmFallback
