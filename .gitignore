@@ -143,4 +143,8 @@ out
 
 # End of https://www.toptal.com/developers/gitignore/api/node
 
+# ignore build from https://github.com/harbassan/spicetify-apps/issues/242
 /stats/
+
+# Local VSCode settings
+.vscode/settings.json
