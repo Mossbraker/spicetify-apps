@@ -1,18 +1,109 @@
-const cache: Record<string, unknown> = {};
+import { statsDebug } from "./debug";
 
-export const set = <T>(key: string, value: T) => {
-	cache[key] = value;
+type CacheEntry<T> = {
+	value: T;
+	cachedAt: number;
+	lastAccessedAt: number;
+	hits: number;
 };
 
-const invalidate = (key: string) => {
-	delete cache[key];
+type InvalidatedCacheEntry = {
+	key: string;
+	status: "stale";
+	ageMs: number;
+	idleMs: number;
+	hits: number;
+	invalidatedAt: number;
+	reason?: string;
+};
+
+export type CacheDiagnostic = {
+	key: string;
+	status: "fresh" | "stale";
+	ageMs: number;
+	idleMs: number;
+	hits: number;
+	invalidatedAt?: number;
+	reason?: string;
+};
+
+const cache = new Map<string, CacheEntry<unknown>>();
+const recentInvalidations: InvalidatedCacheEntry[] = [];
+const MAX_INVALIDATION_DIAGNOSTICS = 8;
+
+const touch = <T,>(key: string) => {
+	const entry = cache.get(key) as CacheEntry<T> | undefined;
+	if (!entry) return undefined;
+	entry.hits += 1;
+	entry.lastAccessedAt = Date.now();
+	return entry.value;
+};
+
+export const set = <T>(key: string, value: T) => {
+	const now = Date.now();
+	cache.set(key, {
+		value,
+		cachedAt: now,
+		lastAccessedAt: now,
+		hits: 0,
+	});
+	statsDebug.info("Cache populated", { key });
+	return value;
+};
+
+const invalidate = (key: string, reason = "Manual refresh") => {
+	const entry = cache.get(key);
+	if (!entry) return;
+
+	cache.delete(key);
+	recentInvalidations.unshift({
+		key,
+		status: "stale",
+		ageMs: Date.now() - entry.cachedAt,
+		idleMs: Date.now() - entry.lastAccessedAt,
+		hits: entry.hits,
+		invalidatedAt: Date.now(),
+		reason,
+	});
+	if (recentInvalidations.length > MAX_INVALIDATION_DIAGNOSTICS) {
+		recentInvalidations.splice(MAX_INVALIDATION_DIAGNOSTICS);
+	}
+	statsDebug.info("Cache invalidated", { key, reason, hits: entry.hits });
+};
+
+export const getCacheDiagnostics = (): CacheDiagnostic[] => {
+	const now = Date.now();
+	const freshEntries = [...cache.entries()]
+		.map(([key, entry]) => ({
+			key,
+			status: "fresh" as const,
+			ageMs: now - entry.cachedAt,
+			idleMs: now - entry.lastAccessedAt,
+			hits: entry.hits,
+		}))
+		.sort((left, right) => left.idleMs - right.idleMs);
+
+	const staleEntries = recentInvalidations.map((entry) => ({
+		key: entry.key,
+		status: entry.status,
+		ageMs: entry.ageMs,
+		idleMs: now - entry.invalidatedAt,
+		hits: entry.hits,
+		invalidatedAt: entry.invalidatedAt,
+		reason: entry.reason,
+	}));
+
+	return [...freshEntries, ...staleEntries];
 };
 
 // cache a specific function
 export const cacher = <T>(cb: () => Promise<T>) => {
 	return async ({ queryKey }: { queryKey: string[] }) => {
 		const key = queryKey.join("-");
-		if (cache[key]) return cache[key] as T;
+		const cachedValue = touch<T>(key);
+		if (cachedValue !== undefined) return cachedValue;
+
+		statsDebug.info("Cache miss", { key });
 		const result = await cb();
 		set(key, result);
 		return result;
@@ -22,15 +113,21 @@ export const cacher = <T>(cb: () => Promise<T>) => {
 // cache a batch function
 export const batchCacher = <T>(prefix: string, cb: (ids: string[]) => Promise<T[]>) => {
 	return async (ids: string[]) => {
-		const cached = ids.map((id) => cache[`${prefix}-${id}`] as T);
-		const uncached = ids.filter((_, index) => !cached[index]);
-		const results = await cb(uncached);
-		results.forEach((result, index) => set(`${prefix}-${uncached[index]}`, result));
-		return [...cached.filter(Boolean), ...results];
+		const uncached = ids.filter((id) => !cache.has(`${prefix}-${id}`));
+		if (uncached.length > 0) {
+			statsDebug.info("Batch cache miss", { prefix, requested: ids.length, uncached: uncached.length });
+			const results = await cb(uncached);
+			results.forEach((result, index) => {
+				const id = uncached[index];
+				if (id !== undefined) set(`${prefix}-${id}`, result);
+			});
+		}
+
+		return ids.map((id) => touch<T>(`${prefix}-${id}`) as T);
 	};
 };
 
-export const invalidator = <T>(queryKey: string[], refetch: () => Promise<T>) => {
+export const invalidator = async <T>(queryKey: string[], refetch: () => Promise<T>) => {
 	invalidate(queryKey.join("-"));
-	refetch();
+	return refetch();
 };

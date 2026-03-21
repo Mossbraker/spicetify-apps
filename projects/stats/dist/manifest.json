@@ -5,6 +5,8 @@
   "subfiles": [],
   "subfiles_extension": [
     "cache.js",
-    "extension.js"
+    "debug.js",
+    "extension.js",
+    "optional_enrichment.js"
   ]
 }

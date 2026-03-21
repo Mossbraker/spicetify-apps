@@ -10,6 +10,7 @@ export interface Config {
 	"api-key": string | null;
 	"lastfm-user": string | null;
 	"use-direct-fetch": boolean;
+	"show-debug-console": boolean;
 	"use-lastfm": boolean;
 	"lastfm-only": boolean;
 	"use-musicbrainz-genres": boolean;

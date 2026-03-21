@@ -23,6 +23,7 @@ import { getMeanAudioFeatures, batchRequest, parseStat } from "../utils/track_he
 import { useQuery } from "@shared/types/react_query";
 import useStatus from "@shared/status/useStatus";
 import { batchCacher, cacher, invalidator } from "../extensions/cache";
+import { runOptionalEnrichment } from "../extensions/optional_enrichment";
 import { getArtistMetas } from "../api/spotify";
 import { getArtistTopTags } from "../api/lastfm";
 import { getArtistGenres as getMusicBrainzGenres } from "../api/musicbrainz";
@@ -117,20 +118,28 @@ const getSpotifyGenres = async (signals: ArtistSignal[]) => {
 
 const enrichWithTagSource = async (
 	signals: ArtistSignal[],
+	source: string,
 	lookup: (artist: string) => Promise<GenreTag[]>,
 	limit: number,
 ) => {
 	const genres: Record<string, number> = {};
 	const targets = signals.slice(0, limit);
+	const resolvedTags = await Promise.all(
+		targets.map(async (signal) => {
+			try {
+				const tags = await runOptionalEnrichment({
+					key: `${source}:${normalizeGenreName(signal.name)}`,
+					label: `${source} tags for ${signal.name}`,
+					task: () => lookup(signal.name),
+				});
+				return { signal, tags };
+			} catch {
+				return { signal, tags: [] as GenreTag[] };
+			}
+		}),
+	);
 
-	for (const signal of targets) {
-		let tags: GenreTag[] = [];
-		try {
-			tags = await lookup(signal.name);
-		} catch {
-			continue;
-		}
-
+	for (const { signal, tags } of resolvedTags) {
 		const topCount = Math.max(tags[0]?.count ?? 0, 1);
 		for (const tag of tags.slice(0, 5)) {
 			const scale = Math.max(0.15, tag.count / topCount);
@@ -182,10 +191,15 @@ const parseTracks = async (
 	const spotifyGenres = await getSpotifyGenres(artistSignals);
 	const shouldUseLastFmFallback = Object.keys(spotifyGenres).length === 0 && Boolean(config["api-key"]);
 	const lastFmGenres = shouldUseLastFmFallback
-		? await enrichWithTagSource(artistSignals, (artist) => getArtistTopTags(config["api-key"] as string, artist), 25)
+		? await enrichWithTagSource(
+				artistSignals,
+				"Last.fm",
+				(artist) => getArtistTopTags(config["api-key"] as string, artist),
+				25,
+			)
 		: {};
 	const musicBrainzGenres = config["use-musicbrainz-genres"]
-		? await enrichWithTagSource(artistSignals, getMusicBrainzGenres, 20)
+		? await enrichWithTagSource(artistSignals, "MusicBrainz", getMusicBrainzGenres, 20)
 		: {};
 	const genres = mergeGenreMaps(spotifyGenres, lastFmGenres, musicBrainzGenres);
 	const releaseYears = parseAlbums(albumsRaw);

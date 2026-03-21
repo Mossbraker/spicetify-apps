@@ -1,4 +1,5 @@
 import type * as Spotify from "../types/spotify";
+import { statsDebug } from "../extensions/debug";
 import { isOAuthEnabled, hasValidTokens, oauthFetch } from "./oauth";
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/";
@@ -13,6 +14,17 @@ const ENDPOINT_SUPPRESSION_STORAGE_KEY = "stats:spotify:endpoint-suppressions";
 
 const endpointSuppressions = new Map<string, SuppressedEndpoint>();
 
+const setSuppressionActivity = (endpointKey: string, suppression: SuppressedEndpoint) => {
+	statsDebug.setActivity({
+		key: `suppression:${endpointKey}`,
+		kind: "suppression",
+		title: `Spotify ${endpointKey}`,
+		detail: buildSuppressedMessage(endpointKey, suppression),
+		until: suppression.until,
+		createdAt: Date.now(),
+	});
+};
+
 const loadSuppressions = () => {
 	if (endpointSuppressions.size > 0) return;
 
@@ -23,7 +35,10 @@ const loadSuppressions = () => {
 		const parsed = JSON.parse(raw) as Record<string, SuppressedEndpoint>;
 		const now = Date.now();
 		for (const [key, value] of Object.entries(parsed)) {
-			if (value.until > now) endpointSuppressions.set(key, value);
+			if (value.until > now) {
+				endpointSuppressions.set(key, value);
+				setSuppressionActivity(key, value);
+			}
 		}
 	} catch {
 		localStorage.removeItem(ENDPOINT_SUPPRESSION_STORAGE_KEY);
@@ -100,9 +115,11 @@ const getActiveSuppression = (endpointKey: string) => {
 	if (!suppression) return null;
 	if (suppression.until <= Date.now()) {
 		endpointSuppressions.delete(endpointKey);
+		statsDebug.clearActivity(`suppression:${endpointKey}`);
 		persistSuppressions();
 		return null;
 	}
+	setSuppressionActivity(endpointKey, suppression);
 	return suppression;
 };
 
@@ -113,6 +130,14 @@ const suppressEndpoint = (endpointKey: string, status: number, reason: string, r
 		until: Date.now() + getSuppressionDurationMs(endpointKey, status, retryAfterSeconds),
 	};
 	endpointSuppressions.set(endpointKey, suppression);
+	setSuppressionActivity(endpointKey, suppression);
+	statsDebug.warn("Spotify endpoint suppressed", {
+		endpointKey,
+		status,
+		reason,
+		retryAfterSeconds,
+		suppressedUntil: new Date(suppression.until).toISOString(),
+	});
 	persistSuppressions();
 	return createSuppressedError(endpointKey, suppression);
 };
@@ -148,8 +173,12 @@ const extractRetryAfterSeconds = (error: unknown) => {
 };
 
 export const clearSpotifyRequestSuppressions = () => {
+	for (const endpointKey of endpointSuppressions.keys()) {
+		statsDebug.clearActivity(`suppression:${endpointKey}`);
+	}
 	endpointSuppressions.clear();
 	localStorage.removeItem(ENDPOINT_SUPPRESSION_STORAGE_KEY);
+	statsDebug.info("Cleared Spotify request suppressions");
 };
 
 export const isSuppressedSpotifyError = (error: unknown): boolean => {
@@ -179,6 +208,11 @@ const externalFetch = async <T>(url: string): Promise<T> => {
 
 	if (!response.ok) {
 		const retryAfter = response.headers.get("Retry-After");
+		statsDebug.warn("External request failed", {
+			url,
+			status: response.status,
+			retryAfter,
+		});
 		throw {
 			code: response.status,
 			retryAfter: retryAfter ? Number(retryAfter) : undefined,
@@ -196,6 +230,7 @@ const externalFetch = async <T>(url: string): Promise<T> => {
 const directFetch = async <T>(url: string): Promise<T> => {
 	const token = Spicetify.Platform?.AuthorizationAPI?.getState?.()?.token?.accessToken;
 	if (!token) {
+		statsDebug.warn("Direct fetch unavailable because no internal token was found");
 		throw new Error("No internal token available");
 	}
 
@@ -207,6 +242,10 @@ const directFetch = async <T>(url: string): Promise<T> => {
 
 	if (response.status === 429) {
 		const retryAfter = response.headers.get("Retry-After");
+		statsDebug.warn("Direct Spotify fetch rate-limited", {
+			url,
+			retryAfter,
+		});
 		throw {
 			code: 429,
 			retryAfter: retryAfter ? Number(retryAfter) : undefined,
@@ -215,6 +254,11 @@ const directFetch = async <T>(url: string): Promise<T> => {
 	}
 
 	if (!response.ok) {
+		statsDebug.warn("Direct Spotify fetch failed", {
+			url,
+			status: response.status,
+			message: response.statusText,
+		});
 		throw { code: response.status, message: response.statusText };
 	}
 
@@ -236,6 +280,11 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 	const endpointKey = getEndpointKey(url);
 	const activeSuppression = getActiveSuppression(endpointKey);
 	if (activeSuppression) {
+		statsDebug.info("Skipping suppressed Spotify endpoint", {
+			endpointKey,
+			url,
+			suppressedUntil: new Date(activeSuppression.until).toISOString(),
+		});
 		throw createSuppressedError(endpointKey, activeSuppression);
 	}
 
@@ -251,6 +300,12 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 			if (status === 400 || status === 403 || status === 429) {
 				throw suppressEndpoint(endpointKey, status, name, extractRetryAfterSeconds(error));
 			}
+			statsDebug.warn("OAuth fetch failed", {
+				name,
+				url,
+				status,
+				error: error instanceof Error ? error.message : String(error),
+			});
 			throw error;
 		}
 	}
@@ -268,6 +323,12 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 			if (status === 400 || status === 403 || status === 429) {
 				throw suppressEndpoint(endpointKey, status, name, extractRetryAfterSeconds(error));
 			}
+			statsDebug.warn("Direct fetch failed; falling back to CosmosAsync", {
+				name,
+				url,
+				status,
+				error: error instanceof Error ? error.message : String(error),
+			});
 			console.log("stats -", name, "direct fetch failed, falling back to CosmosAsync:", error);
 			// Fall through to CosmosAsync
 		}
@@ -297,6 +358,12 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 		if (status === 400 || status === 403 || status === 429 || isRateLimitError(error)) {
 			throw suppressEndpoint(endpointKey, status ?? 429, name, extractRetryAfterSeconds(error));
 		}
+		statsDebug.error("Spotify request failed", {
+			name,
+			url,
+			status,
+			error: error instanceof Error ? error.message : String(error),
+		});
 		console.log("stats -", name, "request failed:", error);
 		throw error as Error;
 	}

@@ -6,6 +6,7 @@ import GenresPage from "./pages/top_genres";
 import LibraryPage from "./pages/library";
 import ChartsPage from "./pages/charts";
 import AlbumsPage from "./pages/top_albums";
+import DebugConsole from "./components/debug_console";
 
 import { version } from "../package.json";
 
@@ -110,6 +111,7 @@ const App = () => {
 	return (
 		<div id="stats-app">
 			<NavbarContainer configWrapper={configWrapper} />
+			{config["show-debug-console"] && <DebugConsole />}
 		</div>
 	);
 

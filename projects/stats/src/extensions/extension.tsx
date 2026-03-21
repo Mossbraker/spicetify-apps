@@ -93,6 +93,14 @@ class SpicetifyStats {
 				sectionHeader: "Workarounds",
 			},
 			{
+				name: "Show Debug Console",
+				key: "show-debug-console",
+				type: "toggle",
+				def: false,
+				desc: "Show recent request logs, delayed enrichment work, and cache diagnostics inside Stats.",
+				sectionHeader: "Diagnostics",
+			},
+			{
 				name: "Last.fm Api Key",
 				key: "api-key",
 				type: "text",
