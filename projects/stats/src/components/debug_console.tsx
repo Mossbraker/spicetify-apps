@@ -84,9 +84,11 @@ const DebugConsole = () => {
 
 	return (
 		<div className={`stats-debugConsole ${open ? "open" : "closed"}`}>
-			<button className="stats-debugConsole-toggle" onClick={toggleOpen} type="button">
-				Debug Console{snapshot.activities.length > 0 ? ` (${snapshot.activities.length})` : ""}
-			</button>
+			{!open && (
+				<button className="stats-debugConsole-toggle" onClick={toggleOpen} type="button">
+					Debug Console{snapshot.activities.length > 0 ? ` (${snapshot.activities.length})` : ""}
+				</button>
+			)}
 			{open && (
 				<div className="stats-debugConsole-panel">
 					<div className="stats-debugConsole-header">
@@ -94,9 +96,14 @@ const DebugConsole = () => {
 							<h3>Stats Debug Console</h3>
 							<p>Request logs, delayed enrichment work, and cache diagnostics</p>
 						</div>
-						<button className="stats-debugConsole-clear" onClick={() => statsDebug.clearLogs()} type="button">
-							Clear Logs
-						</button>
+						<div className="stats-debugConsole-headerButtons">
+							<button className="stats-debugConsole-clear" onClick={() => statsDebug.clearLogs()} type="button">
+								Clear Logs
+							</button>
+							<button className="stats-debugConsole-close" onClick={toggleOpen} type="button" aria-label="Close debug console">
+								✕
+							</button>
+						</div>
 					</div>
 
 					<div className="stats-debugConsole-section">
