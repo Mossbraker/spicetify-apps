@@ -14,7 +14,7 @@ function BackIcon(): React.ReactElement<SVGElement> {
 }
 
 function BackButton({ url }: { url: string }) {
-	const { TooltipWrapper, ButtonTertiary } = Spicetify.ReactComponent;
+	const { TooltipWrapper } = Spicetify.ReactComponent;
 
 	function navigate() {
 		Spicetify.Platform.History.replace(`/library/${url}`);
@@ -24,7 +24,9 @@ function BackButton({ url }: { url: string }) {
 	return (
 		<TooltipWrapper label={"Back"} placement="top">
 			<span>
-				<ButtonTertiary buttonSize="sm" aria-label="Back" iconOnly={BackIcon} onClick={navigate} />
+				<button className="stats-icon-button" type="button" aria-label="Back" onClick={navigate}>
+					<BackIcon />
+				</button>
 			</span>
 		</TooltipWrapper>
 	);

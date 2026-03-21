@@ -53,6 +53,7 @@ const SortDropdownMenu = (props: SortDropdownMenuProps) => {
 	const optionItems = options.map((option) => {
 		return (
 			<SortMenuItem
+				key={option.id}
 				option={option}
 				isActive={option === activeOption}
 				isReversed={isReversed}
@@ -70,8 +71,10 @@ const SortDropdownMenu = (props: SortDropdownMenuProps) => {
 			<button className="x-sortBox-sortDropdown" type="button" role="combobox" aria-expanded="false">
 				<TextComponent variant="mesto" semanticColor="textSubdued">
 					{activeOption.name}
-					{isReversed ? <DownArrow /> : <UpArrow />}
 				</TextComponent>
+				<span aria-hidden="true" className="stats-sort-direction-icon">
+					{isReversed ? <DownArrow /> : <UpArrow />}
+				</span>
 				<svg
 					role="img"
 					height="16"

@@ -20,9 +20,11 @@ const ExpandIcon = () => {
 };
 
 const ExpandButton = () => {
-	const { ButtonTertiary } = Spicetify.ReactComponent;
-
-	return <ButtonTertiary buttonSize="sm" aria-label="Show Filters" iconOnly={ExpandIcon} onClick={expandLibrary} />;
+	return (
+		<button className="stats-icon-button" type="button" aria-label="Show Filters" onClick={expandLibrary}>
+			<ExpandIcon />
+		</button>
+	);
 };
 
 export default ExpandButton;

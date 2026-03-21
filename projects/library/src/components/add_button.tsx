@@ -20,14 +20,16 @@ function AddIcon(): React.ReactElement<SVGElement> {
 
 function AddButton(props: AddButtonProps): React.ReactElement<HTMLButtonElement> {
 	const { ReactComponent } = Spicetify;
-	const { TooltipWrapper, ButtonTertiary, ContextMenu } = ReactComponent;
+	const { TooltipWrapper, ContextMenu } = ReactComponent;
 	const { Menu } = props;
 
 	return (
 		<TooltipWrapper label={"Add"} placement="top">
 			<span>
 				<ContextMenu trigger="click" menu={Menu}>
-					<ButtonTertiary buttonSize="sm" aria-label="Add" iconOnly={AddIcon} />
+					<button className="stats-icon-button" type="button" aria-label="Add">
+						<AddIcon />
+					</button>
 				</ContextMenu>
 			</span>
 		</TooltipWrapper>
