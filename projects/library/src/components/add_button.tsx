@@ -27,9 +27,17 @@ function AddButton(props: AddButtonProps): React.ReactElement<HTMLButtonElement>
 		<TooltipWrapper label={"Add"} placement="top">
 			<span>
 				<ContextMenu trigger="click" menu={Menu}>
-					<button className="stats-icon-button" type="button" aria-label="Add">
-						<AddIcon />
-					</button>
+					{(_isOpen?: boolean, handleContextMenu?: (event: MouseEvent) => void, ref?: (element: Element) => void) => (
+						<button
+							ref={ref as React.Ref<HTMLButtonElement>}
+							className="stats-icon-button"
+							type="button"
+							aria-label="Add"
+							onClick={handleContextMenu ? (event) => handleContextMenu(event.nativeEvent) : undefined}
+						>
+							<AddIcon />
+						</button>
+					)}
 				</ContextMenu>
 			</span>
 		</TooltipWrapper>

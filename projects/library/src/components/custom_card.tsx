@@ -69,32 +69,42 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 
 	return (
 		<ContextMenu menu={Menu} trigger="right-click">
-			<div style={{ position: "relative" }}>
-				<Card
-					featureIdentifier={type}
-					headerText={header}
-					renderCardImage={() => (
-						<CardImage
-							images={[
-								{
-									height: 640,
-									url: imageUrl,
-									width: 640,
-								},
-							]}
-							FallbackComponent={isCollection ? FolderSVG : undefined}
-						/>
-					)}
-					renderSubHeaderContent={() => (
-						<TextComponent as="div" variant="mesto" semanticColor="textSubdued">
-							{subheader}
-						</TextComponent>
-					)}
-					uri={uri}
-					{...additionalProps}
-				/>
-				{badge && <div className="badge">{badge}</div>}
-			</div>
+			{(_isOpen?: boolean, handleContextMenu?: (event: MouseEvent) => void, ref?: (element: Element) => void) => (
+				<div
+					ref={ref as React.Ref<HTMLDivElement>}
+					onContextMenu={
+						handleContextMenu
+							? (event) => handleContextMenu(event.nativeEvent)
+							: undefined
+					}
+					style={{ position: "relative" }}
+				>
+					<Card
+						featureIdentifier={type}
+						headerText={header}
+						renderCardImage={() => (
+							<CardImage
+								images={[
+									{
+										height: 640,
+										url: imageUrl,
+										width: 640,
+									},
+								]}
+								FallbackComponent={isCollection ? FolderSVG : undefined}
+							/>
+						)}
+						renderSubHeaderContent={() => (
+							<TextComponent as="div" variant="mesto" semanticColor="textSubdued">
+								{subheader}
+							</TextComponent>
+						)}
+						uri={uri}
+						{...additionalProps}
+					/>
+					{badge && <div className="badge">{badge}</div>}
+				</div>
+			)}
 		</ContextMenu>
 	);
 }

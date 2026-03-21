@@ -68,25 +68,34 @@ const SortDropdownMenu = (props: SortDropdownMenuProps) => {
 
 	return (
 		<ContextMenu menu={MenuWrapper} trigger="click">
-			<button className="x-sortBox-sortDropdown" type="button" role="combobox" aria-expanded="false">
-				<TextComponent variant="mesto" semanticColor="textSubdued">
-					{activeOption.name}
-				</TextComponent>
-				<span aria-hidden="true" className="stats-sort-direction-icon">
-					{isReversed ? <DownArrow /> : <UpArrow />}
-				</span>
-				<svg
-					role="img"
-					height="16"
-					width="16"
-					aria-hidden="true"
-					className="Svg-img-16 Svg-img-16-icon Svg-img-icon Svg-img-icon-small"
-					viewBox="0 0 16 16"
-					data-encore-id="icon"
+			{(_isOpen?: boolean, handleContextMenu?: (e: MouseEvent) => void, ref?: React.Ref<HTMLButtonElement>) => (
+				<button
+					ref={ref}
+					className="x-sortBox-sortDropdown"
+					type="button"
+					role="combobox"
+					aria-expanded="false"
+					onClick={handleContextMenu ? (event) => handleContextMenu(event.nativeEvent) : undefined}
 				>
-					<path d="m14 6-6 6-6-6h12z"></path>
-				</svg>
-			</button>
+					<TextComponent variant="mesto" semanticColor="textSubdued">
+						{activeOption.name}
+					</TextComponent>
+					<span aria-hidden="true" className="stats-sort-direction-icon">
+						{isReversed ? <DownArrow /> : <UpArrow />}
+					</span>
+					<svg
+						role="img"
+						height="16"
+						width="16"
+						aria-hidden="true"
+						className="Svg-img-16 Svg-img-16-icon Svg-img-icon Svg-img-icon-small"
+						viewBox="0 0 16 16"
+						data-encore-id="icon"
+					>
+						<path d="m14 6-6 6-6-6h12z"></path>
+					</svg>
+				</button>
+			)}
 		</ContextMenu>
 	);
 };
