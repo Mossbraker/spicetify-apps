@@ -1,0 +1,753 @@
+/* ═══════════════════════════════════════════════════════════════
+   Spicetify Statistics — styles
+   Spotify + Last.fm
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── App Container ─── */
+
+#stats-app {
+  padding: 0 32px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ─── Navigation Bar ─── */
+
+.stats-navbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0 12px;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.stats-nav-chip {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: none;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--spice-subtext, #b3b3b3);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  font-family: inherit;
+}
+
+.stats-nav-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--spice-text, #fff);
+}
+
+.stats-nav-chip--active {
+  background: var(--spice-tab-active, #fff);
+  color: var(--spice-main, #000);
+}
+
+.stats-nav-chip--active:hover {
+  background: var(--spice-tab-active, #fff);
+  color: var(--spice-main, #000);
+}
+
+/* ─── Page Layout ─── */
+
+.stats-page {
+  min-height: 50vh;
+}
+
+.stats-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stats-page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--spice-text, #fff);
+  margin: 0;
+}
+
+.stats-page-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stats-page-content {
+  min-height: 200px;
+}
+
+/* ─── Card Grid ─── */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+}
+
+.stats-card {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: background 0.2s;
+}
+
+.stats-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stats-card-img-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  margin-bottom: 12px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.stats-card-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s;
+}
+
+.stats-card-img--circle {
+  border-radius: 50%;
+}
+
+.stats-card-img--placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stats-card-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(30, 60, 115, 0.85);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  padding: 0 4px;
+}
+
+.stats-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+}
+
+.stats-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--spice-text, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-card-sub {
+  font-size: 12px;
+  color: var(--spice-subtext, #b3b3b3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Track List ─── */
+
+.stats-tracklist {
+  width: 100%;
+}
+
+.stats-tracklist-header,
+.stats-track-row {
+  display: grid;
+  grid-template-columns: 40px 48px 1fr 1fr 90px 60px;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.stats-tracklist-header {
+  color: var(--spice-subtext, #b3b3b3);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 4px;
+}
+
+.stats-track-row {
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 14px;
+  color: var(--spice-text, #fff);
+}
+
+.stats-track-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.stats-track-rank {
+  text-align: center;
+  color: var(--spice-subtext, #b3b3b3);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stats-track-art {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.stats-track-art--placeholder {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stats-track-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.stats-track-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stats-track-explicit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--spice-main, #000);
+  flex-shrink: 0;
+}
+
+.stats-track-artists {
+  font-size: 12px;
+  color: var(--spice-subtext, #b3b3b3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-track-album {
+  font-size: 13px;
+  color: var(--spice-subtext, #b3b3b3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-track-streams {
+  font-size: 13px;
+  color: var(--spice-subtext, #b3b3b3);
+  text-align: right;
+}
+
+.stats-track-duration {
+  font-size: 13px;
+  color: var(--spice-subtext, #b3b3b3);
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* ─── Genre Bars ─── */
+
+.stats-genres {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stats-genre-row {
+  display: grid;
+  grid-template-columns: 36px 160px 1fr 80px;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.stats-genre-rank {
+  text-align: center;
+  color: var(--spice-subtext, #b3b3b3);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stats-genre-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--spice-text, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-genre-bar-wrap {
+  height: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stats-genre-bar-fill {
+  height: 100%;
+  background: var(--spice-button, #1db954);
+  border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.4s ease;
+}
+
+.stats-genre-value {
+  font-size: 13px;
+  color: var(--spice-subtext, #b3b3b3);
+  text-align: right;
+}
+
+/* ─── Stat Cards (overview) ─── */
+
+.stats-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stats-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: center;
+  gap: 6px;
+}
+
+.stats-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--spice-text, #fff);
+}
+
+.stats-stat-label {
+  font-size: 13px;
+  color: var(--spice-subtext, #b3b3b3);
+  font-weight: 500;
+}
+
+/* ─── Recent Streams ─── */
+
+.stats-recent {
+  margin-top: 16px;
+}
+
+.stats-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--spice-text, #fff);
+  margin: 0 0 12px 0;
+}
+
+.stats-recent-row {
+  display: grid;
+  grid-template-columns: 1fr 140px 70px;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.stats-recent-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stats-recent-name {
+  font-size: 14px;
+  color: var(--spice-text, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-recent-artist {
+  color: var(--spice-subtext, #b3b3b3);
+  font-size: 13px;
+}
+
+.stats-recent-time {
+  font-size: 13px;
+  color: var(--spice-subtext, #b3b3b3);
+  text-align: right;
+}
+
+.stats-recent-dur {
+  font-size: 13px;
+  color: var(--spice-subtext, #b3b3b3);
+  text-align: right;
+}
+
+/* ─── Dropdown ─── */
+
+.stats-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.stats-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: none;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--spice-subtext, #b3b3b3);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+
+.stats-dropdown-trigger:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--spice-text, #fff);
+}
+
+.stats-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 1000;
+  background: var(--spice-card, #282828);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  padding: 4px;
+  min-width: 180px;
+  animation: stats-fadeIn 0.15s ease;
+}
+
+.stats-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  color: var(--spice-text, #fff);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.stats-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stats-dropdown-item--active {
+  color: var(--spice-button, #1db954);
+}
+
+/* ─── Buttons ─── */
+
+.stats-btn {
+  padding: 8px 24px;
+  border-radius: 20px;
+  border: none;
+  background: var(--spice-button, #1db954);
+  color: var(--spice-text, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  font-family: inherit;
+}
+
+.stats-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.stats-btn--ghost {
+  background: transparent;
+  color: var(--spice-subtext, #b3b3b3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.stats-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--spice-text, #fff);
+}
+
+.stats-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--spice-subtext, #b3b3b3);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  padding: 0;
+}
+
+.stats-icon-btn:hover {
+  color: var(--spice-text, #fff);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Status Display ─── */
+
+.stats-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  gap: 12px;
+  text-align: center;
+  padding: 32px;
+}
+
+.stats-status h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--spice-text, #fff);
+  margin: 0;
+}
+
+.stats-status p {
+  color: var(--spice-subtext, #b3b3b3);
+  font-size: 14px;
+  margin: 0;
+  max-width: 400px;
+}
+
+.stats-status-icon {
+  color: var(--spice-subtext, #b3b3b3);
+  opacity: 0.6;
+}
+
+.stats-empty {
+  color: var(--spice-subtext, #b3b3b3);
+  font-size: 14px;
+  text-align: center;
+  padding: 48px 0;
+}
+
+/* ─── Spinner ─── */
+
+.stats-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--spice-button, #1db954);
+  border-radius: 50%;
+  animation: stats-spin 0.8s linear infinite;
+}
+
+@keyframes stats-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes stats-fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Settings Modal ─── */
+
+.stats-config {
+  padding: 8px 0;
+}
+
+.stats-config-row {
+  margin-bottom: 16px;
+}
+
+.stats-config-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--spice-text, #fff);
+  margin-bottom: 4px;
+}
+
+.stats-config-desc {
+  font-size: 12px;
+  color: var(--spice-subtext, #b3b3b3);
+  margin-bottom: 8px;
+}
+
+.stats-config-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--spice-text, #fff);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.stats-config-input:focus {
+  border-color: var(--spice-button, #1db954);
+}
+
+.stats-config-input::placeholder {
+  color: var(--spice-subtext, #b3b3b3);
+  opacity: 0.6;
+}
+
+.stats-config-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--spice-text, #fff);
+  user-select: none;
+}
+
+.stats-config-toggle-row:hover {
+  opacity: 0.85;
+}
+
+/* ─── Toggle Switch ─── */
+
+.stats-toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.stats-toggle--on {
+  background: var(--spice-button, #1db954);
+}
+
+.stats-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+
+.stats-toggle--on .stats-toggle-knob {
+  transform: translateX(16px);
+}
+
+/* ─── Data Source Selector (settings modal) ─── */
+
+.stats-config-source-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.stats-config-source-btn {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--spice-subtext, #b3b3b3);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  font-family: inherit;
+}
+
+.stats-config-source-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--spice-text, #fff);
+}
+
+.stats-config-source-btn--active {
+  background: var(--spice-button, #1db954);
+  color: #fff;
+  border-color: var(--spice-button, #1db954);
+}
+
+.stats-config-source-btn--active:hover {
+  background: var(--spice-button, #1db954);
+  color: #fff;
+  opacity: 0.9;
+}
+
+/* ─── Loading state ─── */
+
+.stats-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+}

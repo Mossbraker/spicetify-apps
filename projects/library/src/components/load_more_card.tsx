@@ -11,9 +11,9 @@ const LoadMoreCard = (props: any) => {
 					<circle cx="6.5" cy="12" r="1.5"></circle>
 				</svg>
 			</div>
-			<Spicetify.ReactComponent.TextComponent as="div" variant="violaBold" semanticColor="textBase" weight="bold">
+			<div style={{ fontWeight: "bold", color: "var(--spice-text)" }}>
 				Load More
-			</Spicetify.ReactComponent.TextComponent>
+			</div>
 		</div>
 	);
 };

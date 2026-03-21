@@ -2261,4 +2261,979 @@ Also, there is a divergent branch issue. I'd like you to resolve it so I can pus
 
 ---
 
-There's a new PR #245 that wants to merge 9 commits into harbassan:main from Akshay-86:main. Is there anything in those commits that we should integrate into our branch? 
+There's a new PR #245 that wants to merge 9 commits into harbassan:main from Akshay-86:main. Is there anything in those commits that we should integrate into our branch?  I think it likely fixes the react errors, so that should help track down if there are any remaining React issues in our branch. There may be other useful things too.
+
+Also, you said to "What is still useful from the issue 242 version (`stats/`)?"
+
+Yes, there are still a few ideas worth borrowing, without adopting the monolith:
+
+1. A small runtime debug log buffer
+2. A narrowly scoped request queue and startup delay for optional enrichment requests
+3. Cache diagnostics that show hit age and stale behavior more clearly
+
+Those are operational ideas, not architectural ones. I would not take its single-file structure, custom settings system, or whole-app data-source model.
+
+So, let's use those 3 ideas.
+
+---
+
+Well, if you didn't rebuild the apps, I can't test them. Oh wait, you said they're rebuilt but not verified, right? Why does it requires the spicetify CLI now? Can we install it?
+
+Once the debug console is open how do I minimize it? I don't see any way to do it. `Esc` button does nothing.
+
+Latest Library error logs:
+
+xpui-modules.js:1 Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at mo (xpui-modules.js:1:1307252)
+    at e (xpui-modules.js:1:1312247)
+    at Es (xpui-modules.js:1:1330246)
+    at Tc (xpui-modules.js:1:1377186)
+    at ml (xpui-modules.js:1:1366050)
+    at pl (xpui-modules.js:1:1365978)
+    at dl (xpui-modules.js:1:1365841)
+    at el (xpui-modules.js:1:1362676)
+    at Qc (xpui-modules.js:1:1361231)
+    at v (xpui-modules.js:1:4174275)Caused by: React ErrorBoundary Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at xpui-modules.js:1:5760694
+    at button
+    at o (xpui-modules.js:1:7044364)
+    at xpui-modules.js:1:6613689
+    at l (xpui-modules.js:1:6608848)
+    at v (xpui-modules.js:1:6614581)
+    at d (xpui-modules.js:1:3907101)
+    at y
+    at se (spicetify-routes-library.js:4:12321)
+    at div
+    at div
+    at section
+    at P (spicetify-routes-library.js:4:3700)
+    at Ue (spicetify-routes-library.js:4:28604)
+    at Je (spicetify-routes-library.js:4:34655)
+    at div
+    at Qe (spicetify-routes-library.js:4:35909)
+    at render
+    at R (xpui-modules.js:1:2915295)
+    at F (xpui-modules.js:1:2918961)
+    at hE (xpui-snapshot.js:1:249382)
+    at Suspense
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at main
+    at xpui-snapshot.js:1:50663
+    at div
+    at div
+    at xpui-modules.js:1:5462127
+    at Xn (xpui-modules.js:1:5462930)
+    at div
+    at div
+    at ba (xpui-snapshot.js:1:53184)
+    at div
+    at Kn (xpui-snapshot.js:1:51036)
+    at div
+    at Fy (xpui-snapshot.js:1:222466)
+    at Jm (xpui-snapshot.js:1:183874)
+    at s (xpui-modules.js:1:1499939)
+    at qp (xpui-snapshot.js:1:166024)
+    at qr (xpui-snapshot.js:1:64205)
+    at l (xpui-modules.js:1:1216484)
+    at t (xpui-modules.js:1:2312688)
+    at A (xpui-modules.js:1:5318416)
+    at Suspense
+    at bm
+    at a (xpui-modules.js:1:2714519)
+    at l (xpui-modules.js:1:2625195)
+    at l (xpui-modules.js:1:1925428)
+    at l (xpui-modules.js:1:3924326)
+    at c (xpui-modules.js:1:4608271)
+    at dn (xpui-snapshot.js:1:46618)
+    at am (xpui-snapshot.js:1:169853)
+    at c (xpui-modules.js:1:2764663)
+    at Suspense
+    at pn (xpui-snapshot.js:1:46788)
+    at a (xpui-modules.js:1:2276755)
+    at a (xpui-modules.js:1:2996747)
+    at l (xpui-modules.js:1:4857996)
+    at Cx (xpui-snapshot.js:1:230510)
+    at Lt (xpui-snapshot.js:1:43627)
+    at kx (xpui-snapshot.js:1:230885)
+    at Lx (xpui-snapshot.js:1:235678)
+    at S (xpui-modules.js:1:4794167)
+    at E (xpui-modules.js:1:4187590)
+    at l (xpui-modules.js:1:6421092)
+    at d (xpui-modules.js:1:3907101)
+    at l (xpui-modules.js:1:3907576)
+    at u (xpui-modules.js:1:1057160)
+    at m (xpui-modules.js:1:2280791)
+    at e (xpui-modules.js:1:3824014)
+    at l (xpui-modules.js:1:2755788)
+    at E (xpui-modules.js:1:2805089)
+    at le (xpui-modules.js:1:5941889)
+    at l (xpui-modules.js:1:6129795)
+    at p (xpui-snapshot.js:1:11749)
+    at Lt (xpui-snapshot.js:1:43627)
+    at l (xpui-modules.js:1:4586533)
+    at ye (xpui-snapshot.js:1:28848)
+    at Qt (xpui-snapshot.js:1:44555)
+    at Ot (xpui-snapshot.js:1:43953)
+    at Dt (xpui-snapshot.js:1:43855)
+    at a (xpui-modules.js:1:4939758)
+    at a (xpui-modules.js:1:947302)
+    at h (xpui-modules.js:1:7412494)
+    at a (xpui-modules.js:1:5324236)
+    at a (xpui-modules.js:1:2275587)
+    at Ft (xpui-snapshot.js:1:44259)
+    at s (xpui-modules.js:1:5253064)
+    at u (xpui-modules.js:1:749066)
+    at s (xpui-modules.js:1:48385)
+    at a (xpui-modules.js:1:5008899)
+    at ze (xpui-snapshot.js:1:31274)
+    at s (xpui-modules.js:1:4809247)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:42472)
+    at c (xpui-modules.js:1:1243349)
+    at Nt (xpui-snapshot.js:1:43391)
+    at a (xpui-modules.js:1:4438816)
+    at Ht (xpui-snapshot.js:1:44050)
+    at a (xpui-modules.js:1:2396813)
+    at Gt (xpui-snapshot.js:1:44631)
+    at Lt (xpui-snapshot.js:1:43627)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:44749)
+    at fE (xpui-snapshot.js:1:264764)
+    at j (xpui-modules.js:1:4461017)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at s (xpui-modules.js:1:4987377)
+    at B (xpui-modules.js:1:2918330)
+    at Xt (xpui-snapshot.js:1:45796)
+    at vE (xpui-snapshot.js:1:264907)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at c (xpui-modules.js:1:1243349)
+ss @ xpui-modules.js:1
+o.componentDidCatch.n.callback @ xpui-modules.js:1
+Vo @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+fc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+Qc @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+xpui-modules.js:1 Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at mo (xpui-modules.js:1:1307252)
+    at e (xpui-modules.js:1:1312247)
+    at Es (xpui-modules.js:1:1330246)
+    at Tc (xpui-modules.js:1:1377186)
+    at ml (xpui-modules.js:1:1366050)
+    at pl (xpui-modules.js:1:1365978)
+    at dl (xpui-modules.js:1:1365841)
+    at el (xpui-modules.js:1:1362676)
+    at Qc (xpui-modules.js:1:1361231)
+    at v (xpui-modules.js:1:4174275)Caused by: React ErrorBoundary Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at xpui-modules.js:1:5760694
+    at button
+    at o (xpui-modules.js:1:7044364)
+    at xpui-modules.js:1:6613689
+    at l (xpui-modules.js:1:6608848)
+    at v (xpui-modules.js:1:6614581)
+    at d (xpui-modules.js:1:3907101)
+    at y
+    at se (spicetify-routes-library.js:4:12321)
+    at div
+    at div
+    at section
+    at P (spicetify-routes-library.js:4:3700)
+    at Ue (spicetify-routes-library.js:4:28604)
+    at Je (spicetify-routes-library.js:4:34655)
+    at div
+    at Qe (spicetify-routes-library.js:4:35909)
+    at render
+    at R (xpui-modules.js:1:2915295)
+    at F (xpui-modules.js:1:2918961)
+    at hE (xpui-snapshot.js:1:249382)
+    at Suspense
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at main
+    at xpui-snapshot.js:1:50663
+    at div
+    at div
+    at xpui-modules.js:1:5462127
+    at Xn (xpui-modules.js:1:5462930)
+    at div
+    at div
+    at ba (xpui-snapshot.js:1:53184)
+    at div
+    at Kn (xpui-snapshot.js:1:51036)
+    at div
+    at Fy (xpui-snapshot.js:1:222466)
+    at Jm (xpui-snapshot.js:1:183874)
+    at s (xpui-modules.js:1:1499939)
+    at qp (xpui-snapshot.js:1:166024)
+    at qr (xpui-snapshot.js:1:64205)
+    at l (xpui-modules.js:1:1216484)
+    at t (xpui-modules.js:1:2312688)
+    at A (xpui-modules.js:1:5318416)
+    at Suspense
+    at bm
+    at a (xpui-modules.js:1:2714519)
+    at l (xpui-modules.js:1:2625195)
+    at l (xpui-modules.js:1:1925428)
+    at l (xpui-modules.js:1:3924326)
+    at c (xpui-modules.js:1:4608271)
+    at dn (xpui-snapshot.js:1:46618)
+    at am (xpui-snapshot.js:1:169853)
+    at c (xpui-modules.js:1:2764663)
+    at Suspense
+    at pn (xpui-snapshot.js:1:46788)
+    at a (xpui-modules.js:1:2276755)
+    at a (xpui-modules.js:1:2996747)
+    at l (xpui-modules.js:1:4857996)
+    at Cx (xpui-snapshot.js:1:230510)
+    at Lt (xpui-snapshot.js:1:43627)
+    at kx (xpui-snapshot.js:1:230885)
+    at Lx (xpui-snapshot.js:1:235678)
+    at S (xpui-modules.js:1:4794167)
+    at E (xpui-modules.js:1:4187590)
+    at l (xpui-modules.js:1:6421092)
+    at d (xpui-modules.js:1:3907101)
+    at l (xpui-modules.js:1:3907576)
+    at u (xpui-modules.js:1:1057160)
+    at m (xpui-modules.js:1:2280791)
+    at e (xpui-modules.js:1:3824014)
+    at l (xpui-modules.js:1:2755788)
+    at E (xpui-modules.js:1:2805089)
+    at le (xpui-modules.js:1:5941889)
+    at l (xpui-modules.js:1:6129795)
+    at p (xpui-snapshot.js:1:11749)
+    at Lt (xpui-snapshot.js:1:43627)
+    at l (xpui-modules.js:1:4586533)
+    at ye (xpui-snapshot.js:1:28848)
+    at Qt (xpui-snapshot.js:1:44555)
+    at Ot (xpui-snapshot.js:1:43953)
+    at Dt (xpui-snapshot.js:1:43855)
+    at a (xpui-modules.js:1:4939758)
+    at a (xpui-modules.js:1:947302)
+    at h (xpui-modules.js:1:7412494)
+    at a (xpui-modules.js:1:5324236)
+    at a (xpui-modules.js:1:2275587)
+    at Ft (xpui-snapshot.js:1:44259)
+    at s (xpui-modules.js:1:5253064)
+    at u (xpui-modules.js:1:749066)
+    at s (xpui-modules.js:1:48385)
+    at a (xpui-modules.js:1:5008899)
+    at ze (xpui-snapshot.js:1:31274)
+    at s (xpui-modules.js:1:4809247)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:42472)
+    at c (xpui-modules.js:1:1243349)
+    at Nt (xpui-snapshot.js:1:43391)
+    at a (xpui-modules.js:1:4438816)
+    at Ht (xpui-snapshot.js:1:44050)
+    at a (xpui-modules.js:1:2396813)
+    at Gt (xpui-snapshot.js:1:44631)
+    at Lt (xpui-snapshot.js:1:43627)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:44749)
+    at fE (xpui-snapshot.js:1:264764)
+    at j (xpui-modules.js:1:4461017)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at s (xpui-modules.js:1:4987377)
+    at B (xpui-modules.js:1:2918330)
+    at Xt (xpui-snapshot.js:1:45796)
+    at vE (xpui-snapshot.js:1:264907)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at c (xpui-modules.js:1:1243349)
+Yt @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+withScope @ xpui-modules.js:1
+c @ xpui-modules.js:1
+u @ xpui-modules.js:1
+Wt @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+withScope @ xpui-modules.js:1
+c @ xpui-modules.js:1
+u @ xpui-modules.js:1
+Kt @ xpui-modules.js:1
+onError @ xpui-snapshot.js:1
+(anonymous) @ xpui-modules.js:1
+withScope @ xpui-modules.js:1
+c @ xpui-modules.js:1
+u @ xpui-modules.js:1
+componentDidCatch @ xpui-modules.js:1
+o.componentDidCatch.n.callback @ xpui-modules.js:1
+Vo @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+fc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+Qc @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+
+---
+
+So, how is the debug console minimized? I have to clear logs first, and the I have to click the title bar? How would anyone ever guess that. Bad design.
+
+Anyway, this should be the latest build:
+
+xpui-modules.js:1 Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at mo (xpui-modules.js:1:1307252)
+    at e (xpui-modules.js:1:1312247)
+    at Es (xpui-modules.js:1:1330246)
+    at Tc (xpui-modules.js:1:1377186)
+    at ml (xpui-modules.js:1:1366050)
+    at pl (xpui-modules.js:1:1365978)
+    at dl (xpui-modules.js:1:1365841)
+    at el (xpui-modules.js:1:1362676)
+    at Qc (xpui-modules.js:1:1361231)
+    at v (xpui-modules.js:1:4174275)Caused by: React ErrorBoundary Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at xpui-modules.js:1:5760694
+    at button
+    at xpui-modules.js:1:6613689
+    at l (xpui-modules.js:1:6608848)
+    at v (xpui-modules.js:1:6614581)
+    at d (xpui-modules.js:1:3907101)
+    at y
+    at se (spicetify-routes-library.js:4:12373)
+    at div
+    at div
+    at section
+    at P (spicetify-routes-library.js:4:3700)
+    at Ue (spicetify-routes-library.js:4:28708)
+    at Je (spicetify-routes-library.js:4:34759)
+    at div
+    at Qe (spicetify-routes-library.js:4:36013)
+    at render
+    at R (xpui-modules.js:1:2915295)
+    at F (xpui-modules.js:1:2918961)
+    at hE (xpui-snapshot.js:1:249382)
+    at Suspense
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at main
+    at xpui-snapshot.js:1:50663
+    at div
+    at div
+    at xpui-modules.js:1:5462127
+    at Xn (xpui-modules.js:1:5462930)
+    at div
+    at div
+    at ba (xpui-snapshot.js:1:53184)
+    at div
+    at Kn (xpui-snapshot.js:1:51036)
+    at div
+    at Fy (xpui-snapshot.js:1:222466)
+    at Jm (xpui-snapshot.js:1:183874)
+    at s (xpui-modules.js:1:1499939)
+    at qp (xpui-snapshot.js:1:166024)
+    at qr (xpui-snapshot.js:1:64205)
+    at l (xpui-modules.js:1:1216484)
+    at t (xpui-modules.js:1:2312688)
+    at A (xpui-modules.js:1:5318416)
+    at Suspense
+    at bm
+    at a (xpui-modules.js:1:2714519)
+    at l (xpui-modules.js:1:2625195)
+    at l (xpui-modules.js:1:1925428)
+    at l (xpui-modules.js:1:3924326)
+    at c (xpui-modules.js:1:4608271)
+    at dn (xpui-snapshot.js:1:46618)
+    at am (xpui-snapshot.js:1:169853)
+    at c (xpui-modules.js:1:2764663)
+    at Suspense
+    at pn (xpui-snapshot.js:1:46788)
+    at a (xpui-modules.js:1:2276755)
+    at a (xpui-modules.js:1:2996747)
+    at l (xpui-modules.js:1:4857996)
+    at Cx (xpui-snapshot.js:1:230510)
+    at Lt (xpui-snapshot.js:1:43627)
+    at kx (xpui-snapshot.js:1:230885)
+    at Lx (xpui-snapshot.js:1:235678)
+    at S (xpui-modules.js:1:4794167)
+    at E (xpui-modules.js:1:4187590)
+    at l (xpui-modules.js:1:6421092)
+    at d (xpui-modules.js:1:3907101)
+    at l (xpui-modules.js:1:3907576)
+    at u (xpui-modules.js:1:1057160)
+    at m (xpui-modules.js:1:2280791)
+    at e (xpui-modules.js:1:3824014)
+    at l (xpui-modules.js:1:2755788)
+    at E (xpui-modules.js:1:2805089)
+    at le (xpui-modules.js:1:5941889)
+    at l (xpui-modules.js:1:6129795)
+    at p (xpui-snapshot.js:1:11749)
+    at Lt (xpui-snapshot.js:1:43627)
+    at l (xpui-modules.js:1:4586533)
+    at ye (xpui-snapshot.js:1:28848)
+    at Qt (xpui-snapshot.js:1:44555)
+    at Ot (xpui-snapshot.js:1:43953)
+    at Dt (xpui-snapshot.js:1:43855)
+    at a (xpui-modules.js:1:4939758)
+    at a (xpui-modules.js:1:947302)
+    at h (xpui-modules.js:1:7412494)
+    at a (xpui-modules.js:1:5324236)
+    at a (xpui-modules.js:1:2275587)
+    at Ft (xpui-snapshot.js:1:44259)
+    at s (xpui-modules.js:1:5253064)
+    at u (xpui-modules.js:1:749066)
+    at s (xpui-modules.js:1:48385)
+    at a (xpui-modules.js:1:5008899)
+    at ze (xpui-snapshot.js:1:31274)
+    at s (xpui-modules.js:1:4809247)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:42472)
+    at c (xpui-modules.js:1:1243349)
+    at Nt (xpui-snapshot.js:1:43391)
+    at a (xpui-modules.js:1:4438816)
+    at Ht (xpui-snapshot.js:1:44050)
+    at a (xpui-modules.js:1:2396813)
+    at Gt (xpui-snapshot.js:1:44631)
+    at Lt (xpui-snapshot.js:1:43627)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:44749)
+    at fE (xpui-snapshot.js:1:264764)
+    at j (xpui-modules.js:1:4461017)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at s (xpui-modules.js:1:4987377)
+    at B (xpui-modules.js:1:2918330)
+    at Xt (xpui-snapshot.js:1:45796)
+    at vE (xpui-snapshot.js:1:264907)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at c (xpui-modules.js:1:1243349)
+ss @ xpui-modules.js:1
+o.componentDidCatch.n.callback @ xpui-modules.js:1
+Vo @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+fc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+Qc @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+xpui-modules.js:1 Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at mo (xpui-modules.js:1:1307252)
+    at e (xpui-modules.js:1:1312247)
+    at Es (xpui-modules.js:1:1330246)
+    at Tc (xpui-modules.js:1:1377186)
+    at ml (xpui-modules.js:1:1366050)
+    at pl (xpui-modules.js:1:1365978)
+    at dl (xpui-modules.js:1:1365841)
+    at el (xpui-modules.js:1:1362676)
+    at Qc (xpui-modules.js:1:1361231)
+    at v (xpui-modules.js:1:4174275)Caused by: React ErrorBoundary Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at xpui-modules.js:1:5760694
+    at button
+    at xpui-modules.js:1:6613689
+    at l (xpui-modules.js:1:6608848)
+    at v (xpui-modules.js:1:6614581)
+    at d (xpui-modules.js:1:3907101)
+    at y
+    at se (spicetify-routes-library.js:4:12373)
+    at div
+    at div
+    at section
+    at P (spicetify-routes-library.js:4:3700)
+    at Ue (spicetify-routes-library.js:4:28708)
+    at Je (spicetify-routes-library.js:4:34759)
+    at div
+    at Qe (spicetify-routes-library.js:4:36013)
+    at render
+    at R (xpui-modules.js:1:2915295)
+    at F (xpui-modules.js:1:2918961)
+    at hE (xpui-snapshot.js:1:249382)
+    at Suspense
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at main
+    at xpui-snapshot.js:1:50663
+    at div
+    at div
+    at xpui-modules.js:1:5462127
+    at Xn (xpui-modules.js:1:5462930)
+    at div
+    at div
+    at ba (xpui-snapshot.js:1:53184)
+    at div
+    at Kn (xpui-snapshot.js:1:51036)
+    at div
+    at Fy (xpui-snapshot.js:1:222466)
+    at Jm (xpui-snapshot.js:1:183874)
+    at s (xpui-modules.js:1:1499939)
+    at qp (xpui-snapshot.js:1:166024)
+    at qr (xpui-snapshot.js:1:64205)
+    at l (xpui-modules.js:1:1216484)
+    at t (xpui-modules.js:1:2312688)
+    at A (xpui-modules.js:1:5318416)
+    at Suspense
+    at bm
+    at a (xpui-modules.js:1:2714519)
+    at l (xpui-modules.js:1:2625195)
+    at l (xpui-modules.js:1:1925428)
+    at l (xpui-modules.js:1:3924326)
+    at c (xpui-modules.js:1:4608271)
+    at dn (xpui-snapshot.js:1:46618)
+    at am (xpui-snapshot.js:1:169853)
+    at c (xpui-modules.js:1:2764663)
+    at Suspense
+    at pn (xpui-snapshot.js:1:46788)
+    at a (xpui-modules.js:1:2276755)
+    at a (xpui-modules.js:1:2996747)
+    at l (xpui-modules.js:1:4857996)
+    at Cx (xpui-snapshot.js:1:230510)
+    at Lt (xpui-snapshot.js:1:43627)
+    at kx (xpui-snapshot.js:1:230885)
+    at Lx (xpui-snapshot.js:1:235678)
+    at S (xpui-modules.js:1:4794167)
+    at E (xpui-modules.js:1:4187590)
+    at l (xpui-modules.js:1:6421092)
+    at d (xpui-modules.js:1:3907101)
+    at l (xpui-modules.js:1:3907576)
+    at u (xpui-modules.js:1:1057160)
+    at m (xpui-modules.js:1:2280791)
+    at e (xpui-modules.js:1:3824014)
+    at l (xpui-modules.js:1:2755788)
+    at E (xpui-modules.js:1:2805089)
+    at le (xpui-modules.js:1:5941889)
+    at l (xpui-modules.js:1:6129795)
+    at p (xpui-snapshot.js:1:11749)
+    at Lt (xpui-snapshot.js:1:43627)
+    at l (xpui-modules.js:1:4586533)
+    at ye (xpui-snapshot.js:1:28848)
+    at Qt (xpui-snapshot.js:1:44555)
+    at Ot (xpui-snapshot.js:1:43953)
+    at Dt (xpui-snapshot.js:1:43855)
+    at a (xpui-modules.js:1:4939758)
+    at a (xpui-modules.js:1:947302)
+    at h (xpui-modules.js:1:7412494)
+    at a (xpui-modules.js:1:5324236)
+    at a (xpui-modules.js:1:2275587)
+    at Ft (xpui-snapshot.js:1:44259)
+    at s (xpui-modules.js:1:5253064)
+    at u (xpui-modules.js:1:749066)
+    at s (xpui-modules.js:1:48385)
+    at a (xpui-modules.js:1:5008899)
+    at ze (xpui-snapshot.js:1:31274)
+    at s (xpui-modules.js:1:4809247)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:42472)
+    at c (xpui-modules.js:1:1243349)
+    at Nt (xpui-snapshot.js:1:43391)
+    at a (xpui-modules.js:1:4438816)
+    at Ht (xpui-snapshot.js:1:44050)
+    at a (xpui-modules.js:1:2396813)
+    at Gt (xpui-snapshot.js:1:44631)
+    at Lt (xpui-snapshot.js:1:43627)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:44749)
+    at fE (xpui-snapshot.js:1:264764)
+    at j (xpui-modules.js:1:4461017)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at s (xpui-modules.js:1:4987377)
+    at B (xpui-modules.js:1:2918330)
+    at Xt (xpui-snapshot.js:1:45796)
+    at vE (xpui-snapshot.js:1:264907)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at c (xpui-modules.js:1:1243349)
+Yt @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+withScope @ xpui-modules.js:1
+c @ xpui-modules.js:1
+u @ xpui-modules.js:1
+Wt @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+withScope @ xpui-modules.js:1
+c @ xpui-modules.js:1
+u @ xpui-modules.js:1
+Kt @ xpui-modules.js:1
+onError @ xpui-snapshot.js:1
+(anonymous) @ xpui-modules.js:1
+withScope @ xpui-modules.js:1
+c @ xpui-modules.js:1
+u @ xpui-modules.js:1
+componentDidCatch @ xpui-modules.js:1
+o.componentDidCatch.n.callback @ xpui-modules.js:1
+Vo @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+fc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+Qc @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+
+---
+
+I was sure I was using the latest build last time, but I may have made a mistake. These are definitely the latest build errors though.
+
+xpui-modules.js:1 Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at mo (xpui-modules.js:1:1307252)
+    at e (xpui-modules.js:1:1312247)
+    at Es (xpui-modules.js:1:1330246)
+    at Tc (xpui-modules.js:1:1377186)
+    at ml (xpui-modules.js:1:1366050)
+    at pl (xpui-modules.js:1:1365978)
+    at dl (xpui-modules.js:1:1365841)
+    at el (xpui-modules.js:1:1362676)
+    at Qc (xpui-modules.js:1:1361231)
+    at v (xpui-modules.js:1:4174275)Caused by: React ErrorBoundary Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at xpui-modules.js:1:5760694
+    at button
+    at xpui-modules.js:1:6613689
+    at l (xpui-modules.js:1:6608848)
+    at v (xpui-modules.js:1:6614581)
+    at d (xpui-modules.js:1:3907101)
+    at y
+    at se (spicetify-routes-library.js:4:12373)
+    at div
+    at div
+    at section
+    at P (spicetify-routes-library.js:4:3700)
+    at Ue (spicetify-routes-library.js:4:28708)
+    at Je (spicetify-routes-library.js:4:34759)
+    at div
+    at Qe (spicetify-routes-library.js:4:36013)
+    at render
+    at R (xpui-modules.js:1:2915295)
+    at F (xpui-modules.js:1:2918961)
+    at hE (xpui-snapshot.js:1:249382)
+    at Suspense
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at main
+    at xpui-snapshot.js:1:50663
+    at div
+    at div
+    at xpui-modules.js:1:5462127
+    at Xn (xpui-modules.js:1:5462930)
+    at div
+    at div
+    at ba (xpui-snapshot.js:1:53184)
+    at div
+    at Kn (xpui-snapshot.js:1:51036)
+    at div
+    at Fy (xpui-snapshot.js:1:222466)
+    at Jm (xpui-snapshot.js:1:183874)
+    at s (xpui-modules.js:1:1499939)
+    at qp (xpui-snapshot.js:1:166024)
+    at qr (xpui-snapshot.js:1:64205)
+    at l (xpui-modules.js:1:1216484)
+    at t (xpui-modules.js:1:2312688)
+    at A (xpui-modules.js:1:5318416)
+    at Suspense
+    at bm
+    at a (xpui-modules.js:1:2714519)
+    at l (xpui-modules.js:1:2625195)
+    at l (xpui-modules.js:1:1925428)
+    at l (xpui-modules.js:1:3924326)
+    at c (xpui-modules.js:1:4608271)
+    at dn (xpui-snapshot.js:1:46618)
+    at am (xpui-snapshot.js:1:169853)
+    at c (xpui-modules.js:1:2764663)
+    at Suspense
+    at pn (xpui-snapshot.js:1:46788)
+    at a (xpui-modules.js:1:2276755)
+    at a (xpui-modules.js:1:2996747)
+    at l (xpui-modules.js:1:4857996)
+    at Cx (xpui-snapshot.js:1:230510)
+    at Lt (xpui-snapshot.js:1:43627)
+    at kx (xpui-snapshot.js:1:230885)
+    at Lx (xpui-snapshot.js:1:235678)
+    at S (xpui-modules.js:1:4794167)
+    at E (xpui-modules.js:1:4187590)
+    at l (xpui-modules.js:1:6421092)
+    at d (xpui-modules.js:1:3907101)
+    at l (xpui-modules.js:1:3907576)
+    at u (xpui-modules.js:1:1057160)
+    at m (xpui-modules.js:1:2280791)
+    at e (xpui-modules.js:1:3824014)
+    at l (xpui-modules.js:1:2755788)
+    at E (xpui-modules.js:1:2805089)
+    at le (xpui-modules.js:1:5941889)
+    at l (xpui-modules.js:1:6129795)
+    at p (xpui-snapshot.js:1:11749)
+    at Lt (xpui-snapshot.js:1:43627)
+    at l (xpui-modules.js:1:4586533)
+    at ye (xpui-snapshot.js:1:28848)
+    at Qt (xpui-snapshot.js:1:44555)
+    at Ot (xpui-snapshot.js:1:43953)
+    at Dt (xpui-snapshot.js:1:43855)
+    at a (xpui-modules.js:1:4939758)
+    at a (xpui-modules.js:1:947302)
+    at h (xpui-modules.js:1:7412494)
+    at a (xpui-modules.js:1:5324236)
+    at a (xpui-modules.js:1:2275587)
+    at Ft (xpui-snapshot.js:1:44259)
+    at s (xpui-modules.js:1:5253064)
+    at u (xpui-modules.js:1:749066)
+    at s (xpui-modules.js:1:48385)
+    at a (xpui-modules.js:1:5008899)
+    at ze (xpui-snapshot.js:1:31274)
+    at s (xpui-modules.js:1:4809247)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:42472)
+    at c (xpui-modules.js:1:1243349)
+    at Nt (xpui-snapshot.js:1:43391)
+    at a (xpui-modules.js:1:4438816)
+    at Ht (xpui-snapshot.js:1:44050)
+    at a (xpui-modules.js:1:2396813)
+    at Gt (xpui-snapshot.js:1:44631)
+    at Lt (xpui-snapshot.js:1:43627)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:44749)
+    at fE (xpui-snapshot.js:1:264764)
+    at j (xpui-modules.js:1:4461017)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at s (xpui-modules.js:1:4987377)
+    at B (xpui-modules.js:1:2918330)
+    at Xt (xpui-snapshot.js:1:45796)
+    at vE (xpui-snapshot.js:1:264907)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at c (xpui-modules.js:1:1243349)
+ss @ xpui-modules.js:1
+o.componentDidCatch.n.callback @ xpui-modules.js:1
+Vo @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+fc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+Qc @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+xpui-modules.js:1 Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at mo (xpui-modules.js:1:1307252)
+    at e (xpui-modules.js:1:1312247)
+    at Es (xpui-modules.js:1:1330246)
+    at Tc (xpui-modules.js:1:1377186)
+    at ml (xpui-modules.js:1:1366050)
+    at pl (xpui-modules.js:1:1365978)
+    at dl (xpui-modules.js:1:1365841)
+    at el (xpui-modules.js:1:1362676)
+    at Qc (xpui-modules.js:1:1361231)
+    at v (xpui-modules.js:1:4174275)Caused by: React ErrorBoundary Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at xpui-modules.js:1:5760694
+    at button
+    at xpui-modules.js:1:6613689
+    at l (xpui-modules.js:1:6608848)
+    at v (xpui-modules.js:1:6614581)
+    at d (xpui-modules.js:1:3907101)
+    at y
+    at se (spicetify-routes-library.js:4:12373)
+    at div
+    at div
+    at section
+    at P (spicetify-routes-library.js:4:3700)
+    at Ue (spicetify-routes-library.js:4:28708)
+    at Je (spicetify-routes-library.js:4:34759)
+    at div
+    at Qe (spicetify-routes-library.js:4:36013)
+    at render
+    at R (xpui-modules.js:1:2915295)
+    at F (xpui-modules.js:1:2918961)
+    at hE (xpui-snapshot.js:1:249382)
+    at Suspense
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at main
+    at xpui-snapshot.js:1:50663
+    at div
+    at div
+    at xpui-modules.js:1:5462127
+    at Xn (xpui-modules.js:1:5462930)
+    at div
+    at div
+    at ba (xpui-snapshot.js:1:53184)
+    at div
+    at Kn (xpui-snapshot.js:1:51036)
+    at div
+    at Fy (xpui-snapshot.js:1:222466)
+    at Jm (xpui-snapshot.js:1:183874)
+    at s (xpui-modules.js:1:1499939)
+    at qp (xpui-snapshot.js:1:166024)
+    at qr (xpui-snapshot.js:1:64205)
+    at l (xpui-modules.js:1:1216484)
+    at t (xpui-modules.js:1:2312688)
+    at A (xpui-modules.js:1:5318416)
+    at Suspense
+    at bm
+    at a (xpui-modules.js:1:2714519)
+    at l (xpui-modules.js:1:2625195)
+    at l (xpui-modules.js:1:1925428)
+    at l (xpui-modules.js:1:3924326)
+    at c (xpui-modules.js:1:4608271)
+    at dn (xpui-snapshot.js:1:46618)
+    at am (xpui-snapshot.js:1:169853)
+    at c (xpui-modules.js:1:2764663)
+    at Suspense
+    at pn (xpui-snapshot.js:1:46788)
+    at a (xpui-modules.js:1:2276755)
+    at a (xpui-modules.js:1:2996747)
+    at l (xpui-modules.js:1:4857996)
+    at Cx (xpui-snapshot.js:1:230510)
+    at Lt (xpui-snapshot.js:1:43627)
+    at kx (xpui-snapshot.js:1:230885)
+    at Lx (xpui-snapshot.js:1:235678)
+    at S (xpui-modules.js:1:4794167)
+    at E (xpui-modules.js:1:4187590)
+    at l (xpui-modules.js:1:6421092)
+    at d (xpui-modules.js:1:3907101)
+    at l (xpui-modules.js:1:3907576)
+    at u (xpui-modules.js:1:1057160)
+    at m (xpui-modules.js:1:2280791)
+    at e (xpui-modules.js:1:3824014)
+    at l (xpui-modules.js:1:2755788)
+    at E (xpui-modules.js:1:2805089)
+    at le (xpui-modules.js:1:5941889)
+    at l (xpui-modules.js:1:6129795)
+    at p (xpui-snapshot.js:1:11749)
+    at Lt (xpui-snapshot.js:1:43627)
+    at l (xpui-modules.js:1:4586533)
+    at ye (xpui-snapshot.js:1:28848)
+    at Qt (xpui-snapshot.js:1:44555)
+    at Ot (xpui-snapshot.js:1:43953)
+    at Dt (xpui-snapshot.js:1:43855)
+    at a (xpui-modules.js:1:4939758)
+    at a (xpui-modules.js:1:947302)
+    at h (xpui-modules.js:1:7412494)
+    at a (xpui-modules.js:1:5324236)
+    at a (xpui-modules.js:1:2275587)
+    at Ft (xpui-snapshot.js:1:44259)
+    at s (xpui-modules.js:1:5253064)
+    at u (xpui-modules.js:1:749066)
+    at s (xpui-modules.js:1:48385)
+    at a (xpui-modules.js:1:5008899)
+    at ze (xpui-snapshot.js:1:31274)
+    at s (xpui-modules.js:1:4809247)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:42472)
+    at c (xpui-modules.js:1:1243349)
+    at Nt (xpui-snapshot.js:1:43391)
+    at a (xpui-modules.js:1:4438816)
+    at Ht (xpui-snapshot.js:1:44050)
+    at a (xpui-modules.js:1:2396813)
+    at Gt (xpui-snapshot.js:1:44631)
+    at Lt (xpui-snapshot.js:1:43627)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:44749)
+    at fE (xpui-snapshot.js:1:264764)
+    at j (xpui-modules.js:1:4461017)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at s (xpui-modules.js:1:4987377)
+    at B (xpui-modules.js:1:2918330)
+    at Xt (xpui-snapshot.js:1:45796)
+    at vE (xpui-snapshot.js:1:264907)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at c (xpui-modules.js:1:1243349)
+Yt @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+withScope @ xpui-modules.js:1
+c @ xpui-modules.js:1
+u @ xpui-modules.js:1
+Wt @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+withScope @ xpui-modules.js:1
+c @ xpui-modules.js:1
+u @ xpui-modules.js:1
+Kt @ xpui-modules.js:1
+onError @ xpui-snapshot.js:1
+(anonymous) @ xpui-modules.js:1
+withScope @ xpui-modules.js:1
+c @ xpui-modules.js:1
+u @ xpui-modules.js:1
+componentDidCatch @ xpui-modules.js:1
+o.componentDidCatch.n.callback @ xpui-modules.js:1
+Vo @ xpui-modules.js:1
+hc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+mc @ xpui-modules.js:1
+fc @ xpui-modules.js:1
+(anonymous) @ xpui-modules.js:1
+El @ xpui-modules.js:1
+Qc @ xpui-modules.js:1
+v @ xpui-modules.js:1
+P @ xpui-modules.js:1
+
+---
+
+Sorry I stopped you to say a couple things. Yes, as you've realized, this app is completely broken on the main branch of the main repo too. We did not introduce the issue. This issue was also present in the stats app as well, but that has been fixed entirely now. I'm not sure what is causing the issue with the Library app, but I figured it would probably be similar. Have you looked into how we fixed the stats app? It might be worth looking into that to see if it can be applied here as well.
+
+---
+
+Okay, so there is some flickering when the app first loads, but it seems to load the Pkaylists page after that.
+
+Selecting Albums tab causes Spotify to hang. Reopening Spotify causes the app to load the Albums page.
+
+Selecting the Artists tab brought me to the "Something went wrong" "Try reloading the page" "RELOAD PAGE" page again. And now I'm stuck there. Errors below:
+
+---
+
+Is there any sort of pattern emerging yet? Like cetain issues with xpui-modules.js, imports that don't work, buttons/components/etc that that break the app? If so, let's be sure the entire Library app has had all instances of those issues fixed. Is this something we could troubleshoot with unit tests, integration tests, or end-to-end tests? Or is your environment not set up for that?
