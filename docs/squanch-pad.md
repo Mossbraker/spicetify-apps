@@ -2088,3 +2088,177 @@ Yt @ xpui-modules.js:1
 So, I disabled use OAuth and reenabled it and completed the PKCE flow and pasted the callback URL, and got the Successfully connected to Spotify! notification. Now it's working again.
 
 How do I make sure OAuth doesn't just stop working again?
+
+---
+
+You mentioned that the app linked in issue [#242](https://github.com/harbassan/spicetify-apps/issues/242) - and copied locally here `stats/` - is a complete rebuild, so we just took what was useful from it and integrated it into our build. How is it completely rebuilt? Is the their codebase better structured than ours?
+
+---
+
+Okay, that sounds good. I don't want a monolith. Is there anything else useful that we should consider taking from that version?
+
+We should update `projects/stats/README.md` with steps to set up OAuth. Something like:
+
+- Go to https://developer.spotify.com/dashboard and create an app. 
+- Give it any name and description.
+- Add `http://localhost:5173/callback` as a Redirect URI in the app settings.
+- For APIs used, select 'Web API'.
+- Click 'Create'
+- In the Dashboard, select the app you just created, click 'Copy' next to 'Client ID'.
+- Open Spotify, open the Statistics app, click the app settings icon, paste the Client ID into the Spotify Client ID field, toggle Use OAuth on.
+- This will open a new tab in your browser asking you to log in to Spotify and authorize the app. After authorizing, you will be redirected to a URL that starts with `http://localhost:5173/callback`. Copy this entire URL and paste it back into the Paste Callback URL field in the app settings, 
+- You should see a Successfully connected to Spotify! notification, and the app should start populating with your data. You can click the refresh button in the app to trigger a fresh fetch of your Spotify data.
+
+- OAuth status is displayed in the setting. If you ever see a Failed to connect to Spotify notification, try toggling Use OAuth off and on again and redoing the PKCE flow by pasting the callback URL again.
+
+- [stuff about which sources of data are used for which features, and what limitations there are on that data]
+
+- [stuff about other new toggles in the settings and what they do]
+
+- [what the Use Direct Fetch (Experimental) toggle does and when to use it]
+
+And we should zip the new version so it can be downloaded as the latest release.
+
+Has the 'Spicetify Library' app in this repo been fixed as well? If not, can our fixes be ported? If so, rebuild it so I can test it.
+
+---
+
+Still error #31
+
+Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at mo (xpui-modules.js:1:1307252)
+    at e (xpui-modules.js:1:1312247)
+    at Es (xpui-modules.js:1:1330246)
+    at Tc (xpui-modules.js:1:1377186)
+    at ml (xpui-modules.js:1:1366050)
+    at pl (xpui-modules.js:1:1365978)
+    at dl (xpui-modules.js:1:1365841)
+    at el (xpui-modules.js:1:1362676)
+    at Qc (xpui-modules.js:1:1361231)
+    at v (xpui-modules.js:1:4174275)Caused by: React ErrorBoundary Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=object%20with%20keys%20%7B%24%24typeof%2C%20render%7D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at xpui-modules.js:1:5760694
+    at button
+    at o (xpui-modules.js:1:7044364)
+    at xpui-modules.js:1:6613689
+    at l (xpui-modules.js:1:6608848)
+    at v (xpui-modules.js:1:6614581)
+    at d (xpui-modules.js:1:3907101)
+    at y
+    at oe (spicetify-routes-library.js:4:12279)
+    at div
+    at div
+    at section
+    at P (spicetify-routes-library.js:4:3700)
+    at Ue (spicetify-routes-library.js:4:28371)
+    at Je (spicetify-routes-library.js:4:34422)
+    at div
+    at Qe (spicetify-routes-library.js:4:35676)
+    at render
+    at R (xpui-modules.js:1:2915295)
+    at F (xpui-modules.js:1:2918961)
+    at hE (xpui-snapshot.js:1:249382)
+    at Suspense
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at main
+    at xpui-snapshot.js:1:50663
+    at div
+    at div
+    at xpui-modules.js:1:5462127
+    at Xn (xpui-modules.js:1:5462930)
+    at div
+    at div
+    at ba (xpui-snapshot.js:1:53184)
+    at div
+    at Kn (xpui-snapshot.js:1:51036)
+    at div
+    at Fy (xpui-snapshot.js:1:222466)
+    at Jm (xpui-snapshot.js:1:183874)
+    at s (xpui-modules.js:1:1499939)
+    at qp (xpui-snapshot.js:1:166024)
+    at qr (xpui-snapshot.js:1:64205)
+    at l (xpui-modules.js:1:1216484)
+    at t (xpui-modules.js:1:2312688)
+    at A (xpui-modules.js:1:5318416)
+    at Suspense
+    at bm
+    at a (xpui-modules.js:1:2714519)
+    at l (xpui-modules.js:1:2625195)
+    at l (xpui-modules.js:1:1925428)
+    at l (xpui-modules.js:1:3924326)
+    at c (xpui-modules.js:1:4608271)
+    at dn (xpui-snapshot.js:1:46618)
+    at am (xpui-snapshot.js:1:169853)
+    at c (xpui-modules.js:1:2764663)
+    at Suspense
+    at pn (xpui-snapshot.js:1:46788)
+    at a (xpui-modules.js:1:2276755)
+    at a (xpui-modules.js:1:2996747)
+    at l (xpui-modules.js:1:4857996)
+    at Cx (xpui-snapshot.js:1:230510)
+    at Lt (xpui-snapshot.js:1:43627)
+    at kx (xpui-snapshot.js:1:230885)
+    at Lx (xpui-snapshot.js:1:235678)
+    at S (xpui-modules.js:1:4794167)
+    at E (xpui-modules.js:1:4187590)
+    at l (xpui-modules.js:1:6421092)
+    at d (xpui-modules.js:1:3907101)
+    at l (xpui-modules.js:1:3907576)
+    at u (xpui-modules.js:1:1057160)
+    at m (xpui-modules.js:1:2280791)
+    at e (xpui-modules.js:1:3824014)
+    at l (xpui-modules.js:1:2755788)
+    at E (xpui-modules.js:1:2805089)
+    at le (xpui-modules.js:1:5941889)
+    at l (xpui-modules.js:1:6129795)
+    at p (xpui-snapshot.js:1:11749)
+    at Lt (xpui-snapshot.js:1:43627)
+    at l (xpui-modules.js:1:4586533)
+    at ye (xpui-snapshot.js:1:28848)
+    at Qt (xpui-snapshot.js:1:44555)
+    at Ot (xpui-snapshot.js:1:43953)
+    at Dt (xpui-snapshot.js:1:43855)
+    at a (xpui-modules.js:1:4939758)
+    at a (xpui-modules.js:1:947302)
+    at h (xpui-modules.js:1:7412494)
+    at a (xpui-modules.js:1:5324236)
+    at a (xpui-modules.js:1:2275587)
+    at Ft (xpui-snapshot.js:1:44259)
+    at s (xpui-modules.js:1:5253064)
+    at u (xpui-modules.js:1:749066)
+    at s (xpui-modules.js:1:48385)
+    at a (xpui-modules.js:1:5008899)
+    at ze (xpui-snapshot.js:1:31274)
+    at s (xpui-modules.js:1:4809247)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:42472)
+    at c (xpui-modules.js:1:1243349)
+    at Nt (xpui-snapshot.js:1:43391)
+    at a (xpui-modules.js:1:4438816)
+    at Ht (xpui-snapshot.js:1:44050)
+    at a (xpui-modules.js:1:2396813)
+    at Gt (xpui-snapshot.js:1:44631)
+    at Lt (xpui-snapshot.js:1:43627)
+    at Spicetify.ReactComponent.PlatformProvider (xpui-snapshot.js:1:44749)
+    at fE (xpui-snapshot.js:1:264764)
+    at j (xpui-modules.js:1:4461017)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at s (xpui-modules.js:1:4987377)
+    at B (xpui-modules.js:1:2918330)
+    at Xt (xpui-snapshot.js:1:45796)
+    at vE (xpui-snapshot.js:1:264907)
+    at m (xpui-modules.js:1:6642272)
+    at Suspense
+    at c (xpui-modules.js:1:4484046)
+    at l (xpui-modules.js:1:4484121)
+    at c (xpui-modules.js:1:1243349)
+
+Also, there is a divergent branch issue. I'd like you to resolve it so I can push to oauth-bypass-ratelimits branch.
+
+---
+
+There's a new PR #245 that wants to merge 9 commits into harbassan:main from Akshay-86:main. Is there anything in those commits that we should integrate into our branch? 
