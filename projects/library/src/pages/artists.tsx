@@ -92,7 +92,7 @@ const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const props = {
 		lhs: ["Artists"],
 		rhs: [
-			<AddButton Menu={<AddMenu />} />,
+			<AddButton Menu={AddMenu} />,
 			sortDropdown,
 			<SearchBar setSearch={setTextFilter} placeholder="Artists" />,
 			<SettingsButton configWrapper={configWrapper} />,

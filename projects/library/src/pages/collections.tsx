@@ -132,7 +132,7 @@ const CollectionsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 			data?.pages[0].openedCollectionName || "Collections"
 		],
 		rhs: [
-			<AddButton Menu={<AddMenu collection={collection} />} />,
+			<AddButton Menu={() => <AddMenu collection={collection} />} />,
 			sortDropdown,
 			<SearchBar setSearch={setTextFilter} placeholder="Collections" />,
 			<SettingsButton configWrapper={configWrapper} />,

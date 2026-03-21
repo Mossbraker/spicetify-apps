@@ -93,7 +93,7 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const props = {
 		lhs: ["Shows"],
 		rhs: [
-			<AddButton Menu={<AddMenu />} />,
+			<AddButton Menu={AddMenu} />,
 			sortDropdown,
 			<SearchBar setSearch={setTextFilter} placeholder="Shows" />,
 			<SettingsButton configWrapper={configWrapper} />,

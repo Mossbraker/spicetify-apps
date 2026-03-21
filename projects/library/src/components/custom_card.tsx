@@ -68,7 +68,7 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 	const isCollection = type === "collection" || type === "folder";
 
 	return (
-		<ContextMenu menu={Menu()} trigger="right-click">
+		<ContextMenu menu={Menu} trigger="right-click">
 			<div style={{ position: "relative" }}>
 				<Card
 					featureIdentifier={type}

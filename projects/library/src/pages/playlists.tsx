@@ -143,7 +143,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			data?.pages[0].openedFolderName || "Playlists",
 		],
 		rhs: [
-			<AddButton Menu={<AddMenu folder={folder} />} />,
+			<AddButton Menu={() => <AddMenu folder={folder} />} />,
 			sortDropdown,
 			filterDropdown,
 			flattenDropdown,

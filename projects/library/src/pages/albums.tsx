@@ -129,7 +129,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const props = {
 		lhs: ["Albums"],
 		rhs: [
-			<AddButton Menu={<AddMenu />} />,
+			<AddButton Menu={AddMenu} />,
 			filterDropdown,
 			sortDropdown,
 			<SearchBar setSearch={setTextFilter} placeholder="Albums" />,

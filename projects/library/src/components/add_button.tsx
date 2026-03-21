@@ -2,7 +2,7 @@
 import React from "react";
 
 interface AddButtonProps {
-	Menu: typeof Spicetify.ReactComponent.Menu;
+	Menu: React.ComponentType;
 }
 
 function AddIcon(): React.ReactElement<SVGElement> {
