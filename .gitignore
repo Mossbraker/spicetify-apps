@@ -148,3 +148,15 @@ stats-from-issue-242/
 
 # Local VSCode settings
 .vscode/settings.json
+
+# Build output / dist artifacts
+dist/
+*.dist.js
+
+claudekit/
+
+docs/untitty.txt
+
+# Release artifacts (built by CI)
+releases/
+projects/*/dist/
