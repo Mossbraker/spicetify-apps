@@ -34,9 +34,12 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 			case "localalbum":
 				Spicetify.Platform.History.push({ pathname: "better-local-files/album", state: { uri } });
 				break;
-			case "show":
-				Spicetify.Platform.History.push(uri);
+			case "show": {
+				const parts = uri.split(":");
+				const path = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
+				Spicetify.Platform.History.push(path);
 				break;
+			}
 		}
 	};
 

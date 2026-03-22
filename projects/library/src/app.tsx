@@ -76,7 +76,7 @@ const NavbarContainer = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 };
 
 const waitForReady = async (callback: () => void) => {
-	if (Spicetify.Platform && Spicetify.Platform.LibraryAPI && SpicetifyLibrary) {
+	if (Spicetify.Platform && Spicetify.Platform.LibraryAPI && window.SpicetifyLibrary) {
 		callback();
 	} else {
 		setTimeout(() => waitForReady(callback), 1000);
@@ -90,7 +90,7 @@ const App = () => {
 	// otherwise app crashes if its first page on spotify load
 	if (!ready) {
 		waitForReady(() => {
-			setConfig({ ...SpicetifyLibrary.ConfigWrapper.Config });
+			setConfig({ ...window.SpicetifyLibrary.ConfigWrapper.Config });
 			setReady(true);
 		});
 		return <></>;
@@ -98,7 +98,7 @@ const App = () => {
 
 
 	const launchModal = () => {
-		SpicetifyLibrary.ConfigWrapper.launchModal(setConfig);
+		window.SpicetifyLibrary.ConfigWrapper.launchModal(setConfig);
 	};
 
 	const configWrapper = {

@@ -3237,3 +3237,85 @@ Selecting the Artists tab brought me to the "Something went wrong" "Try reloadin
 ---
 
 Is there any sort of pattern emerging yet? Like cetain issues with xpui-modules.js, imports that don't work, buttons/components/etc that that break the app? If so, let's be sure the entire Library app has had all instances of those issues fixed. Is this something we could troubleshoot with unit tests, integration tests, or end-to-end tests? Or is your environment not set up for that?
+
+---
+
+Still some flickering when loading the 'Playlists' tab.
+
+Selecting an album from the albums page just goes to a blank page.
+Selecting an artist from the Artists page also just goes to a blank page.
+Selecting a playlist from the Playlists page also just goes to a blank page.
+Selecting the 'Shows' tab goes to an error page (see attached image).
+    - All four of these issues do not print anything to the console at all. Should we add a debug like in stats?
+
+Selecting the 'Albums' tab still causes Spotify to hang, and it still loads the Albums page after reopening Spotify. Here's the error log after reopening Spotify (not sure if there's anything useful, since whatever caused the hang is probably not in this log):
+
+shuffle+:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+sortByPlayCount:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+fullAlbumDate:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+guc3-spclient.spotify.com/remote-config-resolver/v3/configuration:1  Failed to load resource: the server responded with a status of 404 ()
+xpui-modules.js:1 provider:transport resolve error k Object
+f @ xpui-modules.js:1
+xpui-modules.js:1 Error: Unexpectedly hit unreachable code! Unhandled discriminated union member: false
+    at i (xpui-modules.js:1:7041740)
+    at r (xpui-modules.js:1:7041870)
+    at xpui-modules.js:1:3265101
+    at Ra (xpui-modules.js:1:3265111)
+    at Object.factory (xpui-modules.js:1:3763558)
+    at E.resolveImpl (xpui-modules.js:1:4753055)
+    at E.resolve (xpui-modules.js:1:4752595)
+    at addMissingPlatformAPIs (spicetifyWrapper.js:339:52)
+r @ xpui-modules.js:1
+homeConfig.js:201 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'location')
+    at homeConfig.js:201:33
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+spicetify-routes-library.js:4 Uncaught (in promise) ReferenceError: SpicetifyLibrary is not defined
+    at Oe (spicetify-routes-library.js:4:31366)
+    at spicetify-routes-library.js:4:31402
+api.spotify.com/v1/me:1  Failed to load resource: the server responded with a status of 429 ()
+434b9eee-cd0f-4075-b8c4-39b5e4f6f555:896 [Sort-Play] FATAL: Could not determine user's market. Track availability checks may be inaccurate.
+(anonymous) @ 434b9eee-cd0f-4075-b8c4-39b5e4f6f555:896
+api.spotify.com/v1/browse/categories?limit=10&offset=0&locale=en_US&market=from_token:1  Failed to load resource: the server responded with a status of 429 ()
+xpui-modules.js:1 Uncaught (in promise) HttpResponseError
+    at i.fromResponse (xpui-modules.js:1:4453543)
+    at e.onAfterSend (xpui-modules.js:1:6065563)
+    at xpui-modules.js:1:4991799
+    at async sa (made-for-you-shortcut.js?time=1774136978304:14:4403)
+    at async $t (made-for-you-shortcut.js?time=1774136978304:1:100026)
+    at async made-for-you-shortcut.js?time=1774136978304:14:730
+api.spotify.com/v1/artists/4mO4aGO6u29UyR6XLZR9XW?locale=EN_en:1  Failed to load resource: the server responded with a status of 429 ()
+whatsThatGenre.js?time=1774136978304:5 Uncaught (in promise) TypeError: t is not iterable
+
+---
+
+There are some other repos which you should check for anything useful (not just for the ongoing issue, but anything at all related to UI, API calls, ):
+https://github.com/Xndr2/listening-stats (last updated 2 weeks ago)
+https://github.com/bc9123/spicetify-history (last updated 8 months ago - so that's before the rate limiting issues)
+
+The "Add" button doesn't work on any of the tabs. It doesn't print any errors to the console.

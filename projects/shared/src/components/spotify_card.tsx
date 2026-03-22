@@ -27,7 +27,10 @@ function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement
 		}
 
 		event.preventDefault();
-		Spicetify.Platform.History.push(uri);
+		// Convert spotify:type:id URIs to /type/id paths for Spotify's router
+		const parts = uri.split(":");
+		const path = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
+		Spicetify.Platform.History.push(path);
 	};
 
 	const cardHref = provider === "lastfm" ? uri : "#";
