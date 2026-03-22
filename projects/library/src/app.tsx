@@ -90,6 +90,12 @@ const App = () => {
 	const [config, setConfig] = React.useState({} as ConfigWrapper["config"]);
 	const [ready, setReady] = React.useState(false);
 
+	// Sync debug logging with config — must be above the early return
+	// so hooks are always called in the same order (React rules of hooks)
+	React.useEffect(() => {
+		libraryDebug.setEnabled(Boolean(config["show-debug-console"]));
+	}, [config["show-debug-console"]]);
+
 	// otherwise app crashes if its first page on spotify load
 	if (!ready) {
 		waitForReady(() => {
@@ -98,12 +104,6 @@ const App = () => {
 		});
 		return <></>;
 	}
-
-	// Sync debug logging with config
-	React.useEffect(() => {
-		libraryDebug.setEnabled(Boolean(config["show-debug-console"]));
-	}, [config["show-debug-console"]]);
-
 
 	const launchModal = () => {
 		window.SpicetifyLibrary.ConfigWrapper.launchModal(setConfig);
