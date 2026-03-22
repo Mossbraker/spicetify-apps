@@ -138,6 +138,7 @@ const CollectionsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 	const rootlistCards = items.filter(isValidCollectionItem).map((item) => (
 		item.type === "album" ?
 			<SpotifyCard
+				key={item.uri}
 				type={item.type}
 				uri={item.uri}
 				header={item.name}
@@ -145,6 +146,7 @@ const CollectionsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 				imageUrl={item.images?.[0]?.url}
 			/> :
 			<CustomCard
+				key={item.uri}
 				type={item.type || "localalbum"}
 				uri={item.uri}
 				header={item.name}
@@ -153,10 +155,13 @@ const CollectionsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 			/>
 	));
 
-	if (hasNextPage) rootlistCards.push(<LoadMoreCard callback={fetchNextPage} />);
+	if (hasNextPage) rootlistCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
 
 	return (
 		<PageContainer {...props}>
+			{configWrapper.config["show-item-count"] && (
+				<div className="library-item-count">{items.length} items</div>
+			)}
 			<div className={"main-gridContainer-gridContainer grid"}>{rootlistCards}</div>
 		</PageContainer>
 	);

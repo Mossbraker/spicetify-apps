@@ -12,6 +12,9 @@ function collectionSort(order: string, reverse: boolean): (a: CollectionChild, b
                 if (a.type === "collection") return -1;
                 if (b.type === "collection") return 1;
                 return a.artists[0].name.replace(/^the\s+/i, '').localeCompare(b.artists[0].name.replace(/^the\s+/i, ''));
+            case "3":
+                // Release Year — rely on API sort order; local albums without release dates sort to the end
+                return 0;
             case "6":
                 // @ts-ignore Date contructor does accept null as a parameter
                 return new Date(b.lastPlayedAt).getTime() - new Date(a.lastPlayedAt).getTime();

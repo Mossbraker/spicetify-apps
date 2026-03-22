@@ -303,6 +303,7 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	const showCards = shows.filter(isValidShow).map((show) => (
 		<CustomCard
+			key={show.uri}
 			type="show"
 			uri={show.uri}
 			header={show.name}
@@ -312,10 +313,13 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		/>
 	));
 
-	if (hasNextPage) showCards.push(<LoadMoreCard callback={fetchNextPage} />);
+	if (hasNextPage) showCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
 
 	return (
 		<PageContainer {...props}>
+			{configWrapper.config["show-item-count"] && (
+				<div className="library-item-count">{shows.length} shows</div>
+			)}
 			<div className={"main-gridContainer-gridContainer grid"}>{showCards}</div>
 		</PageContainer>
 	);

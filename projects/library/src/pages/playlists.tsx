@@ -151,6 +151,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const rootlistCards = items.filter(isValidRootlistItem).map((item) => (
 		item.type === "folder" ?
 			<CustomCard
+				key={item.uri}
 				type={item.type}
 				uri={item.uri}
 				header={item.name}
@@ -161,6 +162,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 				badge={item.pinned ? <PinIcon /> : undefined}
 			/> :
 			<SpotifyCard
+				key={item.uri}
 				type={item.type}
 				// NOTE: spotify returns the wrong uri for the local files playlist
 				uri={item.uri === "spotify:local-files" ? "spotify:collection:local-files" : item.uri}
@@ -171,10 +173,13 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			/>
 	));
 
-	if (hasNextPage) rootlistCards.push(<LoadMoreCard callback={fetchNextPage} />);
+	if (hasNextPage) rootlistCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
 
 	return (
 		<PageContainer {...props}>
+			{configWrapper.config["show-item-count"] && (
+				<div className="library-item-count">{items.length} playlists</div>
+			)}
 			<div className={"main-gridContainer-gridContainer grid"}>{rootlistCards}</div>
 		</PageContainer>
 	);

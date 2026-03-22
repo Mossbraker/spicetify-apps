@@ -5,6 +5,7 @@ import SettingsButton from "@shared/components/settings_button";
 import useDropdownMenu from "@shared/dropdown/useDropdownMenu";
 import PageContainer from "@shared/components/page_container";
 import SpotifyCard from "@shared/components/spotify_card";
+import CustomCard from "../components/custom_card";
 import LoadMoreCard from "../components/load_more_card";
 import AddButton from "../components/add_button";
 import TextInputDialog from "../components/text_input_dialog";
@@ -41,6 +42,7 @@ const sortOptions = [
 	{ id: "0", name: "Name" },
 	{ id: "1", name: "Date Added" },
 	{ id: "2", name: "Artist Name" },
+	{ id: "3", name: "Release Year" },
 	{ id: "6", name: "Recents" },
 ];
 
@@ -150,21 +152,39 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	if (albums.length === 0) return <PageContainer {...props}>{EmptyStatus}</PageContainer>;
 
-	const albumCards = albums.filter(isValidAlbum).map((item) => (
-		<SpotifyCard
-			type={item.type || "localalbum"}
-			uri={item.uri}
-			header={item.name}
-			subheader={item.artists[0].name}
-			imageUrl={item.images?.[0]?.url}
-			badge={item.pinned ? <PinIcon /> : undefined}
-		/>
+	const validAlbums = albums.filter(isValidAlbum);
+
+	const albumCards = validAlbums.map((item) => (
+		item.type === "album" ? (
+			<SpotifyCard
+				key={item.uri}
+				type="album"
+				uri={item.uri}
+				header={item.name}
+				subheader={item.artists[0].name}
+				imageUrl={item.images?.[0]?.url}
+				badge={item.pinned ? <PinIcon /> : undefined}
+			/>
+		) : (
+			<CustomCard
+				key={item.uri}
+				type="localalbum"
+				uri={item.uri}
+				header={item.name}
+				subheader={item.artists[0].name}
+				imageUrl={item.images?.[0]?.url}
+				badge={item.pinned ? <PinIcon /> : undefined}
+			/>
+		)
 	));
 
-	if (hasNextPage) albumCards.push(<LoadMoreCard callback={fetchNextPage} />);
+	if (hasNextPage) albumCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
 
 	return (
 		<PageContainer {...props}>
+			{configWrapper.config["show-item-count"] && (
+				<div className="library-item-count">{validAlbums.length} albums</div>
+			)}
 			<div className={"main-gridContainer-gridContainer grid"}>{albumCards}</div>
 		</PageContainer>
 	);

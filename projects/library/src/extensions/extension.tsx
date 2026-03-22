@@ -112,6 +112,20 @@ class SpicetifyLibrary {
 			{ name: "Artists Page", key: "show-artists", type: "toggle", def: true },
 			{ name: "Shows Page", key: "show-shows", type: "toggle", def: true },
 			{
+				name: "Show Item Count",
+				key: "show-item-count",
+				type: "toggle",
+				def: true,
+				desc: "Show total item count on each page.",
+			},
+			{
+				name: "Artist \u2192 Albums View",
+				key: "artist-album-view",
+				type: "toggle",
+				def: false,
+				desc: "Clicking an artist shows their saved albums from your library instead of the Spotify artist page.",
+			},
+			{
 				name: "Show Debug Console",
 				key: "show-debug-console",
 				type: "toggle",

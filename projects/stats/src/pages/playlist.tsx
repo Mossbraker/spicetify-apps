@@ -50,12 +50,13 @@ const PlaylistPage = ({ uri }: { uri: string }) => {
 	const analysis = data as NonNullable<typeof data>;
 
 	const statCards = Object.entries(analysis.analysis).map(([key, value]) => {
-		return <StatCard label={key} value={parseStat(key)(value)} />;
+		return <StatCard key={key} label={key} value={parseStat(key)(value)} />;
 	});
 
 	const artistCards = analysis.artists.contents.slice(0, 10).map((artist) => {
 		return (
 			<SpotifyCard
+				key={artist.uri}
 				type="artist"
 				provider={artist.type}
 				uri={artist.uri}
@@ -69,6 +70,7 @@ const PlaylistPage = ({ uri }: { uri: string }) => {
 	const albumCards = analysis.albums.contents.slice(0, 10).map((album) => {
 		return (
 			<SpotifyCard
+				key={album.uri}
 				type="album"
 				provider={album.type}
 				uri={album.uri}
@@ -92,12 +94,16 @@ const PlaylistPage = ({ uri }: { uri: string }) => {
 				<ChartCard data={analysis.genres} />
 				<div className={"main-gridContainer-gridContainer grid"}>{statCards}</div>
 			</Shelf>
-			{/* <Shelf title="Most Frequent Artists">
-				<InlineGrid>{artistCards}</InlineGrid>
-			</Shelf> */}
-			{/* <Shelf title="Most Frequent Albums">
-				<InlineGrid>{albumCards}</InlineGrid>
-			</Shelf> */}
+			{artistCards.length > 0 && (
+				<Shelf title="Most Frequent Artists">
+					<div className={"main-gridContainer-gridContainer grid"}>{artistCards}</div>
+				</Shelf>
+			)}
+			{albumCards.length > 0 && (
+				<Shelf title="Most Frequent Albums">
+					<div className={"main-gridContainer-gridContainer grid"}>{albumCards}</div>
+				</Shelf>
+			)}
 			<Shelf title="Release Year Distribution">
 				<ChartCard data={analysis.releaseYears} />
 			</Shelf>
