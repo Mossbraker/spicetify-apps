@@ -54,15 +54,19 @@ export const getMeanAudioFeatures = async (ids: string[]) => {
 
 	const audioFeaturesList = await batchCacher("features", batchRequest(100, getAudioFeatures))(ids);
 	if (audioFeaturesList.length === 0) return unavailableFeatures;
+	let availableFeatureCount = 0;
 
 	for (const audioFeatures of audioFeaturesList) {
 		if (!audioFeatures) continue;
+		availableFeatureCount += 1;
 		for (const f of Object.keys(audioFeaturesSum) as (keyof typeof audioFeaturesSum)[]) {
 			audioFeaturesSum[f] += audioFeatures[f];
 		}
 	}
 
-	const divisor = audioFeaturesList.length;
+	if (availableFeatureCount === 0) return unavailableFeatures;
+
+	const divisor = availableFeatureCount;
 	for (const f of Object.keys(audioFeaturesSum) as (keyof typeof audioFeaturesSum)[]) {
 		audioFeaturesSum[f] /= divisor;
 	}

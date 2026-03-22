@@ -6,13 +6,12 @@ interface SpotifyCardProps {
 	header: string;
 	subheader: string;
 	imageUrl?: string;
-	artistUri?: string;
 	badge?: string | React.ReactElement;
 	provider?: "spotify" | "lastfm";
 }
 
 function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement> {
-	const { type, header, uri, imageUrl, subheader, artistUri, badge, provider = "spotify" } = props;
+	const { type, header, uri, imageUrl, subheader, badge, provider = "spotify" } = props;
 	const [imageFailed, setImageFailed] = React.useState(false);
 	const fallbackLabel = header
 		.split(/\s+/)
@@ -51,10 +50,9 @@ function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement
 				<div className="stats-plain-card-copy">
 					<div className="stats-plain-card-title">{header}</div>
 					<div className="stats-plain-card-subtitle">{subheader}</div>
-					{artistUri && provider === "spotify" && type === "album" ? <span className="stats-plain-card-meta">{artistUri}</span> : null}
 				</div>
 			</a>
-				{badge && <div className="badge">{badge}</div>}
+			{badge && <div className="badge">{badge}</div>}
 		</div>
 	);
 }

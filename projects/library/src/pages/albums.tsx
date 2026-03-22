@@ -157,7 +157,6 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			header={item.name}
 			subheader={item.artists[0].name}
 			imageUrl={item.images?.[0]?.url}
-			artistUri={item.artists[0].uri}
 			badge={item.pinned ? <PinIcon /> : undefined}
 		/>
 	));

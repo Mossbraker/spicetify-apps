@@ -14,18 +14,36 @@ import type {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Throttled batch processing to avoid Spotify API rate limits (429 errors).
-// Processes items sequentially with a delay between each to stay under rate limits.
-// /me/* endpoints have stricter limits (~5-10 req before 429), so we use 1s delay.
-const THROTTLE_DELAY_MS = 1000;
-export const throttledMap = async <T, R>(items: T[], fn: (item: T) => Promise<R>): Promise<R[]> => {
+type ThrottledMapOptions = {
+	batchSize?: number;
+	delayMs?: number;
+};
+
+const THROTTLED_BATCH_SIZE = 2;
+const THROTTLED_DELAY_MS = 250;
+export const throttledMap = async <T, R>(
+	items: T[],
+	fn: (item: T) => Promise<R>,
+	options: ThrottledMapOptions = {},
+): Promise<R[]> => {
+	const { batchSize = 1, delayMs = 0 } = options;
 	const results: R[] = [];
-	for (let i = 0; i < items.length; i++) {
-		results.push(await fn(items[i]));
-		// Add delay between requests to avoid rate limiting
-		if (i < items.length - 1) await delay(THROTTLE_DELAY_MS);
+	for (let i = 0; i < items.length; i += batchSize) {
+		const batch = items.slice(i, i + batchSize);
+		results.push(...(await Promise.all(batch.map((item) => fn(item)))));
+		if (delayMs > 0 && i + batchSize < items.length) {
+			await delay(delayMs);
+		}
 	}
 	return results;
+};
+
+export const getThrottledMapOptions = (lastfmOnly: boolean): ThrottledMapOptions => {
+	if (lastfmOnly) {
+		return { batchSize: 8, delayMs: 0 };
+	}
+
+	return { batchSize: THROTTLED_BATCH_SIZE, delayMs: THROTTLED_DELAY_MS };
 };
 
 export const minifyArtist = (artist: Spotify.Artist): SpotifyMinifiedArtist => ({

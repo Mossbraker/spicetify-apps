@@ -244,21 +244,21 @@ That path is now more robust:
 
 This keeps the Charts page useful even when Spotify search endpoints are degraded.
 
-### Persistent Spotify search-result cache
+### Session-scoped Spotify search-result cache
 
 One of the most expensive remaining failure modes was repeated Spotify search enrichment across reloads. Even if the current session had already resolved an artist, album, or track once, the app would have to search again after reload and risk another suppression event.
 
-To reduce that pressure, search enrichment results are now cached persistently in localStorage.
+To reduce that pressure, search enrichment results are now cached for the current app session rather than being written as long-lived localStorage data.
 
 Current behavior:
 
-- cached search results survive reloads
-- entries expire after a bounded TTL
+- cached search results survive reloads within the current session
+- entries expire after a short bounded TTL
 - the cache size is capped so it does not grow without limit
 - cache hits update access metadata for eviction ordering
 - stale persisted `400` suppressions for `search-*` endpoints are discarded on load
 
-The goal is not permanent catalog storage. The goal is to avoid immediately redoing the same Spotify search work for the same chart items every time the app opens.
+The goal is not durable catalog storage. The goal is to avoid immediately redoing the same Spotify search work for the same chart items while the current session is still active.
 
 ### Config-aware cache keys for chart data
 

@@ -45,7 +45,7 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 
 	return (
 		<div className="stats-plain-card-wrapper">
-			<div className="stats-plain-card" onClick={handleClick} style={{ cursor: "pointer" }}>
+			<button className="stats-plain-card" type="button" onClick={handleClick}>
 				<div className="stats-plain-card-image">
 					{imageUrl && !imageFailed ? (
 						<img src={imageUrl} alt="" loading="lazy" onError={() => setImageFailed(true)} />
@@ -65,7 +65,7 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 					<div className="stats-plain-card-title">{header}</div>
 					<div className="stats-plain-card-subtitle">{subheader}</div>
 				</div>
-			</div>
+			</button>
 			{badge && <div className="badge">{badge}</div>}
 		</div>
 	);

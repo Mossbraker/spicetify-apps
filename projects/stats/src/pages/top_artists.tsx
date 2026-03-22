@@ -8,7 +8,7 @@ import RefreshButton from "../components/buttons/refresh_button";
 import * as lastFM from "../api/lastfm";
 import * as spotify from "../api/spotify";
 import { SpotifyRange } from "../types/spotify";
-import { convertArtist, minifyArtist, throttledMap } from "../utils/converter";
+import { convertArtist, getThrottledMapOptions, minifyArtist, throttledMap } from "../utils/converter";
 import useStatus from "@shared/status/useStatus";
 import { useQuery } from "@shared/types/react_query";
 import { cacher, invalidator } from "../extensions/cache";
@@ -20,7 +20,7 @@ const getLastFmTopArtists = async (timeRange: SpotifyRange, config: Config, last
 	const { "lastfm-user": user, "api-key": key } = config;
 	if (!user || !key) throw new Error("Missing LastFM API Key or Username");
 	const response = await lastFM.getTopArtists(key, user, timeRange);
-	return throttledMap(response, (artist) => convertArtist(artist, lastfmOnly, key));
+	return throttledMap(response, (artist) => convertArtist(artist, lastfmOnly, key), getThrottledMapOptions(lastfmOnly));
 };
 
 export const getTopArtists = async (timeRange: SpotifyRange, config: Config) => {

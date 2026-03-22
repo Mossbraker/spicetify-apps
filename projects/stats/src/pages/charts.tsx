@@ -15,7 +15,7 @@ import type {
 import * as lastFM from "../api/lastfm";
 import RefreshButton from "../components/buttons/refresh_button";
 import SettingsButton from "@shared/components/settings_button";
-import { convertArtist, convertTrack, throttledMap } from "../utils/converter";
+import { convertArtist, convertTrack, getThrottledMapOptions, throttledMap } from "../utils/converter";
 import useStatus from "@shared/status/useStatus";
 import { useQuery } from "@shared/types/react_query";
 import { cacher, invalidator } from "../extensions/cache";
@@ -54,9 +54,9 @@ const sortByPlaycount = <T extends { playcount?: number }>(items: T[]) => {
 
 const getArtistChart = async (config: Config) => {
 	const { "api-key": key, "lastfm-only": lastfmOnly } = config;
-	if (!key) throw new Error("Missing LastFM API Key or Username");
+	if (!key) throw new Error("Missing LastFM API Key");
 	const response = await lastFM.getArtistChart(key);
-	const items = await throttledMap(response, (artist) => convertArtist(artist, lastfmOnly, key));
+	const items = await throttledMap(response, (artist) => convertArtist(artist, lastfmOnly, key), getThrottledMapOptions(lastfmOnly));
 	return {
 		kind: "artists" as const,
 		items: sortByPlaycount(items),
@@ -65,9 +65,9 @@ const getArtistChart = async (config: Config) => {
 
 const getTrackChart = async (config: Config) => {
 	const { "api-key": key, "lastfm-only": lastfmOnly } = config;
-	if (!key) throw new Error("Missing LastFM API Key or Username");
+	if (!key) throw new Error("Missing LastFM API Key");
 	const response = await lastFM.getTrackChart(key);
-	const items = await throttledMap(response, (track) => convertTrack(track, lastfmOnly, key));
+	const items = await throttledMap(response, (track) => convertTrack(track, lastfmOnly, key), getThrottledMapOptions(lastfmOnly));
 	return {
 		kind: "tracks" as const,
 		items: sortByPlaycount(await parseLiked(items)),

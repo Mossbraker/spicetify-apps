@@ -10,7 +10,7 @@ type SuppressedEndpoint = {
 	until: number;
 };
 
-type PersistentSearchCacheEntry = {
+type SessionSearchCacheEntry = {
 	value: unknown;
 	cachedAt: number;
 	lastAccessedAt: number;
@@ -19,12 +19,12 @@ type PersistentSearchCacheEntry = {
 };
 
 const ENDPOINT_SUPPRESSION_STORAGE_KEY = "stats:spotify:endpoint-suppressions";
-const PERSISTENT_SEARCH_CACHE_STORAGE_KEY = "stats:spotify:search-cache";
-const PERSISTENT_SEARCH_CACHE_TTL_MS = 7 * 24 * 60 * 60_000;
-const PERSISTENT_SEARCH_CACHE_MAX_ENTRIES = 250;
+const SESSION_SEARCH_CACHE_STORAGE_KEY = "stats:spotify:search-session-cache";
+const SESSION_SEARCH_CACHE_TTL_MS = 15 * 60_000;
+const SESSION_SEARCH_CACHE_MAX_ENTRIES = 100;
 
 const endpointSuppressions = new Map<string, SuppressedEndpoint>();
-const persistentSearchCache = new Map<string, PersistentSearchCacheEntry>();
+const sessionSearchCache = new Map<string, SessionSearchCacheEntry>();
 
 const setSuppressionActivity = (endpointKey: string, suppression: SuppressedEndpoint) => {
 	statsDebug.setActivity({
@@ -37,14 +37,14 @@ const setSuppressionActivity = (endpointKey: string, suppression: SuppressedEndp
 	});
 };
 
-const loadPersistentSearchCache = () => {
-	if (persistentSearchCache.size > 0) return;
+const loadSessionSearchCache = () => {
+	if (sessionSearchCache.size > 0) return;
 
 	try {
-		const raw = localStorage.getItem(PERSISTENT_SEARCH_CACHE_STORAGE_KEY);
+		const raw = sessionStorage.getItem(SESSION_SEARCH_CACHE_STORAGE_KEY);
 		if (!raw) return;
 
-		const parsed = JSON.parse(raw) as Record<string, PersistentSearchCacheEntry>;
+		const parsed = JSON.parse(raw) as Record<string, SessionSearchCacheEntry>;
 		const now = Date.now();
 		let changed = false;
 
@@ -53,74 +53,74 @@ const loadPersistentSearchCache = () => {
 				changed = true;
 				continue;
 			}
-			persistentSearchCache.set(key, value);
+			sessionSearchCache.set(key, value);
 		}
 
-		if (changed) persistPersistentSearchCache();
+		if (changed) persistSessionSearchCache();
 	} catch {
-		localStorage.removeItem(PERSISTENT_SEARCH_CACHE_STORAGE_KEY);
+		sessionStorage.removeItem(SESSION_SEARCH_CACHE_STORAGE_KEY);
 	}
 };
 
-const persistPersistentSearchCache = () => {
+const persistSessionSearchCache = () => {
 	const now = Date.now();
-	const activeEntries = [...persistentSearchCache.entries()]
+	const activeEntries = [...sessionSearchCache.entries()]
 		.filter(([, value]) => value.expiresAt > now)
 		.sort((left, right) => right[1].lastAccessedAt - left[1].lastAccessedAt)
-		.slice(0, PERSISTENT_SEARCH_CACHE_MAX_ENTRIES);
+		.slice(0, SESSION_SEARCH_CACHE_MAX_ENTRIES);
 
-	persistentSearchCache.clear();
-	activeEntries.forEach(([key, value]) => persistentSearchCache.set(key, value));
+	sessionSearchCache.clear();
+	activeEntries.forEach(([key, value]) => sessionSearchCache.set(key, value));
 
 	if (activeEntries.length === 0) {
-		localStorage.removeItem(PERSISTENT_SEARCH_CACHE_STORAGE_KEY);
+		sessionStorage.removeItem(SESSION_SEARCH_CACHE_STORAGE_KEY);
 		return;
 	}
 
-	localStorage.setItem(PERSISTENT_SEARCH_CACHE_STORAGE_KEY, JSON.stringify(Object.fromEntries(activeEntries)));
+	sessionStorage.setItem(SESSION_SEARCH_CACHE_STORAGE_KEY, JSON.stringify(Object.fromEntries(activeEntries)));
 };
 
-const getPersistentSearchCacheKey = (kind: string, parts: string[]) => {
+const getSessionSearchCacheKey = (kind: string, parts: string[]) => {
 	return `${kind}:${parts.map((part) => part.trim().toLocaleLowerCase()).join("::")}`;
 };
 
-const readPersistentSearchCache = <T>(key: string) => {
-	loadPersistentSearchCache();
-	const entry = persistentSearchCache.get(key);
+const readSessionSearchCache = <T>(key: string) => {
+	loadSessionSearchCache();
+	const entry = sessionSearchCache.get(key);
 	if (!entry) return undefined;
 	if (entry.expiresAt <= Date.now()) {
-		persistentSearchCache.delete(key);
-		persistPersistentSearchCache();
+		sessionSearchCache.delete(key);
+		persistSessionSearchCache();
 		return undefined;
 	}
 
 	entry.hits += 1;
 	entry.lastAccessedAt = Date.now();
-	statsDebug.info("Persistent search cache hit", { key, hits: entry.hits });
+	statsDebug.info("Session search cache hit", { key, hits: entry.hits });
 	return entry.value as T;
 };
 
-const writePersistentSearchCache = <T>(key: string, value: T) => {
+const writeSessionSearchCache = <T>(key: string, value: T) => {
 	const now = Date.now();
-	persistentSearchCache.set(key, {
+	sessionSearchCache.set(key, {
 		value,
 		cachedAt: now,
 		lastAccessedAt: now,
 		hits: 0,
-		expiresAt: now + PERSISTENT_SEARCH_CACHE_TTL_MS,
+		expiresAt: now + SESSION_SEARCH_CACHE_TTL_MS,
 	});
-	statsDebug.info("Persistent search cache populated", { key });
-	persistPersistentSearchCache();
+	statsDebug.info("Session search cache populated", { key });
+	persistSessionSearchCache();
 	return value;
 };
 
-const withPersistentSearchCache = async <T>(key: string, fetcher: () => Promise<T>) => {
-	const cached = readPersistentSearchCache<T>(key);
+const withSessionSearchCache = async <T>(key: string, fetcher: () => Promise<T>) => {
+	const cached = readSessionSearchCache<T>(key);
 	if (cached !== undefined) return cached;
 
-	statsDebug.info("Persistent search cache miss", { key });
+	statsDebug.info("Session search cache miss", { key });
 	const value = await fetcher();
-	return writePersistentSearchCache(key, value);
+	return writeSessionSearchCache(key, value);
 };
 
 const loadSuppressions = () => {
@@ -523,8 +523,8 @@ export const getAudioFeatures = (ids: string[]) => {
 
 export const searchForTrack = (track: string, artist: string) => {
 	const q = encodeURIComponent(`track:${track.replace(/'/g, "")} artist:${artist.replace(/'/g, "")}`);
-	const cacheKey = getPersistentSearchCacheKey("search-track", [track, artist]);
-	return withPersistentSearchCache(cacheKey, () =>
+	const cacheKey = getSessionSearchCacheKey("search-track", [track, artist]);
+	return withSessionSearchCache(cacheKey, () =>
 		apiFetch<Spotify.SearchResponse>(
 			"searchForTrack",
 			`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1&market=from_token`,
@@ -534,8 +534,8 @@ export const searchForTrack = (track: string, artist: string) => {
 
 export const searchForArtist = (artist: string) => {
 	const q = encodeURIComponent(`artist:${artist.replace(/'/g, "")}`);
-	const cacheKey = getPersistentSearchCacheKey("search-artist", [artist]);
-	return withPersistentSearchCache(cacheKey, () =>
+	const cacheKey = getSessionSearchCacheKey("search-artist", [artist]);
+	return withSessionSearchCache(cacheKey, () =>
 		apiFetch<Spotify.SearchResponse>(
 			"searchForArtist",
 			`https://api.spotify.com/v1/search?q=${q}&type=artist&limit=1&market=from_token`,
@@ -545,8 +545,8 @@ export const searchForArtist = (artist: string) => {
 
 export const searchForAlbum = (album: string, artist: string) => {
 	const q = encodeURIComponent(`album:${album.replace(/'/g, "")} artist:${artist.replace(/'/g, "")}`);
-	const cacheKey = getPersistentSearchCacheKey("search-album", [album, artist]);
-	return withPersistentSearchCache(cacheKey, () =>
+	const cacheKey = getSessionSearchCacheKey("search-album", [album, artist]);
+	return withSessionSearchCache(cacheKey, () =>
 		apiFetch<Spotify.SearchResponse>(
 			"searchForAlbum",
 			`https://api.spotify.com/v1/search?q=${q}&type=album&limit=1&market=from_token`,
