@@ -15,11 +15,13 @@ export const batchRequest = <T>(size: number, request: (batch: string[]) => Prom
 			chunks.push(ids.slice(i, i + size));
 		}
 
-		const results: T[] = [];
+		const results: (T | undefined)[] = [];
 		for (const chunk of chunks) {
 			try {
-				results.push(...(await request(chunk)));
+				const chunkResults = await request(chunk);
+				results.push(...chunk.map((_, index) => chunkResults[index]));
 			} catch (error) {
+				results.push(...chunk.map(() => undefined));
 				if (isSuppressedSpotifyError(error)) break;
 			}
 		}

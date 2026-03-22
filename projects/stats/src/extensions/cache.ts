@@ -113,14 +113,17 @@ export const cacher = <T>(cb: () => Promise<T>) => {
 };
 
 // cache a batch function
-export const batchCacher = <T>(prefix: string, cb: (ids: string[]) => Promise<T[]>) => {
+export const batchCacher = <T>(prefix: string, cb: (ids: string[]) => Promise<(T | undefined)[]>) => {
 	return async (ids: string[]) => {
 		const uncached = ids.filter((id) => !cache.has(`${prefix}-${id}`));
 		if (uncached.length > 0) {
 			statsDebug.info("Batch cache miss", { prefix, requested: ids.length, uncached: uncached.length });
 			const results = await cb(uncached);
 			uncached.forEach((id, index) => {
-				set(`${prefix}-${id}`, results[index]);
+				const result = results[index];
+				if (result !== undefined) {
+					set(`${prefix}-${id}`, result);
+				}
 			});
 		}
 
