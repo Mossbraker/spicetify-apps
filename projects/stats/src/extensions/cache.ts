@@ -31,12 +31,14 @@ const cache = new Map<string, CacheEntry<unknown>>();
 const recentInvalidations: InvalidatedCacheEntry[] = [];
 const MAX_INVALIDATION_DIAGNOSTICS = 8;
 
+const getEntry = <T,>(key: string) => cache.get(key) as CacheEntry<T> | undefined;
+
 const touch = <T,>(key: string) => {
-	const entry = cache.get(key) as CacheEntry<T> | undefined;
+	const entry = getEntry<T>(key);
 	if (!entry) return undefined;
 	entry.hits += 1;
 	entry.lastAccessedAt = Date.now();
-	return entry.value;
+	return entry;
 };
 
 export const set = <T>(key: string, value: T) => {
@@ -100,8 +102,8 @@ export const getCacheDiagnostics = (): CacheDiagnostic[] => {
 export const cacher = <T>(cb: () => Promise<T>) => {
 	return async ({ queryKey }: { queryKey: string[] }) => {
 		const key = queryKey.join("-");
-		const cachedValue = touch<T>(key);
-		if (cachedValue !== undefined) return cachedValue;
+		const cachedEntry = touch<T>(key);
+		if (cachedEntry) return cachedEntry.value;
 
 		statsDebug.info("Cache miss", { key });
 		const result = await cb();
@@ -117,13 +119,12 @@ export const batchCacher = <T>(prefix: string, cb: (ids: string[]) => Promise<T[
 		if (uncached.length > 0) {
 			statsDebug.info("Batch cache miss", { prefix, requested: ids.length, uncached: uncached.length });
 			const results = await cb(uncached);
-			results.forEach((result, index) => {
-				const id = uncached[index];
-				if (id !== undefined) set(`${prefix}-${id}`, result);
+			uncached.forEach((id, index) => {
+				set(`${prefix}-${id}`, results[index]);
 			});
 		}
 
-		return ids.map((id) => touch<T>(`${prefix}-${id}`) as T);
+		return ids.map((id) => touch<T>(`${prefix}-${id}`)?.value);
 	};
 };
 

@@ -174,7 +174,11 @@ export const parseAlbums = async (albumsRaw: Album[]) => {
 		.slice(0, 500);
 	const albums = await batchCacher("album", getAlbumMetas)(uris);
 	const releaseYears = {} as Record<string, number>;
-	const albumMap = new Map(albums.filter(Boolean).map((album) => [album.uri, album]));
+	const albumMap = new Map(
+		albums
+			.filter((album): album is NonNullable<(typeof albums)[number]> => Boolean(album))
+			.map((album) => [album.uri, album]),
+	);
 	const uniqueAlbums = uris.map((uri) => {
 		const album = albumMap.get(uri);
 		if (album?.date?.isoString) {
@@ -218,7 +222,11 @@ export const parseArtists = async (
 	if (ids.length === 0) return { genres: {}, artists: { contents: [], length: 0 } };
 	const artists = await batchCacher("artist", batchRequest(50, getArtistMetas))(ids);
 	const genres = {} as Record<string, number>;
-	const artistMap = new Map(artists.filter(Boolean).map((artist) => [artist.id, artist]));
+	const artistMap = new Map(
+		artists
+			.filter((artist): artist is NonNullable<(typeof artists)[number]> => Boolean(artist))
+			.map((artist) => [artist.id, artist]),
+	);
 	const fallbackSignals = ids.map((id) => ({
 		name: rawArtistMap.get(id)?.name ?? "",
 		weight: frequencyMap[id],

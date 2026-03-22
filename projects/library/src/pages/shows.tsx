@@ -41,6 +41,13 @@ type SavedShowItem = ShowItem & {
 
 const SHOWS_CACHE_KEY_PREFIX = "library:shows:page:";
 
+type SavedShowsCacheKeyParams = {
+	offset: number;
+	sortOptionId: string;
+	isReversed: boolean;
+	textFilter: string;
+};
+
 const getAddMenuItems = () => {
 	const addShow = () => {
 		const onSave = (value: string) => {
@@ -82,24 +89,27 @@ const sortOptions = [
 	{ id: "1", name: "Date Added" },
 ];
 
-const getShowsCacheKey = (offset: number) => `${SHOWS_CACHE_KEY_PREFIX}${offset}`;
+const getShowsCacheKey = ({ offset, sortOptionId, isReversed, textFilter }: SavedShowsCacheKeyParams) => {
+	const normalizedFilter = textFilter.trim().toLocaleLowerCase();
+	return `${SHOWS_CACHE_KEY_PREFIX}${offset}:${sortOptionId}:${isReversed ? "reverse" : "forward"}:${normalizedFilter}`;
+};
 
-const persistCachedShows = (offset: number, response: SavedShowsResponse) => {
+const persistCachedShows = (params: SavedShowsCacheKeyParams, response: SavedShowsResponse) => {
 	try {
-		localStorage.setItem(getShowsCacheKey(offset), JSON.stringify(response));
+		localStorage.setItem(getShowsCacheKey(params), JSON.stringify(response));
 	} catch {
-		libraryDebug.warn("Shows: failed to persist cached response", { offset });
+		libraryDebug.warn("Shows: failed to persist cached response", params);
 	}
 	return response;
 };
 
-const loadCachedShows = (offset: number) => {
+const loadCachedShows = (params: SavedShowsCacheKeyParams) => {
 	try {
-		const raw = localStorage.getItem(getShowsCacheKey(offset));
+		const raw = localStorage.getItem(getShowsCacheKey(params));
 		if (!raw) return null;
 		return JSON.parse(raw) as SavedShowsResponse;
 	} catch {
-		libraryDebug.warn("Shows: failed to read cached response", { offset });
+		libraryDebug.warn("Shows: failed to read cached response", params);
 		return null;
 	}
 };
@@ -130,6 +140,12 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [textFilter, setTextFilter] = React.useState("");
 
 	const fetchShows = async ({ pageParam }: { pageParam: number }) => {
+		const cacheParams = {
+			offset: pageParam,
+			sortOptionId: sortOption.id,
+			isReversed,
+			textFilter,
+		};
 		libraryDebug.info(`Shows: fetching page offset=${pageParam}, sort=${sortOption.id}, reversed=${isReversed}`);
 
 		const tryLibraryApiFallback = async () => {
@@ -151,7 +167,7 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 				});
 
 				if (response.items?.length) {
-					return persistCachedShows(pageParam, toSavedShowResponse(response));
+					return persistCachedShows(cacheParams, toSavedShowResponse(response));
 				}
 			} catch (error) {
 				libraryDebug.warn("Shows: LibraryAPI fallback failed", {
@@ -195,10 +211,10 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 					return libraryFallback;
 				}
 
-				const cachedResponse = loadCachedShows(pageParam);
+				const cachedResponse = loadCachedShows(cacheParams);
 				if (cachedResponse) {
 					libraryDebug.warn("Shows: using cached response after Spotify rate limit", {
-						offset: pageParam,
+						...cacheParams,
 						itemCount: cachedResponse.items?.length,
 						total: cachedResponse.total,
 					});
@@ -209,7 +225,7 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			throw new Error(raw.error?.message || `Saved shows request failed (${response.status})`);
 		}
 
-		const res = persistCachedShows(pageParam, raw as SavedShowsResponse);
+		const res = persistCachedShows(cacheParams, raw as SavedShowsResponse);
 		libraryDebug.info(`Shows: got ${res.items?.length ?? 0} items (total: ${res.total ?? 0})`, {
 			offset: res.offset,
 			totalLength: res.total,

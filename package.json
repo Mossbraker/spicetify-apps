@@ -7,8 +7,5 @@
     "workspaces": [
         "stats",
         "library"
-    ],
-    "devDependencies": {
-        "@tanstack/react-query": "^5.91.0"
-    }
+    ]
 }

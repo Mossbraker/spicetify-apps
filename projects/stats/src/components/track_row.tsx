@@ -36,7 +36,7 @@ const TrackArtwork = ({ image, name }: { image?: string; name: string }) => {
 
 	return (
 		<img
-			aria-hidden="false"
+			aria-hidden="true"
 			draggable="false"
 			loading="eager"
 			src={image}
