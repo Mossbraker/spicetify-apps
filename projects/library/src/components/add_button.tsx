@@ -1,8 +1,14 @@
 // biome-ignore lint:
 import React from "react";
 
+export interface AddMenuItem {
+	label: string;
+	iconPath: string;
+	onClick: () => void;
+}
+
 interface AddButtonProps {
-	Menu: React.ComponentType;
+	menuItems: AddMenuItem[];
 }
 
 function AddIcon(): React.ReactElement<SVGElement> {
@@ -18,29 +24,54 @@ function AddIcon(): React.ReactElement<SVGElement> {
 	);
 }
 
-function AddButton(props: AddButtonProps): React.ReactElement<HTMLButtonElement> {
-	const { ReactComponent } = Spicetify;
-	const { TooltipWrapper, ContextMenu } = ReactComponent;
-	const { Menu } = props;
+function AddButton({ menuItems }: AddButtonProps): React.ReactElement<HTMLButtonElement> {
+	const [isOpen, setIsOpen] = React.useState(false);
+	const containerRef = React.useRef<HTMLDivElement>(null);
+
+	React.useEffect(() => {
+		if (!isOpen) return;
+		const handleClickOutside = (e: MouseEvent) => {
+			if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+				setIsOpen(false);
+			}
+		};
+		document.addEventListener("click", handleClickOutside, true);
+		return () => document.removeEventListener("click", handleClickOutside, true);
+	}, [isOpen]);
 
 	return (
-		<TooltipWrapper label={"Add"} placement="top">
-			<span>
-				<ContextMenu trigger="click" menu={Menu}>
-					{(_isOpen?: boolean, handleContextMenu?: (event: MouseEvent) => void, ref?: (element: Element) => void) => (
+		<div ref={containerRef} style={{ position: "relative", display: "inline-block" }}>
+			<Spicetify.ReactComponent.TooltipWrapper label={"Add"} placement="top">
+				<button
+					className="stats-icon-button"
+					type="button"
+					aria-label="Add"
+					onClick={() => setIsOpen((v) => !v)}
+				>
+					<AddIcon />
+				</button>
+			</Spicetify.ReactComponent.TooltipWrapper>
+			{isOpen && (
+				<div className="library-addmenu-dropdown">
+					{menuItems.map((item) => (
 						<button
-							ref={ref as React.Ref<HTMLButtonElement>}
-							className="stats-icon-button"
+							key={item.label}
+							className="library-addmenu-item"
 							type="button"
-							aria-label="Add"
-							onClick={handleContextMenu ? (event) => handleContextMenu(event.nativeEvent) : undefined}
+							onClick={() => { setIsOpen(false); item.onClick(); }}
 						>
-							<AddIcon />
+							<span
+								className="library-addmenu-icon"
+								dangerouslySetInnerHTML={{
+									__html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">${item.iconPath}</svg>`,
+								}}
+							/>
+							<span>{item.label}</span>
 						</button>
-					)}
-				</ContextMenu>
-			</span>
-		</TooltipWrapper>
+					))}
+				</div>
+			)}
+		</div>
 	);
 }
 

@@ -7,7 +7,6 @@ import AddButton from "../components/add_button";
 import type { ConfigWrapper } from "../types/library_types";
 import LoadMoreCard from "../components/load_more_card";
 import TextInputDialog from "../components/text_input_dialog";
-import LeadingIcon from "../components/leading_icon";
 import { useInfiniteQuery } from "@shared/types/react_query";
 import useStatus from "@shared/status/useStatus";
 import useSortDropdownMenu from "@shared/dropdown/useSortDropdownMenu";
@@ -15,10 +14,7 @@ import BackButton from "../components/back_button";
 import CustomCard from "../components/custom_card";
 import { CollectionChild } from "../extensions/collections_wrapper";
 
-const AddMenu = ({ collection }: { collection?: string }) => {
-	const { MenuItem, Menu } = Spicetify.ReactComponent;
-	const { SVGIcons } = Spicetify;
-
+const getAddMenuItems = (collection?: string) => {
 	const createCollection = () => {
 		const onSave = (value: string) => {
 			CollectionsWrapper.createCollection(value || "New Collection", collection);
@@ -53,21 +49,14 @@ const AddMenu = ({ collection }: { collection?: string }) => {
 		});
 	};
 
-	return (
-		<Menu>
-			<MenuItem onClick={createCollection} leadingIcon={<LeadingIcon path={SVGIcons["playlist-folder"]} />}>
-				Create Collection
-			</MenuItem>
-			<MenuItem onClick={createDiscogCollection} leadingIcon={<LeadingIcon path={SVGIcons.artist} />}>
-				Create Discog Collection
-			</MenuItem>
-			{collection && (
-				<MenuItem onClick={addAlbum} leadingIcon={<LeadingIcon path={SVGIcons.album} />}>
-					Add Album
-				</MenuItem>
-			)}
-		</Menu>
-	);
+	const items = [
+		{ label: "Create Collection", iconPath: Spicetify.SVGIcons["playlist-folder"], onClick: createCollection },
+		{ label: "Create Discog Collection", iconPath: Spicetify.SVGIcons.artist, onClick: createDiscogCollection },
+	];
+	if (collection) {
+		items.push({ label: "Add Album", iconPath: Spicetify.SVGIcons.album, onClick: addAlbum });
+	}
+	return items;
 };
 
 function isValidCollectionItem(item: CollectionChild) {
@@ -132,7 +121,7 @@ const CollectionsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 			data?.pages[0].openedCollectionName || "Collections"
 		],
 		rhs: [
-			<AddButton Menu={() => <AddMenu collection={collection} />} />,
+			<AddButton menuItems={getAddMenuItems(collection)} />,
 			sortDropdown,
 			<SearchBar setSearch={setTextFilter} placeholder="Collections" />,
 			<SettingsButton configWrapper={configWrapper} />,

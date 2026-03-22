@@ -5,7 +5,6 @@ import SpotifyCard from "@shared/components/spotify_card";
 import SettingsButton from "@shared/components/settings_button";
 import type { ConfigWrapper } from "../types/library_types";
 import LoadMoreCard from "../components/load_more_card";
-import LeadingIcon from "../components/leading_icon";
 import AddButton from "../components/add_button";
 import TextInputDialog from "../components/text_input_dialog";
 import useStatus from "@shared/status/useStatus";
@@ -14,11 +13,8 @@ import type { ArtistItem, GetContentsResponse, UpdateEvent } from "../types/plat
 import PinIcon from "../components/pin_icon";
 import useSortDropdownMenu from "@shared/dropdown/useSortDropdownMenu";
 
-const AddMenu = () => {
-	const { MenuItem, Menu } = Spicetify.ReactComponent;
-	const { SVGIcons } = Spicetify;
-
-	const addAlbum = () => {
+const getAddMenuItems = () => {
+	const addArtist = () => {
 		const onSave = (value: string) => {
 			Spicetify.Platform.LibraryAPI.add({ uris: [value] });
 		};
@@ -30,13 +26,9 @@ const AddMenu = () => {
 		});
 	};
 
-	return (
-		<Menu>
-			<MenuItem onClick={addAlbum} leadingIcon={<LeadingIcon path={SVGIcons.artist} />}>
-				Add Artist
-			</MenuItem>
-		</Menu>
-	);
+	return [
+		{ label: "Add Artist", iconPath: Spicetify.SVGIcons.artist, onClick: addArtist },
+	];
 };
 
 function isValidArtist(artist: ArtistItem) {
@@ -92,7 +84,7 @@ const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const props = {
 		lhs: ["Artists"],
 		rhs: [
-			<AddButton Menu={AddMenu} />,
+			<AddButton menuItems={getAddMenuItems()} />,
 			sortDropdown,
 			<SearchBar setSearch={setTextFilter} placeholder="Artists" />,
 			<SettingsButton configWrapper={configWrapper} />,

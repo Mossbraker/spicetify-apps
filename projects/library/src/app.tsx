@@ -5,6 +5,7 @@ import ArtistsPage from "./pages/artists";
 import ShowsPage from "./pages/shows";
 import PlaylistsPage from "./pages/playlists";
 import CollectionsPage from "./pages/collections";
+import DebugConsole from "./components/debug_console";
 
 import { version } from "../package.json";
 
@@ -109,6 +110,7 @@ const App = () => {
 	return (
 		<div id="library-app">
 			<NavbarContainer configWrapper={configWrapper} />
+			<DebugConsole />
 		</div>
 	);
 };

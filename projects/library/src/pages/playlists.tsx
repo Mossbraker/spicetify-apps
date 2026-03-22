@@ -8,7 +8,6 @@ import AddButton from "../components/add_button";
 import type { ConfigWrapper } from "../types/library_types";
 import LoadMoreCard from "../components/load_more_card";
 import TextInputDialog from "../components/text_input_dialog";
-import LeadingIcon from "../components/leading_icon";
 import { useInfiniteQuery } from "@shared/types/react_query";
 import type { FolderItem, GetContentsResponse, PlaylistItem, UpdateEvent } from "../types/platform";
 import useStatus from "@shared/status/useStatus";
@@ -17,11 +16,8 @@ import useSortDropdownMenu from "@shared/dropdown/useSortDropdownMenu";
 import BackButton from "../components/back_button";
 import CustomCard from "../components/custom_card";
 
-const AddMenu = ({ folder }: { folder?: string }) => {
-	const { MenuItem, Menu } = Spicetify.ReactComponent;
+const getAddMenuItems = (folder?: string) => {
 	const { RootlistAPI } = Spicetify.Platform;
-	const { SVGIcons } = Spicetify;
-
 	const insertLocation = folder ? { uri: folder } : "start";
 
 	const createFolder = () => {
@@ -48,16 +44,10 @@ const AddMenu = ({ folder }: { folder?: string }) => {
 		});
 	};
 
-	return (
-		<Menu>
-			<MenuItem onClick={createFolder} leadingIcon={<LeadingIcon path={SVGIcons["playlist-folder"]} />}>
-				Create Folder
-			</MenuItem>
-			<MenuItem onClick={createPlaylist} leadingIcon={<LeadingIcon path={SVGIcons.playlist} />}>
-				Create Playlist
-			</MenuItem>
-		</Menu>
-	);
+	return [
+		{ label: "Create Folder", iconPath: Spicetify.SVGIcons["playlist-folder"], onClick: createFolder },
+		{ label: "Create Playlist", iconPath: Spicetify.SVGIcons.playlist, onClick: createPlaylist },
+	];
 };
 
 function isValidRootlistItem(item: PlaylistItem | FolderItem) {
@@ -143,7 +133,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			data?.pages[0].openedFolderName || "Playlists",
 		],
 		rhs: [
-			<AddButton Menu={() => <AddMenu folder={folder} />} />,
+			<AddButton menuItems={getAddMenuItems(folder)} />,
 			sortDropdown,
 			filterDropdown,
 			flattenDropdown,

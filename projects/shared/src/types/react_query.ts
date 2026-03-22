@@ -47,9 +47,11 @@ export const useQuery = <TData,>({ queryKey, queryFn, enabled = true }: QueryOpt
 	const [status, setStatus] = React.useState<QueryStatus>(enabled ? "pending" : "success");
 	const [error, setError] = React.useState<Error | null>(null);
 	const requestIdRef = React.useRef(0);
+	const dataRef = React.useRef(data);
 	const queryFnRef = React.useRef(queryFn);
 	const queryKeyRef = React.useRef(queryKey);
 
+	React.useEffect(() => { dataRef.current = data; }, [data]);
 	React.useEffect(() => {
 		queryFnRef.current = queryFn;
 		queryKeyRef.current = queryKey;
@@ -59,11 +61,11 @@ export const useQuery = <TData,>({ queryKey, queryFn, enabled = true }: QueryOpt
 		if (!enabled) {
 			setStatus("success");
 			setError(null);
-			return data;
+			return dataRef.current;
 		}
 
 		const requestId = ++requestIdRef.current;
-		setStatus((current) => (current === "success" && data !== undefined ? current : "pending"));
+		setStatus((current) => (current === "success" && dataRef.current !== undefined ? current : "pending"));
 		setError(null);
 
 		try {
@@ -81,7 +83,7 @@ export const useQuery = <TData,>({ queryKey, queryFn, enabled = true }: QueryOpt
 			}
 			return undefined;
 		}
-	}, [data, enabled]);
+	}, [enabled]);
 
 	React.useEffect(() => {
 		if (!enabled) {

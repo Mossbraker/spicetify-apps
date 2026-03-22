@@ -5,7 +5,6 @@ import SettingsButton from "@shared/components/settings_button";
 import type { ConfigWrapper } from "../types/library_types";
 import SpotifyCard from "@shared/components/spotify_card";
 import LoadMoreCard from "../components/load_more_card";
-import LeadingIcon from "../components/leading_icon";
 import AddButton from "../components/add_button";
 import TextInputDialog from "../components/text_input_dialog";
 import { useInfiniteQuery } from "@shared/types/react_query";
@@ -14,12 +13,10 @@ import useStatus from "@shared/status/useStatus";
 import PinIcon from "../components/pin_icon";
 import useSortDropdownMenu from "@shared/dropdown/useSortDropdownMenu";
 import CustomCard from "../components/custom_card";
+import { libraryDebug } from "../extensions/debug";
 
-const AddMenu = () => {
-	const { MenuItem, Menu } = Spicetify.ReactComponent;
-	const { SVGIcons } = Spicetify;
-
-	const addAlbum = () => {
+const getAddMenuItems = () => {
+	const addShow = () => {
 		const onSave = (value: string) => {
 			Spicetify.Platform.LibraryAPI.add({ uris: [value] });
 		};
@@ -31,13 +28,9 @@ const AddMenu = () => {
 		});
 	};
 
-	return (
-		<Menu>
-			<MenuItem onClick={addAlbum} leadingIcon={<LeadingIcon path={SVGIcons.podcasts} />}>
-				Add Show
-			</MenuItem>
-		</Menu>
-	);
+	return [
+		{ label: "Add Show", iconPath: Spicetify.SVGIcons.podcasts, onClick: addShow },
+	];
 };
 
 function isValidShow(show: ShowItem) {
@@ -56,6 +49,7 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [textFilter, setTextFilter] = React.useState("");
 
 	const fetchShows = async ({ pageParam }: { pageParam: number }) => {
+		libraryDebug.info(`Shows: fetching page offset=${pageParam}, sort=${sortOption.id}, reversed=${isReversed}`);
 		const res = (await Spicetify.Platform.LibraryAPI.getContents({
 			filters: ["3"],
 			sortOrder: sortOption.id,
@@ -64,7 +58,12 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			offset: pageParam,
 			limit,
 		})) as GetContentsResponse<ShowItem>;
-		if (!res.items?.length) throw new Error("No shows found");
+		libraryDebug.info(`Shows: got ${res.items?.length ?? 0} items (total: ${res.totalLength})`, {
+			offset: res.offset,
+			totalLength: res.totalLength,
+			itemCount: res.items?.length,
+			availableFilters: res.availableFilters,
+		});
 		return res;
 	};
 
@@ -93,7 +92,7 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const props = {
 		lhs: ["Shows"],
 		rhs: [
-			<AddButton Menu={AddMenu} />,
+			<AddButton menuItems={getAddMenuItems()} />,
 			sortDropdown,
 			<SearchBar setSearch={setTextFilter} placeholder="Shows" />,
 			<SettingsButton configWrapper={configWrapper} />,
@@ -104,7 +103,12 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	const contents = data as NonNullable<typeof data>;
 
-	const shows = contents.pages.flatMap((page) => page.items);
+	const shows = contents.pages.flatMap((page) => page.items ?? []);
+
+	if (shows.length === 0) {
+		const EmptyStatus = useStatus("error", new Error("No shows found")) as React.ReactElement;
+		return <PageContainer {...props}>{EmptyStatus}</PageContainer>;
+	}
 
 	const showCards = shows.filter(isValidShow).map((show) => (
 		<CustomCard

@@ -5,6 +5,7 @@
   "subfiles": [],
   "subfiles_extension": [
     "collections_wrapper.js",
+    "debug.js",
     "extension.js",
     "folder_image_wrapper.js"
   ]
