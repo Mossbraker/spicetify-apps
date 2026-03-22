@@ -1,5 +1,6 @@
 // biome-ignore lint:
 import React from "react";
+import { sanitizeSvgPaths } from "../utils/sanitize_svg";
 
 export interface AddMenuItem {
 	label: string;
@@ -15,12 +16,35 @@ function AddIcon(): React.ReactElement<SVGElement> {
 	return (
 		<Spicetify.ReactComponent.IconComponent
 			semanticColor="textSubdued"
-			dangerouslySetInnerHTML={{
-				__html:
-					'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M15.25 8a.75.75 0 0 1-.75.75H8.75v5.75a.75.75 0 0 1-1.5 0V8.75H1.5a.75.75 0 0 1 0-1.5h5.75V1.5a.75.75 0 0 1 1.5 0v5.75h5.75a.75.75 0 0 1 .75.75z"></path></svg>',
-			}}
 			iconSize={16}
-		/>
+		>
+			{/* Safe: static SVG content with no dynamic data */}
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+				<path d="M15.25 8a.75.75 0 0 1-.75.75H8.75v5.75a.75.75 0 0 1-1.5 0V8.75H1.5a.75.75 0 0 1 0-1.5h5.75V1.5a.75.75 0 0 1 1.5 0v5.75h5.75a.75.75 0 0 1 .75.75z" />
+			</svg>
+		</Spicetify.ReactComponent.IconComponent>
+	);
+}
+
+/**
+ * Renders a menu item icon by sanitizing the iconPath string using an allowlist
+ * approach. Only safe SVG elements and attributes are rendered.
+ */
+function MenuItemIcon({ iconPath }: { iconPath: string }): React.ReactElement {
+	const safePaths = React.useMemo(() => sanitizeSvgPaths(iconPath), [iconPath]);
+
+	return (
+		<span className="library-addmenu-icon">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 16 16"
+				width="16"
+				height="16"
+				fill="currentColor"
+			>
+				{safePaths}
+			</svg>
+		</span>
 	);
 }
 
@@ -152,12 +176,7 @@ function AddButton({ menuItems }: AddButtonProps): React.ReactElement<HTMLButton
 								item.onClick();
 							}}
 						>
-							<span
-								className="library-addmenu-icon"
-								dangerouslySetInnerHTML={{
-									__html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">${item.iconPath}</svg>`,
-								}}
-							/>
+							<MenuItemIcon iconPath={item.iconPath} />
 							<span>{item.label}</span>
 						</button>
 					))}

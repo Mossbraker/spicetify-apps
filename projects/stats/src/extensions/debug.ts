@@ -27,6 +27,7 @@ const logs: StatsDebugLogEntry[] = [];
 const activities = new Map<string, StatsDebugActivityEntry>();
 const listeners = new Set<() => void>();
 let nextId = 1;
+let enabled = false;
 
 const emit = () => {
 	listeners.forEach((listener) => listener());
@@ -41,6 +42,7 @@ const attachGlobals = () => {
 };
 
 const addLog = (level: StatsDebugLevel, message: string, meta?: unknown) => {
+	if (!enabled) return;
 	logs.push({
 		id: nextId++,
 		level,
@@ -67,6 +69,7 @@ export const statsDebug = {
 		addLog("error", message, meta);
 	},
 	setActivity(entry: StatsDebugActivityEntry) {
+		if (!enabled) return;
 		activities.set(entry.key, entry);
 		attachGlobals();
 		emit();
@@ -92,9 +95,45 @@ export const statsDebug = {
 			listeners.delete(listener);
 		};
 	},
+	setEnabled(value: boolean) {
+		enabled = value;
+		if (!value) {
+			logs.length = 0;
+			activities.clear();
+			emit();
+		}
+	},
+	isEnabled(): boolean {
+		return enabled;
+	},
 };
 
 attachGlobals();
+
+const STATS_DEBUG_KEY = "spicetify-stats-debug";
+
+const isDebugEnabled = (): boolean => {
+	try {
+		return localStorage.getItem(STATS_DEBUG_KEY) === "true";
+	} catch {
+		return false;
+	}
+};
+
+/**
+ * Debug-gated logging wrapper.
+ * Forwards to the in-app debug panel when debug logging is enabled.
+ * Additionally logs to the browser console when localStorage key
+ * "spicetify-stats-debug" is set to "true".
+ */
+export const debugLog = (...args: unknown[]): void => {
+	if (!enabled && !isDebugEnabled()) return;
+	const message = args.map((a) => (typeof a === "string" ? a : String(a))).join(" ");
+	statsDebug.info(message, args.length === 1 ? undefined : args);
+	if (isDebugEnabled()) {
+		console.log(...args);
+	}
+};
 
 declare global {
 	interface Window {

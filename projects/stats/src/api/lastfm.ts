@@ -50,29 +50,34 @@ const val = <T>(res: T | undefined) => {
 	return res;
 };
 
-export const getTopTracks = (key: string, user: string, range: keyof typeof lfmperiods) => {
+export const getTopTracks = async (key: string, user: string, range: keyof typeof lfmperiods) => {
 	const url = `https://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user=${user}&api_key=${key}&limit=100&format=json&period=${lfmperiods[range]}`;
-	return apiFetch<LastFM.TopTracksResponse>("lfmTopTracks", url).then((res) => val(res?.toptracks?.track));
+	const res = await apiFetch<LastFM.TopTracksResponse>("lfmTopTracks", url);
+	return val(res?.toptracks?.track);
 };
 
-export const getTopArtists = (key: string, user: string, range: keyof typeof lfmperiods) => {
+export const getTopArtists = async (key: string, user: string, range: keyof typeof lfmperiods) => {
 	const url = `https://ws.audioscrobbler.com/2.0/?method=user.gettopartists&user=${user}&api_key=${key}&limit=100&format=json&period=${lfmperiods[range]}`;
-	return apiFetch<LastFM.TopArtistsResponse>("lfmTopArtists", url).then((res) => val(res?.topartists?.artist));
+	const res = await apiFetch<LastFM.TopArtistsResponse>("lfmTopArtists", url);
+	return val(res?.topartists?.artist);
 };
 
-export const getTopAlbums = (key: string, user: string, range: keyof typeof lfmperiods) => {
+export const getTopAlbums = async (key: string, user: string, range: keyof typeof lfmperiods) => {
 	const url = `https://ws.audioscrobbler.com/2.0/?method=user.gettopalbums&user=${user}&api_key=${key}&limit=100&format=json&period=${lfmperiods[range]}`;
-	return apiFetch<LastFM.TopAlbumsResponse>("lfmTopAlbums", url).then((res) => val(res?.topalbums?.album));
+	const res = await apiFetch<LastFM.TopAlbumsResponse>("lfmTopAlbums", url);
+	return val(res?.topalbums?.album);
 };
 
-export const getArtistChart = (key: string) => {
+export const getArtistChart = async (key: string) => {
 	const url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettopartists&api_key=${key}&format=json`;
-	return apiFetch<LastFM.ArtistChartResponse>("lfmArtistChart", url).then((res) => val(res?.artists?.artist));
+	const res = await apiFetch<LastFM.ArtistChartResponse>("lfmArtistChart", url);
+	return val(res?.artists?.artist);
 };
 
-export const getTrackChart = (key: string) => {
+export const getTrackChart = async (key: string) => {
 	const url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&api_key=${key}&format=json`;
-	return apiFetch<LastFM.TrackChartResponse>("lfmTrackChart", url).then((res) => val(res?.tracks?.track));
+	const res = await apiFetch<LastFM.TrackChartResponse>("lfmTrackChart", url);
+	return val(res?.tracks?.track);
 };
 
 export const getArtistTopAlbumImage = async (key: string, artist: string) => {

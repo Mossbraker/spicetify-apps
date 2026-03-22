@@ -1,6 +1,6 @@
 import React from "react";
 
-const LoadMoreCard = (props: any) => {
+const LoadMoreCard = (props: { callback: () => void }) => {
 	const { callback } = props;
 	return (
 		<div onClick={callback} className="load-more-card main-card-card">

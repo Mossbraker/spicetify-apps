@@ -1,6 +1,7 @@
 import type * as Spotify from "../types/spotify";
-import { statsDebug } from "../extensions/debug";
-import { isOAuthEnabled, hasValidTokens, oauthFetch } from "./oauth";
+import { statsDebug, debugLog } from "../extensions/debug";
+import { isOAuthEnabled, hasValidTokens, oauthFetch, getAccessToken } from "./oauth";
+import { fetchWithRetry } from "../utils/fetch-with-retry";
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/";
 
@@ -22,6 +23,15 @@ const ENDPOINT_SUPPRESSION_STORAGE_KEY = "stats:spotify:endpoint-suppressions";
 const SESSION_SEARCH_CACHE_STORAGE_KEY = "stats:spotify:search-session-cache";
 const SESSION_SEARCH_CACHE_TTL_MS = 15 * 60_000;
 const SESSION_SEARCH_CACHE_MAX_ENTRIES = 100;
+
+/** Maximum time an endpoint can remain suppressed before automatic recovery */
+const SUPPRESSION_TTL_MS = 5 * 60_000;
+/** Minimum suppression time for 429 rate-limit responses */
+const MIN_RATE_LIMIT_SUPPRESSION_MS = 15_000;
+/** Default suppression time when no Retry-After header is provided for 429 */
+const DEFAULT_RATE_LIMIT_SUPPRESSION_MS = 60_000;
+/** Fallback suppression time for non-categorised errors */
+const DEFAULT_SUPPRESSION_MS = 60_000;
 
 const endpointSuppressions = new Map<string, SuppressedEndpoint>();
 const sessionSearchCache = new Map<string, SessionSearchCacheEntry>();
@@ -100,8 +110,27 @@ const readSessionSearchCache = <T>(key: string) => {
 	return entry.value as T;
 };
 
+const evictOldestSearchCacheEntries = () => {
+	if (sessionSearchCache.size < SESSION_SEARCH_CACHE_MAX_ENTRIES) return;
+
+	const now = Date.now();
+	const entries = [...sessionSearchCache.entries()]
+		.filter(([, entry]) => entry.expiresAt > now)
+		.sort((left, right) => left[1].lastAccessedAt - right[1].lastAccessedAt);
+
+	const excess = entries.length - SESSION_SEARCH_CACHE_MAX_ENTRIES + 1; // +1 for the incoming entry
+	if (excess > 0) {
+		const toEvict = entries.slice(0, excess);
+		for (const [evictKey] of toEvict) {
+			sessionSearchCache.delete(evictKey);
+		}
+		statsDebug.info("Session search cache evicted oldest entries", { evicted: toEvict.length, remaining: sessionSearchCache.size });
+	}
+};
+
 const writeSessionSearchCache = <T>(key: string, value: T) => {
 	const now = Date.now();
+	evictOldestSearchCacheEntries();
 	sessionSearchCache.set(key, {
 		value,
 		cachedAt: now,
@@ -176,20 +205,17 @@ const getEndpointKey = (url: string) => {
 	return url.replace(/^https?:\/\/api\.spotify\.com\/v1\//, "").split("?")[0];
 };
 
-const getSuppressionDurationMs = (endpointKey: string, status: number, retryAfterSeconds?: number) => {
+const getSuppressionDurationMs = (_endpointKey: string, status: number, retryAfterSeconds?: number) => {
 	if (status === 429) {
-		const retryAfterMs = retryAfterSeconds ? retryAfterSeconds * 1000 : 60_000;
-		return Math.max(retryAfterMs, 15_000);
+		const retryAfterMs = retryAfterSeconds ? retryAfterSeconds * 1000 : DEFAULT_RATE_LIMIT_SUPPRESSION_MS;
+		return Math.min(Math.max(retryAfterMs, MIN_RATE_LIMIT_SUPPRESSION_MS), SUPPRESSION_TTL_MS);
 	}
 
-	if (status === 403) {
-		if (endpointKey === "audio-features" || endpointKey === "artist-metas") return 30 * 60_000;
-		return 10 * 60_000;
+	if (status === 403 || status === 400) {
+		return SUPPRESSION_TTL_MS;
 	}
 
-	if (status === 400) return 10 * 60_000;
-
-	return 60_000;
+	return Math.min(DEFAULT_SUPPRESSION_MS, SUPPRESSION_TTL_MS);
 };
 
 const buildSuppressedMessage = (endpointKey: string, suppression: SuppressedEndpoint) => {
@@ -276,6 +302,15 @@ const extractRetryAfterSeconds = (error: unknown) => {
 	return undefined;
 };
 
+/** Extract a human-readable message from Error instances or structured {message} objects */
+const extractErrorMessage = (error: unknown): string => {
+	if (error instanceof Error) return error.message;
+	if (error && typeof error === "object" && "message" in error) {
+		return String((error as { message: unknown }).message);
+	}
+	return String(error);
+};
+
 export const clearSpotifyRequestSuppressions = () => {
 	for (const endpointKey of endpointSuppressions.keys()) {
 		statsDebug.clearActivity(`suppression:${endpointKey}`);
@@ -304,11 +339,11 @@ const isRateLimitError = (error: unknown): boolean => {
 const isSpotifyApiUrl = (url: string) => url.startsWith(SPOTIFY_API_BASE_URL);
 
 const externalFetch = async <T>(url: string): Promise<T> => {
-	const response = await fetch(url, {
+	const response = await fetchWithRetry(url, {
 		headers: {
 			Accept: "application/json",
 		},
-	});
+	}, { logger: statsDebug });
 
 	if (!response.ok) {
 		const retryAfter = response.headers.get("Retry-After");
@@ -338,11 +373,11 @@ const directFetch = async <T>(url: string): Promise<T> => {
 		throw new Error("No internal token available");
 	}
 
-	const response = await fetch(url, {
+	const response = await fetchWithRetry(url, {
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},
-	});
+	}, { logger: statsDebug });
 
 	if (response.status === 429) {
 		const retryAfter = response.headers.get("Retry-After");
@@ -370,14 +405,59 @@ const directFetch = async <T>(url: string): Promise<T> => {
 };
 
 /**
+ * Attempt an OAuth token refresh and retry the request once.
+ * Returns the response data on success, or null if refresh/retry is
+ * not possible or fails.
+ */
+const attemptOAuthRefreshAndRetry = async <T>(name: string, url: string): Promise<T | null> => {
+	if (!isOAuthEnabled()) return null;
+	try {
+		statsDebug.info("Attempting OAuth token refresh and retry after 401", { name, url });
+		const freshToken = await getAccessToken();
+		if (!freshToken) return null;
+
+		// Use fetchWithRetry directly instead of oauthFetch to avoid redundant
+		// refresh cascading — oauthFetch has its own internal 401 handler that
+		// would trigger additional token refreshes and retries.
+		const response = await fetchWithRetry(url, {
+			headers: {
+				Authorization: `Bearer ${freshToken}`,
+			},
+		});
+
+		if (!response.ok) {
+			statsDebug.warn("OAuth refresh-and-retry request failed", {
+				name,
+				url,
+				status: response.status,
+			});
+			return null;
+		}
+
+		return await response.json() as T;
+	} catch (retryError) {
+		const errorMessage = extractErrorMessage(retryError);
+		statsDebug.warn("OAuth token refresh and retry failed", {
+			name,
+			url,
+			error: errorMessage,
+		});
+		return null;
+	}
+};
+
+/**
  * Core API fetch function.
  * Priority: OAuth > Direct Fetch > CosmosAsync
+ *
+ * On 401 Unauthorized from any path, the function attempts an OAuth
+ * token refresh and retries the request once before giving up.
  */
 export const apiFetch = async <T>(name: string, url: string, log = true): Promise<T> => {
 	if (!isSpotifyApiUrl(url)) {
 		const timeStart = window.performance.now();
 		const response = await externalFetch<T>(url);
-		if (log) console.log("stats -", name, "fetch time:", window.performance.now() - timeStart);
+		if (log) debugLog("stats -", name, "fetch time:", window.performance.now() - timeStart);
 		return response;
 	}
 
@@ -397,20 +477,30 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 		try {
 			const timeStart = window.performance.now();
 			const response = await oauthFetch<T>(url);
-			if (log) console.log("stats -", name, "fetch time (OAuth):", window.performance.now() - timeStart);
+			if (log) debugLog("stats -", name, "fetch time (OAuth):", window.performance.now() - timeStart);
 			return response;
 		} catch (error) {
 			const status = extractStatus(error);
 			if (status === 400 || status === 403 || status === 429) {
 				throw suppressEndpoint(endpointKey, status, name, extractRetryAfterSeconds(error));
 			}
-			statsDebug.warn("OAuth fetch failed", {
-				name,
-				url,
-				status,
-				error: error instanceof Error ? error.message : String(error),
-			});
-			throw error;
+			// H-4: On 401 (or token-expired errors that oauthFetch could not
+			// recover from internally), attempt one more refresh + retry before
+			// falling through to the direct-fetch / CosmosAsync paths.
+			if (status === 401) {
+				const retryResult = await attemptOAuthRefreshAndRetry<T>(name, url);
+				if (retryResult !== null) return retryResult;
+				statsDebug.warn("OAuth 401 unrecoverable, falling through to alternative fetch paths", { name, url });
+				// Fall through to direct fetch / CosmosAsync
+			} else {
+				statsDebug.warn("OAuth fetch failed", {
+					name,
+					url,
+					status,
+					error: extractErrorMessage(error),
+				});
+				throw error;
+			}
 		}
 	}
 
@@ -420,25 +510,31 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 		try {
 			const timeStart = window.performance.now();
 			const response = await directFetch<T>(url);
-			if (log) console.log("stats -", name, "fetch time (direct):", window.performance.now() - timeStart);
+			if (log) debugLog("stats -", name, "fetch time (direct):", window.performance.now() - timeStart);
 			return response;
 		} catch (error) {
 			const status = extractStatus(error);
 			if (status === 400 || status === 403 || status === 429) {
 				throw suppressEndpoint(endpointKey, status, name, extractRetryAfterSeconds(error));
 			}
+			// H-4: On 401 from direct fetch, attempt OAuth token refresh and retry
+			if (status === 401) {
+				const retryResult = await attemptOAuthRefreshAndRetry<T>(name, url);
+				if (retryResult !== null) return retryResult;
+				statsDebug.warn("Direct fetch 401 unrecoverable via OAuth, falling through to CosmosAsync", { name, url });
+			}
 			statsDebug.warn("Direct fetch failed; falling back to CosmosAsync", {
 				name,
 				url,
 				status,
-				error: error instanceof Error ? error.message : String(error),
+				error: extractErrorMessage(error),
 			});
-			console.log("stats -", name, "direct fetch failed, falling back to CosmosAsync:", error);
+			debugLog("stats -", name, "direct fetch failed, falling back to CosmosAsync:", error);
 			// Fall through to CosmosAsync
 		}
 	}
 
-	// Fall back to CosmosAsync with retry logic
+	// Fall back to CosmosAsync
 	try {
 		const timeStart = window.performance.now();
 		const response = await Spicetify.CosmosAsync.get(url);
@@ -455,20 +551,25 @@ export const apiFetch = async <T>(name: string, url: string, log = true): Promis
 			throw new Error(
 				`Failed to fetch the info from server. Try again later. ${name.includes("lfm") ? "Check your LFM API key and username." : ""}`,
 			);
-		if (log) console.log("stats -", name, "fetch time:", window.performance.now() - timeStart);
+		if (log) debugLog("stats -", name, "fetch time:", window.performance.now() - timeStart);
 		return response;
 	} catch (error) {
 		const status = extractStatus(error);
 		if (status === 400 || status === 403 || status === 429 || isRateLimitError(error)) {
 			throw suppressEndpoint(endpointKey, status ?? 429, name, extractRetryAfterSeconds(error));
 		}
+		// H-4: On 401 from CosmosAsync, attempt OAuth token refresh and retry
+		if (status === 401) {
+			const retryResult = await attemptOAuthRefreshAndRetry<T>(name, url);
+			if (retryResult !== null) return retryResult;
+		}
 		statsDebug.error("Spotify request failed", {
 			name,
 			url,
 			status,
-			error: error instanceof Error ? error.message : String(error),
+			error: extractErrorMessage(error),
 		});
-		console.log("stats -", name, "request failed:", error);
+		debugLog("stats -", name, "request failed:", error);
 		throw error as Error;
 	}
 };
@@ -479,91 +580,93 @@ const val = <T>(res: T | undefined) => {
 	return res;
 };
 
-export const getTopTracks = (range: Spotify.SpotifyRange) => {
-	return apiFetch<Spotify.TopTracksResponse>(
+export const getTopTracks = async (range: Spotify.SpotifyRange) => {
+	const res = await apiFetch<Spotify.TopTracksResponse>(
 		"topTracks",
 		`https://api.spotify.com/v1/me/top/tracks?limit=50&offset=0&time_range=${range}`,
-	).then((res) => val(res.items));
+	);
+	return val(res.items);
 };
 
-export const getTopArtists = (range: Spotify.SpotifyRange) => {
-	return apiFetch<Spotify.TopArtistsResponse>(
+export const getTopArtists = async (range: Spotify.SpotifyRange) => {
+	const res = await apiFetch<Spotify.TopArtistsResponse>(
 		"topArtists",
 		`https://api.spotify.com/v1/me/top/artists?limit=50&offset=0&time_range=${range}`,
-	).then((res) => val(res.items));
+	);
+	return val(res.items);
 };
 
 /**
  * @param ids - max: 50
  */
-export const getArtistMetas = (ids: string[]) => {
-	return apiFetch<Spotify.SeveralArtistsResponse>("artistMetas", `https://api.spotify.com/v1/artists?ids=${ids}`).then(
-		(res) => res.artists,
-	);
+export const getArtistMetas = async (ids: string[]) => {
+	const res = await apiFetch<Spotify.SeveralArtistsResponse>("artistMetas", `https://api.spotify.com/v1/artists?ids=${ids}`);
+	return res.artists;
 };
 
-export const getAlbumMetas = (ids: string[]) => {
-	return apiFetch<Spotify.SeveralAlbumsResponse>("albumMetas", `https://api.spotify.com/v1/albums?ids=${ids}`).then(
-		(res) => res.albums,
-	);
+export const getAlbumMetas = async (ids: string[]) => {
+	const res = await apiFetch<Spotify.SeveralAlbumsResponse>("albumMetas", `https://api.spotify.com/v1/albums?ids=${ids}`);
+	return res.albums;
 };
 
-export const getTrackMetas = (ids: string[]) => {
-	return apiFetch<Spotify.SeveralTracksResponse>("trackMetas", `https://api.spotify.com/v1/tracks?ids=${ids}`).then(
-		(res) => res.tracks,
-	);
+export const getTrackMetas = async (ids: string[]) => {
+	const res = await apiFetch<Spotify.SeveralTracksResponse>("trackMetas", `https://api.spotify.com/v1/tracks?ids=${ids}`);
+	return res.tracks;
 };
 
-export const getAudioFeatures = (ids: string[]) => {
-	return apiFetch<Spotify.SeveralAudioFeaturesResponse>(
+export const getAudioFeatures = async (ids: string[]) => {
+	const res = await apiFetch<Spotify.SeveralAudioFeaturesResponse>(
 		"audioFeatures",
 		`https://api.spotify.com/v1/audio-features?ids=${ids}`,
-	).then((res) => res.audio_features);
+	);
+	return res.audio_features;
 };
 
-export const searchForTrack = (track: string, artist: string) => {
+export const searchForTrack = async (track: string, artist: string) => {
 	const q = encodeURIComponent(`track:${track.replace(/'/g, "")} artist:${artist.replace(/'/g, "")}`);
 	const cacheKey = getSessionSearchCacheKey("search-track", [track, artist]);
-	return withSessionSearchCache(cacheKey, () =>
-		apiFetch<Spotify.SearchResponse>(
+	return withSessionSearchCache(cacheKey, async () => {
+		const res = await apiFetch<Spotify.SearchResponse>(
 			"searchForTrack",
 			`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1&market=from_token`,
-		).then((res) => res.tracks.items),
-	);
+		);
+		return res.tracks.items;
+	});
 };
 
-export const searchForArtist = (artist: string) => {
+export const searchForArtist = async (artist: string) => {
 	const q = encodeURIComponent(`artist:${artist.replace(/'/g, "")}`);
 	const cacheKey = getSessionSearchCacheKey("search-artist", [artist]);
-	return withSessionSearchCache(cacheKey, () =>
-		apiFetch<Spotify.SearchResponse>(
+	return withSessionSearchCache(cacheKey, async () => {
+		const res = await apiFetch<Spotify.SearchResponse>(
 			"searchForArtist",
 			`https://api.spotify.com/v1/search?q=${q}&type=artist&limit=1&market=from_token`,
-		).then((res) => res.artists.items),
-	);
+		);
+		return res.artists.items;
+	});
 };
 
-export const searchForAlbum = (album: string, artist: string) => {
+export const searchForAlbum = async (album: string, artist: string) => {
 	const q = encodeURIComponent(`album:${album.replace(/'/g, "")} artist:${artist.replace(/'/g, "")}`);
 	const cacheKey = getSessionSearchCacheKey("search-album", [album, artist]);
-	return withSessionSearchCache(cacheKey, () =>
-		apiFetch<Spotify.SearchResponse>(
+	return withSessionSearchCache(cacheKey, async () => {
+		const res = await apiFetch<Spotify.SearchResponse>(
 			"searchForAlbum",
 			`https://api.spotify.com/v1/search?q=${q}&type=album&limit=1&market=from_token`,
-		).then((res) => res.albums.items),
-	);
+		);
+		return res.albums.items;
+	});
 };
 
-export const queryLiked = (ids: string[]) => {
+export const queryLiked = async (ids: string[]) => {
 	return apiFetch<boolean[]>("queryLiked", `https://api.spotify.com/v1/me/tracks/contains?ids=${ids}`);
 };
 
-export const getPlaylistMeta = (id: string) => {
+export const getPlaylistMeta = async (id: string) => {
 	return apiFetch<Spotify.PlaylistResponse>("playlistMeta", `https://api.spotify.com/v1/playlists/${id}`);
 };
 
-export const getUserPlaylists = () => {
-	return apiFetch<Spotify.UserPlaylistsResponse>("userPlaylists", "https://api.spotify.com/v1/me/playlists").then(
-		(res) => res.items,
-	);
+export const getUserPlaylists = async () => {
+	const res = await apiFetch<Spotify.UserPlaylistsResponse>("userPlaylists", "https://api.spotify.com/v1/me/playlists");
+	return res.items;
 };

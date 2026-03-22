@@ -16,6 +16,7 @@ const MAX_DEBUG_LOGS = 150;
 const logs: LibraryDebugLogEntry[] = [];
 const listeners = new Set<() => void>();
 let nextId = 1;
+let enabled = false;
 
 const emit = () => {
 	listeners.forEach((listener) => listener());
@@ -30,6 +31,7 @@ const attachGlobals = () => {
 };
 
 const addLog = (level: LibraryDebugLevel, message: string, meta?: unknown) => {
+	if (!enabled) return;
 	logs.push({
 		id: nextId++,
 		level,
@@ -68,6 +70,41 @@ export const libraryDebug = {
 			listeners.delete(listener);
 		};
 	},
+	setEnabled(value: boolean) {
+		enabled = value;
+		if (!value) {
+			logs.length = 0;
+			emit();
+		}
+	},
+	isEnabled(): boolean {
+		return enabled;
+	},
 };
 
 attachGlobals();
+
+const LIBRARY_DEBUG_KEY = "spicetify-library-debug";
+
+const isDebugEnabled = (): boolean => {
+	try {
+		return localStorage.getItem(LIBRARY_DEBUG_KEY) === "true";
+	} catch {
+		return false;
+	}
+};
+
+/**
+ * Debug-gated logging wrapper.
+ * Forwards to the in-app debug panel when debug logging is enabled.
+ * Additionally logs to the browser console when localStorage key
+ * "spicetify-library-debug" is set to "true".
+ */
+export const debugLog = (...args: unknown[]): void => {
+	if (!enabled && !isDebugEnabled()) return;
+	const message = args.map((a) => (typeof a === "string" ? a : String(a))).join(" ");
+	libraryDebug.info(message, args.length === 1 ? undefined : args);
+	if (isDebugEnabled()) {
+		console.log(...args);
+	}
+};

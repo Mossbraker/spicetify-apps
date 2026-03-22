@@ -1,3 +1,6 @@
+import { version } from "../../package.json";
+import { fetchWithRetry } from "../utils/fetch-with-retry";
+
 type MusicBrainzTag = {
 	count?: number;
 	name: string;
@@ -38,19 +41,25 @@ const startCooldown = () => {
 const fetchJson = async <T>(url: string): Promise<T | null> => {
 	if (isCoolingDown()) return null;
 
-	const response = await fetch(url, {
-		headers: {
-			Accept: "application/json",
-		},
-	});
+	try {
+		const response = await fetchWithRetry(url, {
+			headers: {
+				Accept: "application/json",
+				"User-Agent": `spicetify-stats/${version} (https://github.com/harbassan/spicetify-apps)`,
+			},
+		});
 
-	if (response.status === 429 || response.status === 503) {
-		startCooldown();
+		if (response.status === 429 || response.status === 503) {
+			startCooldown();
+			return null;
+		}
+
+		if (!response.ok) return null;
+		return (await response.json()) as T;
+	} catch {
+		// Network error after all retries exhausted
 		return null;
 	}
-
-	if (!response.ok) return null;
-	return (await response.json()) as T;
 };
 
 const mergeTags = (tags: MusicBrainzTag[]) => {

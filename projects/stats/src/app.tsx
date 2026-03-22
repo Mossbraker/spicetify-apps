@@ -7,6 +7,7 @@ import LibraryPage from "./pages/library";
 import ChartsPage from "./pages/charts";
 import AlbumsPage from "./pages/top_albums";
 import DebugConsole from "./components/debug_console";
+import { statsDebug } from "./extensions/debug";
 
 import { version } from "../package.json";
 
@@ -24,11 +25,12 @@ const checkForUpdates = (setNewUpdate: (a: boolean) => void) => {
 		.then((res) => res.json())
 		.then(
 			(result) => {
-				const releases = result.filter((release: any) => release.name.startsWith("stats"));
+				const releases = result.filter((release: { name: string }) => release.name.startsWith("stats"));
+				if (releases.length === 0) return;
 				setNewUpdate(releases[0].name.slice(7) !== version);
 			},
 			(error) => {
-				console.log("Failed to check for updates", error);
+				console.warn("Failed to check for updates", error);
 			},
 		);
 };
@@ -98,6 +100,11 @@ const App = () => {
 		});
 		return <></>;
 	}
+
+	// Sync debug logging with config
+	React.useEffect(() => {
+		statsDebug.setEnabled(Boolean(config["show-debug-console"]));
+	}, [config["show-debug-console"]]);
 
 	const launchModal = () => {
 		SpicetifyStats.ConfigWrapper.launchModal(setConfig);

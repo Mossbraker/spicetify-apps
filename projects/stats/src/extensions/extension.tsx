@@ -182,12 +182,14 @@ window.SpicetifyStats = new SpicetifyStats();
 
 	const version = localStorage.getItem("stats:version");
 	if (!version || version !== STATS_VERSION) {
+		const keysToRemove: string[] = [];
 		for (let i = 0; i < localStorage.length; i++) {
-			const key = localStorage.key(i) as string;
-			if (key.startsWith("stats:") && !key.startsWith("stats:config:") && !key.startsWith("stats:oauth:")) {
-				localStorage.removeItem(key);
+			const key = localStorage.key(i);
+			if (key && key.startsWith("stats:") && !key.startsWith("stats:config:") && !key.startsWith("stats:oauth:")) {
+				keysToRemove.push(key);
 			}
 		}
+		keysToRemove.forEach((key) => localStorage.removeItem(key));
 		localStorage.setItem("stats:version", STATS_VERSION);
 	}
 

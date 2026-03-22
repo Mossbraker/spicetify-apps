@@ -30,6 +30,7 @@ export type CacheDiagnostic = {
 const cache = new Map<string, CacheEntry<unknown>>();
 const recentInvalidations: InvalidatedCacheEntry[] = [];
 const MAX_INVALIDATION_DIAGNOSTICS = 8;
+const MAX_CACHE_ENTRIES = 500;
 
 const getEntry = <T,>(key: string) => cache.get(key) as CacheEntry<T> | undefined;
 
@@ -41,6 +42,23 @@ const touch = <T,>(key: string) => {
 	return entry;
 };
 
+const evictIfNeeded = () => {
+	if (cache.size <= MAX_CACHE_ENTRIES) return;
+
+	const entries = [...cache.entries()].sort(
+		(left, right) => left[1].lastAccessedAt - right[1].lastAccessedAt,
+	);
+
+	const toEvict = entries.slice(0, cache.size - MAX_CACHE_ENTRIES);
+	for (const [key] of toEvict) {
+		cache.delete(key);
+	}
+
+	if (toEvict.length > 0) {
+		statsDebug.info("Cache evicted LRU entries", { evicted: toEvict.length, remaining: cache.size });
+	}
+};
+
 export const set = <T>(key: string, value: T) => {
 	const now = Date.now();
 	cache.set(key, {
@@ -49,6 +67,7 @@ export const set = <T>(key: string, value: T) => {
 		lastAccessedAt: now,
 		hits: 0,
 	});
+	evictIfNeeded();
 	statsDebug.info("Cache populated", { key });
 	return value;
 };

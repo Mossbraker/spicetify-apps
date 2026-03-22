@@ -1,5 +1,12 @@
+interface SpicetifyStatsGlobal {
+	ConfigWrapper: {
+		Config: Config & Record<string, unknown>;
+		launchModal: (callback?: (config: Config) => void) => void;
+	};
+}
+
 declare global {
-	var SpicetifyStats: any;
+	var SpicetifyStats: SpicetifyStatsGlobal;
 }
 
 export interface Config {
