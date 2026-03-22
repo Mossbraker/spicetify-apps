@@ -216,3 +216,67 @@ The current state is intentionally pragmatic:
 - it clearly signals unavailable data rather than inventing it
 
 If the project later wants true arbitrary-range analytics or durable listening-history features, that should be pursued as a separate backend-backed architecture rather than another round of client-side patching.
+
+## Follow-up Updates
+
+The branch picked up a second round of resilience work after the initial recovery pass.
+
+### Debugging and diagnostics
+
+Stats now includes an in-app debug console that surfaces:
+
+- recent request and fallback logs
+- active endpoint suppressions
+- cache and invalidation activity
+
+This was added because console-only debugging was too slow when the app was failing before the user could easily inspect what happened. The debug console makes it much easier to see whether the current failure is caused by OAuth state, direct fetch fallback, endpoint suppression, or missing enrichment data.
+
+### Charts artwork fallback was extended
+
+The original recovery work preserved Last.fm as the main data source for Charts, but artwork could still disappear when Spotify enrichment was unavailable.
+
+That path is now more robust:
+
+- album chart items preserve Last.fm artwork when Spotify enrichment fails or returns no image
+- artist chart items can fall back to `artist.getTopAlbums` on Last.fm to obtain a representative image
+- track chart items can fall back to `track.getInfo` on Last.fm to obtain album art
+- known Last.fm placeholder images are filtered out so fake artwork is not treated as success
+
+This keeps the Charts page useful even when Spotify search endpoints are degraded.
+
+### Persistent Spotify search-result cache
+
+One of the most expensive remaining failure modes was repeated Spotify search enrichment across reloads. Even if the current session had already resolved an artist, album, or track once, the app would have to search again after reload and risk another suppression event.
+
+To reduce that pressure, search enrichment results are now cached persistently in localStorage.
+
+Current behavior:
+
+- cached search results survive reloads
+- entries expire after a bounded TTL
+- the cache size is capped so it does not grow without limit
+- cache hits update access metadata for eviction ordering
+- stale persisted `400` suppressions for `search-*` endpoints are discarded on load
+
+The goal is not permanent catalog storage. The goal is to avoid immediately redoing the same Spotify search work for the same chart items every time the app opens.
+
+### Config-aware cache keys for chart data
+
+Chart queries now include a configuration-derived cache key rather than relying only on the tab identifier.
+
+Why this matters:
+
+- switching between Spotify-backed and Last.fm-backed modes should not reuse the wrong cached result
+- changing Last.fm identity-sensitive settings should invalidate the relevant query results cleanly
+
+This is a small change, but it removes a class of confusing stale-data behavior when testing fallback modes.
+
+## Current Practical Outcome
+
+With the follow-up changes in place, the Stats app is now better at three things than it was after the first recovery pass:
+
+- explaining why a request path is failing
+- keeping chart artwork present without depending on fresh Spotify enrichment
+- avoiding repeated Spotify search traffic across reloads
+
+The app is still constrained by the underlying platform, but it now degrades with much less churn and much better visibility.

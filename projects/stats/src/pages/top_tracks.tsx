@@ -23,7 +23,7 @@ const getLastFmTopTracks = async (timeRange: SpotifyRange, config: Config, lastf
 	const { "lastfm-user": user, "api-key": key } = config;
 	if (!user || !key) throw new Error("Missing LastFM API Key or Username");
 	const response = await lastFM.getTopTracks(key, user, timeRange);
-	return throttledMap(response, (track) => convertTrack(track, lastfmOnly));
+	return throttledMap(response, (track) => convertTrack(track, lastfmOnly, key));
 };
 
 export const getTopTracks = async (timeRange: SpotifyRange, config: Config) => {

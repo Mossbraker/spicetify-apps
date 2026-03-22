@@ -2,6 +2,7 @@ import { searchForAlbum, searchForArtist, searchForTrack } from "../api/spotify"
 import { cacher, set } from "../extensions/cache";
 import type * as LastFM from "../types/lastfm";
 import type * as Spotify from "../types/spotify";
+import { getArtistTopAlbumImage, getLastFmImageUrl, getTrackAlbumImage } from "../api/lastfm";
 import type {
 	LastFMMinifiedAlbum,
 	LastFMMinifiedArtist,
@@ -64,12 +65,24 @@ export const minifyTrack = (track: Spotify.Track): SpotifyMinifiedTrack => ({
 	type: "spotify",
 });
 
-const toHttpsUrl = (url?: string) => (url ? url.replace(/^http:\/\//i, "https://") : undefined);
+const getArtistFallbackImage = async (artist: LastFM.Artist, lastfmApiKey?: string) => {
+	const directImage = getLastFmImageUrl(artist.image);
+	if (directImage || !lastfmApiKey) return directImage;
 
-const getLastFmImage = (images?: { "#text": string }[]) => {
-	if (!images?.length) return undefined;
-	const image = [...images].reverse().find((entry) => entry?.["#text"]?.trim());
-	return toHttpsUrl(image?.["#text"]);
+	const resolvedImage = await cacher(() => getArtistTopAlbumImage(lastfmApiKey, artist.name))({
+		queryKey: ["lfmArtistTopAlbumImage", artist.name],
+	});
+	return resolvedImage ?? undefined;
+};
+
+const getTrackFallbackImage = async (track: LastFM.Track, lastfmApiKey?: string) => {
+	const directImage = getLastFmImageUrl(track.image);
+	if (directImage || !lastfmApiKey) return directImage;
+
+	const resolvedImage = await cacher(() => getTrackAlbumImage(lastfmApiKey, track.artist.name, track.name))({
+		queryKey: ["lfmTrackAlbumImage", track.artist.name, track.name],
+	});
+	return resolvedImage ?? undefined;
 };
 
 // Pure LastFM artist without Spotify lookup - avoids API calls entirely
@@ -77,15 +90,16 @@ export const convertArtistLastFMOnly = (artist: LastFM.Artist): LastFMMinifiedAr
 	name: artist.name,
 	playcount: Number(artist.playcount),
 	uri: artist.url,
-	image: getLastFmImage(artist.image),
+	image: getLastFmImageUrl(artist.image),
 	type: "lastfm",
 });
 
-export const convertArtist = async (artist: LastFM.Artist, lastfmOnly = false) => {
-	// Skip Spotify lookup if lastfm-only mode is enabled
-	if (lastfmOnly) return convertArtistLastFMOnly(artist);
 
-	const fallbackImage = getLastFmImage(artist.image);
+export const convertArtist = async (artist: LastFM.Artist, lastfmOnly = false, lastfmApiKey?: string) => {
+	// Skip Spotify lookup if lastfm-only mode is enabled
+	const fallbackImage = await getArtistFallbackImage(artist, lastfmApiKey);
+	if (lastfmOnly) return { ...convertArtistLastFMOnly(artist), image: fallbackImage };
+
 
 	let spotifyArtist;
 	try {
@@ -97,9 +111,9 @@ export const convertArtist = async (artist: LastFM.Artist, lastfmOnly = false) =
 			return spotifyArtists.sort((a, b) => b.popularity - a.popularity)[0];
 		})({ queryKey: ["searchForArtist", artist.name] });
 	} catch {
-		return convertArtistLastFMOnly(artist);
+		return { ...convertArtistLastFMOnly(artist), image: fallbackImage };
 	}
-	if (!spotifyArtist) return convertArtistLastFMOnly(artist);
+	if (!spotifyArtist) return { ...convertArtistLastFMOnly(artist), image: fallbackImage };
 	set(`artist-${spotifyArtist.id}`, spotifyArtist);
 	const minifiedArtist = minifyArtist(spotifyArtist);
 	return {
@@ -115,13 +129,15 @@ export const convertAlbumLastFMOnly = (album: LastFM.Album): LastFMMinifiedAlbum
 	uri: album.url,
 	name: album.name,
 	playcount: Number(album.playcount),
-	image: getLastFmImage(album.image),
+	image: getLastFmImageUrl(album.image),
 	type: "lastfm",
 });
 
 export const convertAlbum = async (album: LastFM.Album, lastfmOnly = false) => {
 	// Skip Spotify lookup if lastfm-only mode is enabled
 	if (lastfmOnly) return convertAlbumLastFMOnly(album);
+
+	const fallbackImage = getLastFmImageUrl(album.image);
 
 	let spotifyAlbum;
 	try {
@@ -134,17 +150,17 @@ export const convertAlbum = async (album: LastFM.Album, lastfmOnly = false) => {
 	} catch {
 		return convertAlbumLastFMOnly(album);
 	}
-	if (!spotifyAlbum)
+	if (!spotifyAlbum) {
 		return {
-			uri: album.url,
-			name: album.name,
-			playcount: Number(album.playcount),
-			type: "lastfm",
-		} as LastFMMinifiedAlbum;
+			...convertAlbumLastFMOnly(album),
+			image: fallbackImage,
+		};
+	}
 	return {
 		...minifyAlbum(spotifyAlbum),
 		playcount: Number(album.playcount),
 		name: album.name,
+		image: minifyAlbum(spotifyAlbum).image ?? fallbackImage,
 	} as SpotifyMinifiedAlbum;
 };
 
@@ -154,7 +170,7 @@ export const convertTrackLastFMOnly = (track: LastFM.Track): LastFMMinifiedTrack
 	name: track.name,
 	playcount: Number(track.playcount),
 	duration_ms: Number(track.duration) * 1000,
-	image: getLastFmImage(track.image),
+	image: getLastFmImageUrl(track.image),
 	artists: [
 		{
 			name: track.artist.name,
@@ -164,11 +180,12 @@ export const convertTrackLastFMOnly = (track: LastFM.Track): LastFMMinifiedTrack
 	type: "lastfm",
 });
 
-export const convertTrack = async (track: LastFM.Track, lastfmOnly = false) => {
-	// Skip Spotify lookup if lastfm-only mode is enabled
-	if (lastfmOnly) return convertTrackLastFMOnly(track);
 
-	const fallbackImage = getLastFmImage(track.image);
+export const convertTrack = async (track: LastFM.Track, lastfmOnly = false, lastfmApiKey?: string) => {
+	// Skip Spotify lookup if lastfm-only mode is enabled
+	const fallbackImage = await getTrackFallbackImage(track, lastfmApiKey);
+	if (lastfmOnly) return { ...convertTrackLastFMOnly(track), image: fallbackImage };
+
 
 	let spotifyTrack;
 	try {
@@ -179,9 +196,9 @@ export const convertTrack = async (track: LastFM.Track, lastfmOnly = false) => {
 			queryKey: ["searchForTrack", track.name, track.artist.name],
 		});
 	} catch {
-		return convertTrackLastFMOnly(track);
+		return { ...convertTrackLastFMOnly(track), image: fallbackImage };
 	}
-	if (!spotifyTrack) return convertTrackLastFMOnly(track);
+	if (!spotifyTrack) return { ...convertTrackLastFMOnly(track), image: fallbackImage };
 	const minifiedTrack = minifyTrack(spotifyTrack);
 	return {
 		...minifiedTrack,

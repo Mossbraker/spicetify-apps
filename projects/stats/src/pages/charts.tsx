@@ -22,6 +22,7 @@ import { cacher, invalidator } from "../extensions/cache";
 // @ts-ignore
 import _ from "lodash";
 import { parseLiked } from "../utils/track_helper";
+import { getConfigCacheKey } from "../utils/config_cache";
 
 export const formatNumber = (num: number) => {
 	if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
@@ -55,7 +56,7 @@ const getArtistChart = async (config: Config) => {
 	const { "api-key": key, "lastfm-only": lastfmOnly } = config;
 	if (!key) throw new Error("Missing LastFM API Key or Username");
 	const response = await lastFM.getArtistChart(key);
-	const items = await throttledMap(response, (artist) => convertArtist(artist, lastfmOnly));
+	const items = await throttledMap(response, (artist) => convertArtist(artist, lastfmOnly, key));
 	return {
 		kind: "artists" as const,
 		items: sortByPlaycount(items),
@@ -66,7 +67,7 @@ const getTrackChart = async (config: Config) => {
 	const { "api-key": key, "lastfm-only": lastfmOnly } = config;
 	if (!key) throw new Error("Missing LastFM API Key or Username");
 	const response = await lastFM.getTrackChart(key);
-	const items = await throttledMap(response, (track) => convertTrack(track, lastfmOnly));
+	const items = await throttledMap(response, (track) => convertTrack(track, lastfmOnly, key));
 	return {
 		kind: "tracks" as const,
 		items: sortByPlaycount(await parseLiked(items)),
@@ -114,9 +115,10 @@ const getDate = () => {
 const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [dropdown, activeOption] = useDropdownMenu(DropdownOptions, "stats:charts");
 	const isArtistChart = activeOption.id === "artists";
+	const cacheKey = getConfigCacheKey(configWrapper.config, { includeLastfmIdentity: true });
 
 	const { status, error, data, refetch } = useQuery({
-		queryKey: ["top-charts", activeOption.id],
+		queryKey: ["top-charts", activeOption.id, cacheKey],
 		queryFn: (props) => (isArtistChart ? cacher(() => getArtistChart(configWrapper.config))(props) : cacher(() => getTrackChart(configWrapper.config))(props)),
 	});
 
@@ -126,7 +128,7 @@ const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		lhs: [`Top Charts - ${_.startCase(activeOption.id)}`],
 		rhs: [
 			dropdown,
-			<RefreshButton callback={() => invalidator(["top-charts", activeOption.id], refetch)} />,
+			<RefreshButton callback={() => invalidator(["top-charts", activeOption.id, cacheKey], refetch)} />,
 			<SettingsButton configWrapper={configWrapper} />,
 		],
 	};

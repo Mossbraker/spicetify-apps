@@ -1,6 +1,43 @@
 import type * as LastFM from "../types/lastfm";
 import { apiFetch } from "./spotify";
 
+type LastFmImage = {
+	"#text": string;
+};
+
+type ArtistTopAlbumsResponse = {
+	topalbums?: {
+		album?: {
+			image?: LastFmImage[];
+		}[];
+	};
+};
+
+type TrackInfoResponse = {
+	track?: {
+		album?: {
+			image?: LastFmImage[];
+		};
+	};
+};
+
+const LASTFM_PLACEHOLDER_HASHES = [
+	"2a96cbd8b46e442fc41c2b86b821562f",
+	"c6f59c1e5e7240a4c0d427abd71f3dbb",
+];
+
+const toHttpsUrl = (url?: string) => (url ? url.replace(/^http:\/\//i, "https://") : undefined);
+
+const isPlaceholderImage = (url?: string) =>
+	Boolean(url && LASTFM_PLACEHOLDER_HASHES.some((hash) => url.includes(hash)));
+
+export const getLastFmImageUrl = (images?: LastFmImage[]) => {
+	if (!images?.length) return undefined;
+	const image = [...images].reverse().find((entry) => entry?.["#text"]?.trim());
+	const url = toHttpsUrl(image?.["#text"]);
+	return isPlaceholderImage(url) ? undefined : url;
+};
+
 const lfmperiods = {
 	extra_short_term: "7day",
 	short_term: "1month",
@@ -36,6 +73,18 @@ export const getArtistChart = (key: string) => {
 export const getTrackChart = (key: string) => {
 	const url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&api_key=${key}&format=json`;
 	return apiFetch<LastFM.TrackChartResponse>("lfmTrackChart", url).then((res) => val(res?.tracks?.track));
+};
+
+export const getArtistTopAlbumImage = async (key: string, artist: string) => {
+	const url = `https://ws.audioscrobbler.com/2.0/?method=artist.gettopalbums&artist=${encodeURIComponent(artist)}&api_key=${key}&autocorrect=1&limit=1&format=json`;
+	const response = await apiFetch<ArtistTopAlbumsResponse>("lfmArtistTopAlbumImage", url, false);
+	return getLastFmImageUrl(response?.topalbums?.album?.[0]?.image) ?? null;
+};
+
+export const getTrackAlbumImage = async (key: string, artist: string, track: string) => {
+	const url = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(track)}&api_key=${key}&autocorrect=1&format=json`;
+	const response = await apiFetch<TrackInfoResponse>("lfmTrackAlbumImage", url, false);
+	return getLastFmImageUrl(response?.track?.album?.image) ?? null;
 };
 
 export const getArtistTopTags = async (key: string, artist: string) => {

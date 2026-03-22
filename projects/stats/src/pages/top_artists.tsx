@@ -20,7 +20,7 @@ const getLastFmTopArtists = async (timeRange: SpotifyRange, config: Config, last
 	const { "lastfm-user": user, "api-key": key } = config;
 	if (!user || !key) throw new Error("Missing LastFM API Key or Username");
 	const response = await lastFM.getTopArtists(key, user, timeRange);
-	return throttledMap(response, (artist) => convertArtist(artist, lastfmOnly));
+	return throttledMap(response, (artist) => convertArtist(artist, lastfmOnly, key));
 };
 
 export const getTopArtists = async (timeRange: SpotifyRange, config: Config) => {
