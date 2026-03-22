@@ -235,15 +235,24 @@ const TrackRow = (props: TrackRowProps) => {
 						)}
 						<div className="main-trackList-rowSectionVariable" role="gridcell" aria-colindex={4} tabIndex={-1}>
 							<span data-encore-id="type" className="TypeElement-mesto TypeElement-mesto-type">
-								<a
-									draggable="true"
-									className="standalone-ellipsis-one-line"
-									dir="auto"
-									href={albumUri}
-									tabIndex={-1}
-								>
-									{albumName}
-								</a>
+								{albumUri ? (
+									<a
+										draggable="true"
+										className="standalone-ellipsis-one-line"
+										dir="auto"
+										href={albumUri}
+										tabIndex={-1}
+									>
+										{albumName}
+									</a>
+								) : (
+									<span
+										className="standalone-ellipsis-one-line"
+										dir="auto"
+									>
+										{albumName}
+									</span>
+								)}
 							</span>
 						</div>
 						<div className="main-trackList-rowSectionEnd" role="gridcell" aria-colindex={5} tabIndex={-1}>

@@ -60,7 +60,7 @@ export async function fetchWithRetry(
 				const waitMs = Math.min(retryAfterMs, maxBackoffMs);
 
 				logger?.warn(
-					`fetchWithRetry: 429 rate limited, backing off (url=${url}, attempt=${attempt + 1}/${maxRetries}, waitMs=${waitMs})`,
+					`fetchWithRetry: 429 rate limited, backing off (url=${url}, attempt=${attempt + 1}/${maxRetries + 1}, waitMs=${waitMs})`,
 				);
 
 				await wait(waitMs);
@@ -74,7 +74,7 @@ export async function fetchWithRetry(
 
 			if (attempt < maxRetries) {
 				logger?.warn(
-					`fetchWithRetry: network error, backing off (url=${url}, attempt=${attempt + 1}/${maxRetries}, backoffMs=${backoffMs}, error=${lastError.message})`,
+					`fetchWithRetry: network error, backing off (url=${url}, attempt=${attempt + 1}/${maxRetries + 1}, backoffMs=${backoffMs}, error=${lastError.message})`,
 				);
 
 				await wait(backoffMs);

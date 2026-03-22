@@ -118,8 +118,21 @@ const enrichGenresFromArtistNames = async (
 	const genres = { ...currentGenres };
 	const topArtists = artists.slice(0, 25);
 
+	const CONCURRENCY = 5;
+
+	const runPool = async <T>(items: T[], fn: (item: T) => Promise<void>) => {
+		let i = 0;
+		const next = async (): Promise<void> => {
+			while (i < items.length) {
+				const item = items[i++];
+				await fn(item);
+			}
+		};
+		await Promise.all(Array.from({ length: Math.min(CONCURRENCY, items.length) }, () => next()));
+	};
+
 	if (Object.keys(genres).length === 0 && config?.["api-key"]) {
-		for (const artist of topArtists) {
+		await runPool(topArtists, async (artist) => {
 			try {
 				const tags = await getArtistTopTags(config["api-key"], artist.name);
 				const maxCount = Math.max(tags[0]?.count ?? 0, 1);
@@ -127,13 +140,13 @@ const enrichGenresFromArtistNames = async (
 					addToGenreMap(genres, tag.name, artist.weight * Math.max(0.15, tag.count / maxCount));
 				}
 			} catch {
-				continue;
+				// skip failed artists
 			}
-		}
+		});
 	}
 
 	if (config?.["use-musicbrainz-genres"]) {
-		for (const artist of topArtists.slice(0, 20)) {
+		await runPool(topArtists.slice(0, 20), async (artist) => {
 			try {
 				const tags = await getMusicBrainzGenres(artist.name);
 				const maxCount = Math.max(tags[0]?.count ?? 0, 1);
@@ -141,9 +154,9 @@ const enrichGenresFromArtistNames = async (
 					addToGenreMap(genres, tag.name, artist.weight * Math.max(0.15, (tag.count ?? 0) / maxCount));
 				}
 			} catch {
-				continue;
+				// skip failed artists
 			}
-		}
+		});
 	}
 
 	return genres;
