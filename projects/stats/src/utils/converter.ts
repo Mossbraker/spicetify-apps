@@ -174,11 +174,12 @@ export const convertAlbum = async (album: LastFM.Album, lastfmOnly = false) => {
 			image: fallbackImage,
 		};
 	}
+	const minifiedAlbum = minifyAlbum(spotifyAlbum);
 	return {
-		...minifyAlbum(spotifyAlbum),
+		...minifiedAlbum,
 		playcount: Number(album.playcount),
 		name: album.name,
-		image: minifyAlbum(spotifyAlbum).image ?? fallbackImage,
+		image: minifiedAlbum.image ?? fallbackImage,
 	} as SpotifyMinifiedAlbum;
 };
 

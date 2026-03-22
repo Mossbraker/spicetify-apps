@@ -82,7 +82,8 @@ const sortShows = (shows: SavedShowItem[], sortOrder: string, isReversed: boolea
 	return isReversed ? sorted.reverse() : sorted;
 };
 
-const limit = 200;
+const SPOTIFY_SHOWS_LIMIT = 50;
+const LIBRARY_SHOWS_LIMIT = 200;
 
 const sortOptions = [
 	{ id: "0", name: "Name" },
@@ -156,7 +157,7 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 					textFilter,
 					offset: pageParam,
 					sortDirection: isReversed ? "reverse" : undefined,
-					limit,
+					limit: LIBRARY_SHOWS_LIMIT,
 				})) as GetContentsResponse<ShowItem>;
 
 				libraryDebug.info("Shows: LibraryAPI fallback result", {
@@ -184,12 +185,15 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			throw new Error("Spotify access token unavailable for saved shows");
 		}
 
-		const response = await fetch(`https://api.spotify.com/v1/me/shows?limit=${limit}&offset=${pageParam}`, {
+		const response = await fetch(
+			`https://api.spotify.com/v1/me/shows?limit=${SPOTIFY_SHOWS_LIMIT}&offset=${pageParam}`,
+			{
 			headers: {
 				Authorization: `Bearer ${token}`,
 				Accept: "application/json",
 			},
-		});
+			},
+		);
 		const raw = (await response.json().catch(() => ({}))) as Partial<SavedShowsResponse> & {
 			error?: { status?: number; message?: string };
 		};
