@@ -154,6 +154,7 @@ dist/
 *.dist.js
 
 claudekit/
+.claude/
 
 docs/untitty.txt
 
