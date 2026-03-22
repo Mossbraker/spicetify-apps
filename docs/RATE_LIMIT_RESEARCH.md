@@ -194,7 +194,7 @@ These projects work because they use proper OAuth app registration with their ow
 The OAuth PKCE implementation in this branch is ready to use once Spotify reopens developer app registration. Users would need to:
 
 1. Create a Spotify Developer App at https://developer.spotify.com/dashboard
-2. Add redirect URI: `http://localhost:8888/callback`
+2. Add redirect URI: `http://127.0.0.1:5173/callback`
 3. Enter Client ID in Stats app settings
 4. Click "Authenticate with OAuth"
 
