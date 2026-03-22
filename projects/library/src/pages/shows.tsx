@@ -315,10 +315,17 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	if (hasNextPage) showCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
 
+	const totalShows =
+		contents.pages[0] && "total" in contents.pages[0] && typeof contents.pages[0].total === "number"
+			? contents.pages[0].total
+			: shows.length;
+
 	return (
 		<PageContainer {...props}>
 			{configWrapper.config["show-item-count"] ? (
-				<div className="library-item-count">{shows.length} shows</div>
+				<div className="library-item-count">
+					Loaded {shows.length} of {totalShows} shows
+				</div>
 			) : null}
 			<div className={"main-gridContainer-gridContainer grid"}>{showCards}</div>
 		</PageContainer>

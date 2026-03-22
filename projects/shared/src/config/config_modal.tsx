@@ -113,6 +113,7 @@ const SliderInput = (props: SliderInputProps) => {
             value={props.value}
             onChange={handleSliderChange}
             style={{ width: "100%", cursor: "pointer" }}
+            aria-label="Configuration slider"
         />
     );
 };

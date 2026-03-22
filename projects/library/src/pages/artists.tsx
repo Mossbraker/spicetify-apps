@@ -200,7 +200,26 @@ const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const validArtists = artists.filter(isValidArtist);
 
 	const artistCards = validArtists.map((artist) => {
-		const card = (
+		if (configWrapper.config["artist-album-view"]) {
+			return (
+				<CustomCard
+					key={artist.uri}
+					type="artist"
+					uri={artist.uri}
+					header={artist.name}
+					subheader={""}
+					imageUrl={artist.images?.at(0)?.url}
+					badge={artist.pinned ? <PinIcon /> : undefined}
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						setSelectedArtist(artist);
+					}}
+				/>
+			);
+		}
+
+		return (
 			<SpotifyCard
 				key={artist.uri}
 				type="artist"
@@ -211,35 +230,6 @@ const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 				badge={artist.pinned ? <PinIcon /> : undefined}
 			/>
 		);
-
-		if (configWrapper.config["artist-album-view"]) {
-			return (
-				<div
-					key={artist.uri}
-					role="button"
-					tabIndex={0}
-					aria-label={`View saved albums by ${artist.name}`}
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						setSelectedArtist(artist);
-					}}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") {
-							e.preventDefault();
-							setSelectedArtist(artist);
-						}
-					}}
-					className="artist-drilldown-wrapper"
-				>
-					<span aria-hidden="true" inert>
-						{card}
-					</span>
-				</div>
-			);
-		}
-
-		return card;
 	});
 
 	if (hasNextPage) artistCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
