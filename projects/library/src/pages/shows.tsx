@@ -317,9 +317,9 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	return (
 		<PageContainer {...props}>
-			{configWrapper.config["show-item-count"] && (
+			{configWrapper.config["show-item-count"] ? (
 				<div className="library-item-count">{shows.length} shows</div>
-			)}
+			) : null}
 			<div className={"main-gridContainer-gridContainer grid"}>{showCards}</div>
 		</PageContainer>
 	);

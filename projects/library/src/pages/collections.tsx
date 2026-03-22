@@ -134,34 +134,51 @@ const CollectionsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 
 	const items = contents.pages.flatMap((page) => page.items);
 
-	// TODO: fix the typing to explictly allow localalbums
-	const rootlistCards = items.filter(isValidCollectionItem).map((item) => (
-		item.type === "album" ?
-			<SpotifyCard
+	const rootlistCards = items.filter(isValidCollectionItem).map((item) => {
+		if (item.type === "album") {
+			return (
+				<SpotifyCard
+					key={item.uri}
+					type={item.type}
+					uri={item.uri}
+					header={item.name}
+					subheader={item.artists?.[0]?.name}
+					imageUrl={item.images?.[0]?.url}
+				/>
+			);
+		}
+		if (item.type === "collection") {
+			return (
+				<CustomCard
+					key={item.uri}
+					type="collection"
+					uri={item.uri}
+					header={item.name}
+					subheader={`${item.items.length} Albums`}
+					imageUrl={item.image}
+				/>
+			);
+		}
+		// localalbum
+		return (
+			<CustomCard
 				key={item.uri}
-				type={item.type}
+				type="localalbum"
 				uri={item.uri}
 				header={item.name}
 				subheader={item.artists?.[0]?.name}
 				imageUrl={item.images?.[0]?.url}
-			/> :
-			<CustomCard
-				key={item.uri}
-				type={item.type || "localalbum"}
-				uri={item.uri}
-				header={item.name}
-				subheader={item.type ? `${item.items.length} Albums` : item.artists?.[0]?.name}
-				imageUrl={item.type ? item.image : item.images?.[0]?.url}
 			/>
-	));
+		);
+	});
 
 	if (hasNextPage) rootlistCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
 
 	return (
 		<PageContainer {...props}>
-			{configWrapper.config["show-item-count"] && (
+			{configWrapper.config["show-item-count"] ? (
 				<div className="library-item-count">{items.length} items</div>
-			)}
+			) : null}
 			<div className={"main-gridContainer-gridContainer grid"}>{rootlistCards}</div>
 		</PageContainer>
 	);

@@ -106,9 +106,9 @@ const ArtistAlbums = ({
 				<div className="library-item-count">No saved albums found for this artist</div>
 			) : (
 				<>
-					{configWrapper.config["show-item-count"] && (
+					{configWrapper.config["show-item-count"] ? (
 						<div className="library-item-count">{albums.length} albums</div>
-					)}
+					) : null}
 					<div className="main-gridContainer-gridContainer grid">{albumCards}</div>
 				</>
 			)}
@@ -231,9 +231,9 @@ const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	return (
 		<PageContainer {...props}>
-			{configWrapper.config["show-item-count"] && (
+			{configWrapper.config["show-item-count"] ? (
 				<div className="library-item-count">{validArtists.length} artists</div>
-			)}
+			) : null}
 			<div className={"main-gridContainer-gridContainer grid"}>{artistCards}</div>
 		</PageContainer>
 	);

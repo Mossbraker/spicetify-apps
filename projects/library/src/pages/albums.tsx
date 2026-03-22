@@ -54,7 +54,7 @@ const filterOptions = [
 
 function isValidAlbum(album: AlbumItem) {
 	const primaryArtist = album.artists?.[0];
-	return album.name && album.uri && primaryArtist?.name && primaryArtist?.uri;
+	return album.name && album.uri && primaryArtist?.name;
 }
 
 const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
@@ -182,9 +182,9 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	return (
 		<PageContainer {...props}>
-			{configWrapper.config["show-item-count"] && (
+			{configWrapper.config["show-item-count"] ? (
 				<div className="library-item-count">{validAlbums.length} albums</div>
-			)}
+			) : null}
 			<div className={"main-gridContainer-gridContainer grid"}>{albumCards}</div>
 		</PageContainer>
 	);

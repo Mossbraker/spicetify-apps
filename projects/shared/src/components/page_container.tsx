@@ -3,7 +3,7 @@ import React from "react";
 interface PageContainerProps {
     lhs: React.ReactNode[];
     rhs?: React.ReactNode[];
-    children: React.ReactElement | React.ReactElement[];
+    children: React.ReactNode;
 }
 
 const PageContainer = (props: PageContainerProps) => {

@@ -57,6 +57,14 @@
     transition: background-color 120ms ease;
 }
 
+button.stats-plain-card {
+    border: none;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    width: 100%;
+}
+
 .stats-plain-card:hover {
     background: var(--spice-player);
 }
@@ -127,6 +135,7 @@
     align-content: space-between;
     align-items: center;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     margin: 16px 0;
 
@@ -134,6 +143,7 @@
     .header-left {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 8px;
     }
 

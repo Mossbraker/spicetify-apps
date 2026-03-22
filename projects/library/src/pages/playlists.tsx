@@ -177,9 +177,9 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	return (
 		<PageContainer {...props}>
-			{configWrapper.config["show-item-count"] && (
+			{configWrapper.config["show-item-count"] ? (
 				<div className="library-item-count">{items.length} playlists</div>
-			)}
+			) : null}
 			<div className={"main-gridContainer-gridContainer grid"}>{rootlistCards}</div>
 		</PageContainer>
 	);
