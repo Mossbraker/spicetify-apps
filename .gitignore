@@ -148,6 +148,7 @@ stats-from-issue-242/
 
 # Local VSCode settings
 .vscode/settings.json
+.vscode/mcp.json
 
 # Build output / dist artifacts
 dist/
@@ -157,6 +158,7 @@ claudekit/
 .claude/
 
 docs/untitty.txt
+docs/squanch-pad.md
 
 # Release artifacts (built by CI)
 releases/
