@@ -142,3 +142,24 @@ out
 .svelte-kit
 
 # End of https://www.toptal.com/developers/gitignore/api/node
+
+# ignore build from https://github.com/harbassan/spicetify-apps/issues/242
+stats-from-issue-242/
+
+# Local VSCode settings
+.vscode/settings.json
+.vscode/mcp.json
+
+# Build output / dist artifacts
+dist/
+*.dist.js
+
+claudekit/
+.claude/
+
+docs/untitty.txt
+docs/squanch-pad.md
+
+# Release artifacts (built by CI)
+releases/
+projects/*/dist/

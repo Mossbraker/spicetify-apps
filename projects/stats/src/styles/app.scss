@@ -39,6 +39,21 @@
         align-items: center;
     }
 
+    .stats-trackRowImageFallback {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        background: linear-gradient(135deg, rgba(var(--spice-rgb-selected-row), 0.18), rgba(var(--spice-rgb-selected-row), 0.05));
+        color: var(--spice-text);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        flex: 0 0 40px;
+    }
+
     .stats-scrollButton {
         width: 40px;
         border-radius: 8px;
@@ -73,6 +88,12 @@
         border-radius: 8px;
         background: var(--spice-player);
         position: relative;
+    }
+
+    .stats-genreCardEmpty {
+        align-items: center;
+        color: var(--spice-subtext);
+        font-size: 0.95rem;
     }
 
     .stats-genreRow {
@@ -143,6 +164,175 @@
     .main-card-cardContainer {
         width: 100%;
         height: 100%;
+    }
+
+    .stats-statCardValue {
+        color: var(--spice-text);
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+        word-break: break-word;
+    }
+
+    .stats-statCardLabel {
+        color: var(--spice-subtext);
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-top: 6px;
+    }
+
+    .stats-shelfTitle {
+        color: var(--spice-text);
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .stats-debugConsole {
+        bottom: 24px;
+        position: fixed;
+        right: 24px;
+        width: min(420px, calc(100vw - 32px));
+        z-index: 50;
+    }
+
+    .stats-debugConsole-toggle,
+    .stats-debugConsole-clear {
+        background: var(--spice-player);
+        border: 1px solid rgba(var(--spice-rgb-selected-row), 0.35);
+        border-radius: 999px;
+        color: var(--spice-text);
+        cursor: pointer;
+        font-size: 0.875rem;
+        padding: 8px 14px;
+    }
+
+    .stats-debugConsole.closed {
+        width: auto;
+    }
+
+    .stats-debugConsole.closed .stats-debugConsole-toggle {
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+    }
+
+    .stats-debugConsole.open .stats-debugConsole-toggle {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        width: 100%;
+    }
+
+    .stats-debugConsole-headerButtons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .stats-debugConsole-close {
+        align-items: center;
+        background: transparent;
+        border: 1px solid rgba(var(--spice-rgb-selected-row), 0.35);
+        border-radius: 50%;
+        color: var(--spice-text);
+        cursor: pointer;
+        display: flex;
+        font-size: 1rem;
+        height: 32px;
+        justify-content: center;
+        line-height: 1;
+        width: 32px;
+    }
+
+    .stats-debugConsole-close:hover {
+        background: rgba(var(--spice-rgb-selected-row), 0.2);
+    }
+
+    .stats-debugConsole-panel {
+        background: var(--spice-main);
+        border: 1px solid rgba(var(--spice-rgb-selected-row), 0.25);
+        border-radius: 18px;
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.32);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-height: 70vh;
+        overflow: auto;
+        padding: 16px;
+    }
+
+    .stats-debugConsole-header,
+    .stats-debugConsole-logHeader,
+    .stats-debugConsole-cacheHeader {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .stats-debugConsole-header h3,
+    .stats-debugConsole-header p {
+        margin: 0;
+    }
+
+    .stats-debugConsole-header p,
+    .stats-debugConsole-empty,
+    .stats-debugConsole-retryMessage,
+    .stats-debugConsole-cacheKey,
+    .stats-debugConsole-message,
+    .stats-debugConsole-meta {
+        color: var(--spice-subtext);
+    }
+
+    .stats-debugConsole-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .stats-debugConsole-sectionTitle,
+    .stats-debugConsole-retryTitle,
+    .stats-debugConsole-level {
+        color: var(--spice-text);
+        font-weight: 700;
+    }
+
+    .stats-debugConsole-retry,
+    .stats-debugConsole-cache,
+    .stats-debugConsole-log {
+        background: var(--spice-player);
+        border: 1px solid rgba(var(--spice-rgb-selected-row), 0.16);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px;
+    }
+
+    .stats-debugConsole-cache.stale {
+        border-color: rgba(var(--spice-rgb-selected-row), 0.45);
+    }
+
+    .stats-debugConsole-log.warn {
+        border-color: rgba(var(--spice-rgb-selected-row), 0.35);
+    }
+
+    .stats-debugConsole-log.error {
+        border-color: rgba(var(--spice-rgb-selected-row), 0.55);
+    }
+
+    .stats-debugConsole-logList,
+    .stats-debugConsole-cacheList {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .stats-debugConsole-meta {
+        font-size: 0.75rem;
+        margin: 0;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
     }
 
 }

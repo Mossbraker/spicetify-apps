@@ -1,6 +1,6 @@
 import { CollectionChild } from "../extensions/collections_wrapper";
 
-function collectionSort(order: string, reverse: boolean) {
+function collectionSort(order: string, reverse: boolean): (a: CollectionChild, b: CollectionChild) => number {
     const sortBy = (a: CollectionChild, b: CollectionChild) => {
         if (a.pinned || b.pinned) return 0;
         switch (order) {
@@ -20,7 +20,7 @@ function collectionSort(order: string, reverse: boolean) {
         }
     };
 
-    return reverse ? (a: any, b: any) => sortBy(b, a) : sortBy;
+    return reverse ? (a: CollectionChild, b: CollectionChild) => sortBy(b, a) : sortBy;
 }
 
 export default collectionSort;

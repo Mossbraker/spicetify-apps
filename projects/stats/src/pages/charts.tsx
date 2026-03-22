@@ -15,13 +15,14 @@ import type {
 import * as lastFM from "../api/lastfm";
 import RefreshButton from "../components/buttons/refresh_button";
 import SettingsButton from "@shared/components/settings_button";
-import { convertArtist, convertTrack } from "../utils/converter";
+import { convertArtist, convertTrack, getThrottledMapOptions, throttledMap } from "../utils/converter";
 import useStatus from "@shared/status/useStatus";
 import { useQuery } from "@shared/types/react_query";
 import { cacher, invalidator } from "../extensions/cache";
 // @ts-ignore
 import _ from "lodash";
 import { parseLiked } from "../utils/track_helper";
+import { getConfigCacheKey } from "../utils/config_cache";
 
 export const formatNumber = (num: number) => {
 	if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
@@ -35,15 +36,42 @@ const DropdownOptions = [
 	{ id: "tracks", name: "Top Tracks" },
 ];
 
-const getChart = async (type: "tracks" | "artists", config: Config) => {
-	const { "api-key": key } = config;
-	if (!key) throw new Error("Missing LastFM API Key or Username");
-	if (type === "artists") {
-		const response = await lastFM.getArtistChart(key);
-		return Promise.all(response.map(convertArtist));
-	}
+type ArtistChartData = {
+	kind: "artists";
+	items: (LastFMMinifiedArtist | SpotifyMinifiedArtist)[];
+};
+
+type TrackChartData = {
+	kind: "tracks";
+	items: (LastFMMinifiedTrack | SpotifyMinifiedTrack)[];
+};
+
+type ChartData = ArtistChartData | TrackChartData;
+
+const sortByPlaycount = <T extends { playcount?: number }>(items: T[]) => {
+	return [...items].sort((left, right) => (right.playcount ?? 0) - (left.playcount ?? 0));
+};
+
+const getArtistChart = async (config: Config) => {
+	const { "api-key": key, "lastfm-only": lastfmOnly } = config;
+	if (!key) throw new Error("Missing LastFM API Key");
+	const response = await lastFM.getArtistChart(key);
+	const items = await throttledMap(response, (artist) => convertArtist(artist, lastfmOnly, key), getThrottledMapOptions(lastfmOnly));
+	return {
+		kind: "artists" as const,
+		items: sortByPlaycount(items),
+	};
+};
+
+const getTrackChart = async (config: Config) => {
+	const { "api-key": key, "lastfm-only": lastfmOnly } = config;
+	if (!key) throw new Error("Missing LastFM API Key");
 	const response = await lastFM.getTrackChart(key);
-	return Promise.all(response.map(convertTrack));
+	const items = await throttledMap(response, (track) => convertTrack(track, lastfmOnly, key), getThrottledMapOptions(lastfmOnly));
+	return {
+		kind: "tracks" as const,
+		items: sortByPlaycount(await parseLiked(items)),
+	};
 };
 
 const ArtistChart = ({ artists }: { artists: (LastFMMinifiedArtist | SpotifyMinifiedArtist)[] }) => {
@@ -86,13 +114,12 @@ const getDate = () => {
 
 const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [dropdown, activeOption] = useDropdownMenu(DropdownOptions, "stats:charts");
+	const isArtistChart = activeOption.id === "artists";
+	const cacheKey = getConfigCacheKey(configWrapper.config, { includeLastfmIdentity: true });
 
 	const { status, error, data, refetch } = useQuery({
-		queryKey: ["top-charts", activeOption.id],
-		queryFn: (props) =>
-			cacher(() => getChart(activeOption.id as "tracks" | "artists", configWrapper.config))(props).then((res) =>
-				"artists" in res[0] ? parseLiked(res) : res,
-			),
+		queryKey: ["top-charts", activeOption.id, cacheKey],
+		queryFn: (props) => (isArtistChart ? cacher(() => getArtistChart(configWrapper.config))(props) : cacher(() => getTrackChart(configWrapper.config))(props)),
 	});
 
 	const Status = useStatus(status, error);
@@ -101,27 +128,33 @@ const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		lhs: [`Top Charts - ${_.startCase(activeOption.id)}`],
 		rhs: [
 			dropdown,
-			<RefreshButton callback={() => invalidator(["top-charts", activeOption.id], refetch)} />,
+			<RefreshButton callback={() => invalidator(["top-charts", activeOption.id, cacheKey], refetch)} />,
 			<SettingsButton configWrapper={configWrapper} />,
 		],
 	};
 
 	if (Status) return <PageContainer {...props}>{Status}</PageContainer>;
 
-	const items = data as NonNullable<typeof data>;
+	const chartData = data as ChartData | undefined;
+	if (!chartData || chartData.kind !== activeOption.id) {
+		return <PageContainer {...props}><div>Loading chart data...</div></PageContainer>;
+	}
+
+	const items = chartData.items;
+	if (!items.length) return <PageContainer {...props}><div>No chart data available.</div></PageContainer>;
 
 	const infoToCreatePlaylist = {
 		playlistName: `Top Track Chart - ${getDate()}`,
 		itemsUris: items.map((track) => track.uri),
 	};
 
-	if (activeOption.id === "tracks") {
+	if (!isArtistChart) {
 		// @ts-ignore
 		props.infoToCreatePlaylist = infoToCreatePlaylist;
 	}
 
 	// @ts-ignore
-	const chartToRender = activeOption.id === "artists" ? <ArtistChart artists={items} /> : <TrackChart tracks={items} />;
+	const chartToRender = isArtistChart ? <ArtistChart artists={items} /> : <TrackChart tracks={items} />;
 
 	return <PageContainer {...props}>{chartToRender}</PageContainer>;
 };

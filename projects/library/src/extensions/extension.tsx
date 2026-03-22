@@ -111,6 +111,14 @@ class SpicetifyLibrary {
 			{ name: "Collections Page", key: "show-collections", type: "toggle", def: true },
 			{ name: "Artists Page", key: "show-artists", type: "toggle", def: true },
 			{ name: "Shows Page", key: "show-shows", type: "toggle", def: true },
+			{
+				name: "Show Debug Console",
+				key: "show-debug-console",
+				type: "toggle",
+				def: false,
+				desc: "Show recent request logs and diagnostics inside Library.",
+				sectionHeader: "Diagnostics",
+			},
 		],
 		"library",
 	);
@@ -126,8 +134,16 @@ window.SpicetifyLibrary = new SpicetifyLibrary();
 	main(LocalStorageAPI);
 })();
 
-// biome-ignore lint:
-function main(LocalStorageAPI: any) {
+interface LocalStorageAPI {
+	getItem(key: string): unknown;
+	getEvents(): {
+		_emitter: {
+			addListener(event: string, callback: (e: { data: Record<string, unknown> }) => void): void;
+		};
+	};
+}
+
+function main(LocalStorageAPI: LocalStorageAPI) {
 	const isAlbum = (props: { uri: string; id: string }) => props.uri?.includes("album") || props.id?.includes("local");
 	const isArtist = (props: { uri: string }) => props.uri?.includes("artist");
 

@@ -8,7 +8,6 @@ import SpotifyCard from "@shared/components/spotify_card";
 import LoadMoreCard from "../components/load_more_card";
 import AddButton from "../components/add_button";
 import TextInputDialog from "../components/text_input_dialog";
-import LeadingIcon from "../components/leading_icon";
 import useStatus from "@shared/status/useStatus";
 import { useInfiniteQuery, useQuery } from "@shared/types/react_query";
 import type { AlbumItem, GetContentsResponse, UpdateEvent } from "../types/platform";
@@ -16,10 +15,9 @@ import PinIcon from "../components/pin_icon";
 import useSortDropdownMenu from "@shared/dropdown/useSortDropdownMenu";
 import collectionSort from "../utils/collection_sort";
 
-const AddMenu = () => {
-	const { MenuItem, Menu } = Spicetify.ReactComponent;
-	const { SVGIcons } = Spicetify;
+import { libraryDebug } from "../extensions/debug";
 
+const getAddMenuItems = () => {
 	const addAlbum = () => {
 		const onSave = (value: string) => {
 			Spicetify.Platform.LibraryAPI.add({ uris: [value] });
@@ -32,13 +30,9 @@ const AddMenu = () => {
 		});
 	};
 
-	return (
-		<Menu>
-			<MenuItem onClick={addAlbum} leadingIcon={<LeadingIcon path={SVGIcons.album} />}>
-				Add Album
-			</MenuItem>
-		</Menu>
-	);
+	return [
+		{ label: "Add Album", iconPath: Spicetify.SVGIcons.album, onClick: addAlbum },
+	];
 };
 
 const limit = 200;
@@ -67,6 +61,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [textFilter, setTextFilter] = React.useState("");
 
 	const fetchAlbums = async ({ pageParam }: { pageParam: number }) => {
+		libraryDebug.info(`Albums: fetching page offset=${pageParam}, sort=${sortOption.id}, reversed=${isReversed}`);
 		const res = (await Spicetify.Platform.LibraryAPI.getContents({
 			filters: ["0"],
 			sortOrder: sortOption.id,
@@ -75,10 +70,16 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			offset: pageParam,
 			limit,
 		})) as GetContentsResponse<AlbumItem>;
+		libraryDebug.info(`Albums: got ${res.items?.length ?? 0} items (total: ${res.totalLength})`, {
+			offset: res.offset,
+			totalLength: res.totalLength,
+			itemCount: res.items?.length,
+		});
 		return res;
 	};
 
 	const fetchLocalAlbums = async () => {
+		libraryDebug.info("Albums: fetching local albums");
 		const localAlbums = await CollectionsWrapper.getLocalAlbums();
 		let albums = localAlbums.values().toArray() as AlbumItem[];
 
@@ -129,7 +130,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const props = {
 		lhs: ["Albums"],
 		rhs: [
-			<AddButton Menu={<AddMenu />} />,
+			<AddButton menuItems={getAddMenuItems()} />,
 			filterDropdown,
 			sortDropdown,
 			<SearchBar setSearch={setTextFilter} placeholder="Albums" />,
@@ -156,7 +157,6 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			header={item.name}
 			subheader={item.artists[0].name}
 			imageUrl={item.images?.[0]?.url}
-			artistUri={item.artists[0].uri}
 			badge={item.pinned ? <PinIcon /> : undefined}
 		/>
 	));

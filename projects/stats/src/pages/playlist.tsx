@@ -6,6 +6,7 @@ import Shelf from "../components/shelf";
 import useStatus from "@shared/status/useStatus";
 import { parseStat, parseTracks } from "../utils/track_helper";
 import { getFullPlaylist } from "../api/platform";
+import { debugLog } from "../extensions/debug";
 
 const getPlaylist = async (uri: string) => {
 	const contents = await getFullPlaylist(uri);
@@ -25,7 +26,7 @@ const useQueryShitty = <T,>(callback: () => Promise<T>) => {
 				setData(data);
 				setStatus("success");
 			} catch (e) {
-				console.log(e);
+				debugLog(e);
 				setError(e as Error);
 				setStatus("error");
 			}

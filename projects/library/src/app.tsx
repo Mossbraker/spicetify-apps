@@ -5,6 +5,8 @@ import ArtistsPage from "./pages/artists";
 import ShowsPage from "./pages/shows";
 import PlaylistsPage from "./pages/playlists";
 import CollectionsPage from "./pages/collections";
+import DebugConsole from "./components/debug_console";
+import { libraryDebug } from "./extensions/debug";
 
 import { version } from "../package.json";
 
@@ -22,11 +24,12 @@ const checkForUpdates = (setNewUpdate: (a: boolean) => void) => {
 		.then((res) => res.json())
 		.then(
 			(result) => {
-				const releases = result.filter((release: any) => release.name.startsWith("library"));
+				const releases = result.filter((release: { name: string }) => release.name.startsWith("library"));
+				if (releases.length === 0) return;
 				setNewUpdate(releases[0].name.slice(9) !== version);
 			},
 			(error) => {
-				console.log("Failed to check for updates", error);
+				console.warn("Failed to check for updates", error);
 			},
 		);
 };
@@ -76,7 +79,7 @@ const NavbarContainer = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 };
 
 const waitForReady = async (callback: () => void) => {
-	if (Spicetify.Platform && Spicetify.Platform.LibraryAPI && Spicetify.ReactQuery && SpicetifyLibrary) {
+	if (Spicetify.Platform && Spicetify.Platform.LibraryAPI && window.SpicetifyLibrary) {
 		callback();
 	} else {
 		setTimeout(() => waitForReady(callback), 1000);
@@ -90,15 +93,20 @@ const App = () => {
 	// otherwise app crashes if its first page on spotify load
 	if (!ready) {
 		waitForReady(() => {
-			setConfig({ ...SpicetifyLibrary.ConfigWrapper.Config });
+			setConfig({ ...window.SpicetifyLibrary.ConfigWrapper.Config });
 			setReady(true);
 		});
 		return <></>;
 	}
 
+	// Sync debug logging with config
+	React.useEffect(() => {
+		libraryDebug.setEnabled(Boolean(config["show-debug-console"]));
+	}, [config["show-debug-console"]]);
+
 
 	const launchModal = () => {
-		SpicetifyLibrary.ConfigWrapper.launchModal(setConfig);
+		window.SpicetifyLibrary.ConfigWrapper.launchModal(setConfig);
 	};
 
 	const configWrapper = {
@@ -109,6 +117,7 @@ const App = () => {
 	return (
 		<div id="library-app">
 			<NavbarContainer configWrapper={configWrapper} />
+			{config["show-debug-console"] && <DebugConsole />}
 		</div>
 	);
 };

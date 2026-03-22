@@ -2,11 +2,104 @@ import React from "react";
 import PlaylistPage from "../pages/playlist";
 import { version as STATS_VERSION } from "../../package.json";
 import ConfigWrapper from "@shared/config/config_wrapper";
+import { startAuthFlow, handleCallback, clearTokens, getConnectionStatus } from "../api/oauth";
+
+const getOAuthStatusLabel = () => {
+	const { connected, expiresAt } = getConnectionStatus();
+	const hasRefreshToken = Boolean(localStorage.getItem("stats:oauth:refresh_token"));
+
+	if (!connected && !hasRefreshToken) return "Disconnected";
+	if (!connected && hasRefreshToken) return "Refresh token available; access token will be restored on next request";
+	if (!expiresAt) return hasRefreshToken ? "Connected; refresh token available" : "Connected; no refresh token stored";
+
+	const expiresText = expiresAt.toLocaleString();
+	return hasRefreshToken
+		? `Connected; access token expires ${expiresText}; refresh token available`
+		: `Connected; access token expires ${expiresText}; no refresh token stored`;
+};
 
 // contruct global class for stats methods
 class SpicetifyStats {
 	ConfigWrapper = new ConfigWrapper(
 		[
+			{
+				name: "Spotify Client ID",
+				key: "oauth-client-id",
+				type: "text",
+				def: null,
+				placeholder: "Enter Client ID from Spotify Developer Dashboard",
+				desc: `Create an app at developer.spotify.com/dashboard. Add redirect URI: http://127.0.0.1:5173/callback`,
+				sectionHeader: "OAuth (Bypass Rate Limits)",
+			},
+			{
+				name: "Use OAuth",
+				key: "use-oauth",
+				type: "toggle",
+				def: false,
+				desc: "Use your own Spotify Developer App instead of the built-in API",
+				callback: (enabled: boolean) => {
+					if (enabled) {
+						startAuthFlow();
+					}
+				},
+				initializeCallback: false,
+			},
+			{
+				name: "Paste Callback URL",
+				key: "oauth-callback",
+				type: "text",
+				def: null,
+				placeholder: "http://127.0.0.1:5173/callback?code=...",
+				desc: "After authorizing, copy the full URL from your browser and paste it here",
+				initializeCallback: false,
+				callback: async (url: string) => {
+					if (url && url.includes("code=")) {
+						await handleCallback(url);
+					}
+				},
+			},
+			{
+				name: "Disconnect OAuth",
+				key: "oauth-disconnect",
+				type: "toggle",
+				def: false,
+				desc: "Toggle to disconnect your Spotify Developer App",
+				callback: (value: boolean) => {
+					if (value) {
+						clearTokens();
+						localStorage.setItem("stats:config:use-oauth", "false");
+						localStorage.removeItem("stats:config:oauth-callback");
+						Spicetify.showNotification("OAuth disconnected", false);
+						// Reset the toggle
+						localStorage.setItem("stats:config:oauth-disconnect", "false");
+					}
+				},
+				initializeCallback: false,
+			},
+			{
+				name: "OAuth Status",
+				key: "oauth-status",
+				type: "display",
+				def: null,
+				desc: "Shows whether Stats currently has a usable access token and whether a refresh token is stored for automatic recovery.",
+				displayValue: getOAuthStatusLabel,
+			},
+			{
+				name: "Use Direct Fetch (Experimental)",
+				key: "use-direct-fetch",
+				type: "toggle",
+				def: false,
+				desc: "Bypass CosmosAsync and use direct API calls. May help with rate limiting issues.",
+				sectionHeader: "Workarounds",
+			},
+			{
+				name: "Show Debug Console",
+				key: "show-debug-console",
+				type: "toggle",
+				def: false,
+				desc: "Show recent request logs, delayed enrichment work, and cache diagnostics inside Stats.",
+				sectionHeader: "Diagnostics",
+			},
 			{
 				name: "Last.fm Api Key",
 				key: "api-key",
@@ -29,6 +122,20 @@ class SpicetifyStats {
 				type: "toggle",
 				def: false,
 				desc: "Last.fm charts your stats purely based on the streaming count, whereas Spotify factors in other variables",
+			},
+			{
+				name: "LastFM Only (No Spotify API)",
+				key: "lastfm-only",
+				type: "toggle",
+				def: true,
+				desc: "Avoid all Spotify API calls. Stats will use LastFM data only without enrichment. Useful if you're rate-limited.",
+			},
+			{
+				name: "Include MusicBrainz Genre Tags",
+				key: "use-musicbrainz-genres",
+				type: "toggle",
+				def: false,
+				desc: "Augment genre analysis with MusicBrainz tags derived from the current timeframe's top tracks and top artists.",
 			},
 			{
 				name: "Artists Page",
@@ -75,12 +182,14 @@ window.SpicetifyStats = new SpicetifyStats();
 
 	const version = localStorage.getItem("stats:version");
 	if (!version || version !== STATS_VERSION) {
+		const keysToRemove: string[] = [];
 		for (let i = 0; i < localStorage.length; i++) {
-			const key = localStorage.key(i) as string;
-			if (key.startsWith("stats:") && !key.startsWith("stats:config:")) {
-				localStorage.removeItem(key);
+			const key = localStorage.key(i);
+			if (key && key.startsWith("stats:") && !key.startsWith("stats:config:") && !key.startsWith("stats:oauth:")) {
+				keysToRemove.push(key);
 			}
 		}
+		keysToRemove.forEach((key) => localStorage.removeItem(key));
 		localStorage.setItem("stats:version", STATS_VERSION);
 	}
 
@@ -93,7 +202,7 @@ window.SpicetifyStats = new SpicetifyStats();
 		const playlistUri = `spotify:playlist:${History.location.pathname.split("/")[2]}`;
 		// @ts-ignore
 		PopupModal.display({ title: "Playlist Stats", content: <PlaylistPage uri={playlistUri} />, isLarge: true });
-	}, false, true);
+	}, false);
 	playlistEdit.element.classList.add("playlist-stats-button");
 	playlistEdit.element.classList.toggle("hidden", true);
 

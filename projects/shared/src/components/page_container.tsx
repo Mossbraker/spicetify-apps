@@ -8,11 +8,10 @@ interface PageContainerProps {
 
 const PageContainer = (props: PageContainerProps) => {
     const { rhs, lhs, children } = props;
-    const { TextComponent } = Spicetify.ReactComponent;
 
     function parseNodes(nodes: React.ReactNode[]) {
         return nodes.map(node => typeof node === "string"
-            ? <TextComponent children={node} as="h1" variant="canon" semanticColor="textBase" />
+            ? <h1 className="stats-page-title">{node}</h1>
             : node
         );
     }
