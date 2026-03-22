@@ -12,6 +12,7 @@ import { useInfiniteQuery } from "@shared/types/react_query";
 import type { AlbumItem, ArtistItem, GetContentsResponse, UpdateEvent } from "../types/platform";
 import PinIcon from "../components/pin_icon";
 import useSortDropdownMenu from "@shared/dropdown/useSortDropdownMenu";
+import CustomCard from "../components/custom_card";
 
 const getAddMenuItems = () => {
 	const addArtist = () => {
@@ -51,6 +52,7 @@ const ArtistAlbums = ({
 	const [loading, setLoading] = React.useState(true);
 
 	React.useEffect(() => {
+		let cancelled = false;
 		const fetchAlbums = async () => {
 			setLoading(true);
 			try {
@@ -66,32 +68,45 @@ const ArtistAlbums = ({
 				const artistAlbums = (res.items || []).filter((album) =>
 					album.artists?.some((a) => a.uri === artist.uri),
 				);
-				setAlbums(artistAlbums);
+				if (!cancelled) setAlbums(artistAlbums);
 			} catch (e) {
 				console.error("Failed to fetch artist albums", e);
-				setAlbums([]);
+				if (!cancelled) setAlbums([]);
 			}
-			setLoading(false);
+			if (!cancelled) setLoading(false);
 		};
 		fetchAlbums();
+		return () => { cancelled = true; };
 	}, [artist.uri, artist.name]);
 
 	const albumCards = albums.map((album) => (
-		<SpotifyCard
-			key={album.uri}
-			type="album"
-			uri={album.uri}
-			header={album.name}
-			subheader={album.artists?.[0]?.name || ""}
-			imageUrl={album.images?.[0]?.url}
-			badge={album.pinned ? <PinIcon /> : undefined}
-		/>
+		album.type === "album" ? (
+			<SpotifyCard
+				key={album.uri}
+				type="album"
+				uri={album.uri}
+				header={album.name}
+				subheader={album.artists?.[0]?.name || ""}
+				imageUrl={album.images?.[0]?.url}
+				badge={album.pinned ? <PinIcon /> : undefined}
+			/>
+		) : (
+			<CustomCard
+				key={album.uri}
+				type="localalbum"
+				uri={album.uri}
+				header={album.name}
+				subheader={album.artists?.[0]?.name || ""}
+				imageUrl={album.images?.[0]?.url}
+				badge={album.pinned ? <PinIcon /> : undefined}
+			/>
+		)
 	));
 
 	return (
 		<PageContainer
 			lhs={[
-				<button type="button" className="stats-backButton" onClick={onBack} aria-label="Back to artists">
+				<button type="button" className="library-backButton" onClick={onBack} aria-label="Back to artists">
 					<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
 						<path d="M15.957 2.793a1 1 0 0 1 0 1.414L8.164 12l7.793 7.793a1 1 0 1 1-1.414 1.414L5.336 12l9.207-9.207a1 1 0 0 1 1.414 0z" />
 					</svg>
@@ -217,7 +232,7 @@ const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 					}}
 					className="artist-drilldown-wrapper"
 				>
-					<span aria-hidden="true">
+					<span aria-hidden="true" inert>
 						{card}
 					</span>
 				</div>
