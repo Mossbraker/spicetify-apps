@@ -48,7 +48,7 @@ function MenuItemIcon({ iconPath }: { iconPath: string }): React.ReactElement {
 	);
 }
 
-function AddButton({ menuItems }: AddButtonProps): React.ReactElement<HTMLButtonElement> {
+function AddButton({ menuItems }: AddButtonProps): React.ReactElement {
 	const [isOpen, setIsOpen] = React.useState(false);
 	const containerRef = React.useRef<HTMLDivElement>(null);
 	const triggerRef = React.useRef<HTMLButtonElement>(null);
