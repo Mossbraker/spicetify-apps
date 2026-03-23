@@ -231,21 +231,26 @@ window.SpicetifyStats = new SpicetifyStats();
 	playlistEdit.element.classList.add("playlist-stats-button");
 	playlistEdit.element.classList.toggle("hidden", true);
 
-	// Artist stats topbar button kept as fallback only (hidden by default)
+	// ── Artist Stats ─────────────────────────────────────────────
+	// Topbar button is kept as a fallback only (hidden by default).
+	// Primary injection targets the artist page action bar via MutationObserver.
 	const artistStats = new Topbar.Button("artist-stats", "chart-down", () => {
-		const artistUri = `spotify:artist:${History.location.pathname.split("/")[2]}`;
-		// @ts-ignore
-		PopupModal.display({ title: "Artist Stats", content: <ArtistPage uri={artistUri} />, isLarge: true });
-	}, false);
-	artistStats.element.classList.add("artist-stats-button");
-	artistStats.element.classList.toggle("hidden", true);
-	// Ensure topbar fallback button is clickable — belt-and-suspenders click handler
-	artistStats.element.addEventListener("click", () => {
 		const parts = History.location.pathname.split("/");
 		if (parts[1] === "artist" && parts[2]) {
 			openArtistStats(parts[2]);
 		}
-	});
+	}, false);
+	artistStats.element.classList.add("artist-stats-button");
+	artistStats.element.classList.toggle("hidden", true);
+
+	// Capture-phase click handler — bypasses any event interception
+	artistStats.element.addEventListener("click", (e: MouseEvent) => {
+		const parts = History.location.pathname.split("/");
+		if (parts[1] === "artist" && parts[2]) {
+			e.stopPropagation();
+			openArtistStats(parts[2]);
+		}
+	}, true);
 
 	function openArtistStats(artistId: string): void {
 		const artistUri = `spotify:artist:${artistId}`;
@@ -259,63 +264,35 @@ window.SpicetifyStats = new SpicetifyStats();
 
 	let currentTargetArtistId: string | null = null;
 
-	function tryInjectArtistButton(artistId: string, attempt: number): void {
-		if (artistId !== currentTargetArtistId) return;
+	// Core injection function — called by MutationObserver and navigation handler.
+	// Guards prevent redundant calls. No retry loop — the observer retries for us.
+	function insertArtistButton(): void {
+		if (!currentTargetArtistId) return;
+		if (document.getElementById("stats-artist-inject-btn")) return;
+
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
-		if (config?.["show-artist-stats-button"] === false) {
-			return;
-		}
+		if (config?.["show-artist-stats-button"] === false) return;
 
-		// Strategy 1: direct container selectors
-		const SELECTORS = [
-			'[data-testid="action-bar-row"]',
-			'[data-testid="action-bar"]',
-			".main-actionBar-ActionBarRow",
-			".main-actionBar-ActionBar",
-			".main-actionButtons",
-		];
-		let actionBar: Element | null = SELECTORS.reduce<Element | null>(
-			(found, sel) => found ?? document.querySelector(sel), null,
-		);
+		// Find action bar — prioritise the selector sort-play uses successfully
+		const actionBar =
+			document.querySelector(".main-actionBar-ActionBarRow") ??
+			document.querySelector('[data-testid="action-bar-row"]') ??
+			document.querySelector('[data-testid="action-bar"]') ??
+			document.querySelector(".main-actionBar-ActionBar") ??
+			document.querySelector(".main-actionButtons") ??
+			document.querySelector('button[data-testid="follow-button"]')?.parentElement ??
+			document.querySelector('button[data-testid="following-button"]')?.parentElement ??
+			document.querySelector('button[data-testid="more-button"]')?.parentElement ??
+			null;
 
-		// Strategy 2: find Follow/Following button and use its parent row
-		if (!actionBar) {
-			const followBtn = document.querySelector(
-				'button[data-testid="follow-button"], button[data-testid="following-button"]',
-			);
-			if (followBtn?.parentElement) {
-				actionBar = followBtn.parentElement;
-			}
-		}
-
-		// Strategy 3: find the more/options button ("...") and use its parent row
-		if (!actionBar) {
-			const moreBtn = document.querySelector(
-				'button[data-testid="more-button"]',
-			);
-			if (moreBtn?.parentElement) {
-				actionBar = moreBtn.parentElement;
-			}
-		}
-
-		if (!actionBar) {
-			if (attempt < 10) {
-				setTimeout(() => tryInjectArtistButton(artistId, attempt + 1), 300);
-			} else {
-				// Fallback: use Topbar button
-				artistStats.element.classList.remove("hidden");
-			}
-			return;
-		}
-
-		// Remove any stale injected button before adding new one
-		removeInjectedArtistButton();
+		if (!actionBar) return; // Not rendered yet — observer will retry
 
 		const btn = document.createElement("button");
 		btn.id = "stats-artist-inject-btn";
 		btn.className = "stats-artist-inject-btn";
 		btn.type = "button";
 		btn.setAttribute("aria-label", "Artist Stats");
+		btn.title = "Artist Stats";
 
 		const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 		svgEl.setAttribute("viewBox", "0 0 16 16");
@@ -331,9 +308,12 @@ window.SpicetifyStats = new SpicetifyStats();
 		const orderValue = config?.["artist-stats-button-order"] ?? 0;
 		btn.style.order = String(orderValue);
 
+		const artistId = currentTargetArtistId;
 		btn.addEventListener("click", () => openArtistStats(artistId));
 
 		actionBar.appendChild(btn);
+		// Injection succeeded — ensure topbar fallback stays hidden
+		artistStats.element.classList.add("hidden");
 	}
 
 	function handleNavigation(pathname: string): void {
@@ -343,34 +323,35 @@ window.SpicetifyStats = new SpicetifyStats();
 
 		currentTargetArtistId = isArtistPage ? uid : null;
 
-		// Playlist stats Topbar button
 		playlistEdit.element.classList.toggle("hidden", !isPlaylistPage);
-
-		// Artist stats: hide Topbar fallback and remove injected button first
 		artistStats.element.classList.add("hidden");
 		removeInjectedArtistButton();
 
 		if (isArtistPage) {
-			tryInjectArtistButton(uid, 0);
+			insertArtistButton();
+			// Fallback: if injection hasn't succeeded after 5 s, show topbar button
+			const fallbackId = uid;
+			setTimeout(() => {
+				if (currentTargetArtistId === fallbackId && !document.getElementById("stats-artist-inject-btn")) {
+					artistStats.element.classList.remove("hidden");
+				}
+			}, 5000);
 		}
 	}
 
-	// MutationObserver: re-attempt injection when action bar appears in DOM
-	// (mirrors the sort-play extension's approach for reliable detection)
-	const actionBarObserver = new MutationObserver((mutations) => {
+	// ── MutationObserver (primary injection trigger) ────────────
+	// Mirrors the sort-play extension's approach: watch for any DOM change,
+	// debounce, then try to insert the button. Guards inside insertArtistButton
+	// prevent duplicate work.
+	let injectTimer: ReturnType<typeof setTimeout> | null = null;
+	const actionBarObserver = new MutationObserver(() => {
 		if (!currentTargetArtistId) return;
 		if (document.getElementById("stats-artist-inject-btn")) return;
-		const hasRelevantNode = mutations.some((m) =>
-			Array.from(m.addedNodes).some((n) =>
-				n instanceof Element &&
-				(n.classList?.contains("main-actionBar-ActionBarRow") ||
-				 n.querySelector?.(".main-actionBar-ActionBarRow") ||
-				 n.querySelector?.('[data-testid="action-bar-row"]')),
-			),
-		);
-		if (hasRelevantNode) {
-			tryInjectArtistButton(currentTargetArtistId, 0);
-		}
+		if (injectTimer) return;
+		injectTimer = setTimeout(() => {
+			injectTimer = null;
+			insertArtistButton();
+		}, 150);
 	});
 	actionBarObserver.observe(document.body, { childList: true, subtree: true });
 
