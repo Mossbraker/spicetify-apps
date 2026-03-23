@@ -102,3 +102,16 @@ export const getArtistTopTags = async (key: string, artist: string) => {
 		}))
 		.filter((tag) => tag.name);
 };
+
+export const getArtistInfo = async (key: string, artist: string, username?: string) => {
+	let url = `https://ws.audioscrobbler.com/2.0/?method=artist.getInfo&artist=${encodeURIComponent(artist)}&api_key=${key}&format=json`;
+	if (username) url += `&username=${encodeURIComponent(username)}`;
+	const res = await apiFetch<LastFM.ArtistInfoResponse>("lfmArtistInfo", url, false);
+	return res?.artist ?? null;
+};
+
+export const getArtistGlobalTopTracks = async (key: string, artist: string, limit = 50) => {
+	const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getTopTracks&artist=${encodeURIComponent(artist)}&api_key=${key}&limit=${limit}&format=json`;
+	const res = await apiFetch<LastFM.ArtistTopTracksResponse>("lfmArtistTopTracks", url, false);
+	return res?.toptracks?.track ?? [];
+};

@@ -350,3 +350,73 @@
 .playlist-stats-button.hidden {
     display: none;
 }
+
+.GenericModal[aria-label="Artist Stats"] .main-embedWidgetGenerator-container {
+    width: 80vw;
+    height: 80vh;
+    background-color: var(--spice-main);
+}
+
+.artist-stats-button.hidden {
+    display: none;
+}
+
+#stats-app {
+    .stats-artistOverview {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .stats-genreTooltip {
+        color: var(--spice-subtext);
+        font-size: 0.8rem;
+        cursor: help;
+        margin-left: 8px;
+    }
+
+    .stats-playlistAppearances-loadBtn,
+    .stats-lfmTopTracks-loadBtn {
+        background: var(--spice-player);
+        border: 1px solid rgba(var(--spice-rgb-selected-row), 0.25);
+        border-radius: 8px;
+        color: var(--spice-text);
+        cursor: pointer;
+        font-size: 0.875rem;
+        padding: 10px 16px;
+        transition: background 0.15s;
+
+        &:hover {
+            background: rgba(var(--spice-rgb-selected-row), 0.15);
+        }
+    }
+
+    .stats-playlistProgress {
+        color: var(--spice-subtext);
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+
+    .stats-lfmTrackList {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 8px 0;
+    }
+
+    .stats-lfmTrackRow {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 8px;
+        font-size: 0.875rem;
+
+        .stats-lfmTrackName {
+            color: var(--spice-text);
+        }
+
+        .stats-lfmTrackListeners {
+            color: var(--spice-subtext);
+        }
+    }
+}

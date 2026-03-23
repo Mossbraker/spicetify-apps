@@ -1,5 +1,6 @@
 import React from "react";
 import PlaylistPage from "../pages/playlist";
+import ArtistPage from "../pages/artist";
 import { version as STATS_VERSION } from "../../package.json";
 import ConfigWrapper from "@shared/config/config_wrapper";
 import { startAuthFlow, handleCallback, clearTokens, getConnectionStatus } from "../api/oauth";
@@ -161,6 +162,14 @@ class SpicetifyStats {
 				def: true,
 				desc: "Requires Last.fm API key",
 			},
+			{
+				name: "Auto-Load Playlist Appearances",
+				key: "auto-load-playlist-appearances",
+				type: "toggle",
+				def: true,
+				desc: "Automatically scan your playlists for this artist when viewing Artist Stats. Disable to show a manual load button instead.",
+				sectionHeader: "Artist Stats",
+			},
 		],
 		"stats",
 	);
@@ -206,10 +215,20 @@ window.SpicetifyStats = new SpicetifyStats();
 	playlistEdit.element.classList.add("playlist-stats-button");
 	playlistEdit.element.classList.toggle("hidden", true);
 
+	const artistStats = new Topbar.Button("artist-stats", "chart-down", () => {
+		const artistUri = `spotify:artist:${History.location.pathname.split("/")[2]}`;
+		// @ts-ignore
+		PopupModal.display({ title: "Artist Stats", content: <ArtistPage uri={artistUri} />, isLarge: true });
+	}, false);
+	artistStats.element.classList.add("artist-stats-button");
+	artistStats.element.classList.toggle("hidden", true);
+
 	function setTopbarButtonVisibility(pathname: string): void {
 		const [, type, uid] = pathname.split("/");
 		const isPlaylistPage = type === "playlist" && uid;
+		const isArtistPage = type === "artist" && uid;
 		playlistEdit.element.classList.toggle("hidden", !isPlaylistPage);
+		artistStats.element.classList.toggle("hidden", !isArtistPage);
 	}
 	setTopbarButtonVisibility(History.location.pathname);
 

@@ -27,6 +27,7 @@ export interface Config {
 	"show-genres": boolean;
 	"show-library": boolean;
 	"show-charts": boolean;
+	"auto-load-playlist-appearances": boolean;
 }
 
 export interface ConfigWrapper {

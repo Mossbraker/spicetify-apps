@@ -169,3 +169,6 @@ projects/*/dist/
 
 # PR description
 docs/PR-desc.md
+
+# Planning docs
+docs/superpowers/
