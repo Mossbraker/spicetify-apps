@@ -43,8 +43,8 @@ function collectionSort(order: string, reverse: boolean): (a: CollectionChild, b
                     if (aYear === null) return 1;
                     if (bYear === null) return -1;
 
-                    // Newer releases first; reverse flag is handled by the wrapper returned below.
-                    return bYear - aYear;
+                    // Reverse is handled here (not by the outer wrapper) to preserve null-year placement.
+                    return reverse ? aYear - bYear : bYear - aYear;
                 }
             case "6":
                 // @ts-ignore Date contructor does accept null as a parameter
@@ -54,7 +54,8 @@ function collectionSort(order: string, reverse: boolean): (a: CollectionChild, b
         }
     };
 
-    return reverse ? (a: CollectionChild, b: CollectionChild) => sortBy(b, a) : sortBy;
+    // For release year (case "3"), reverse is handled within sortBy to keep null years at the end.
+    return (reverse && order !== "3") ? (a: CollectionChild, b: CollectionChild) => sortBy(b, a) : sortBy;
 }
 
 export default collectionSort;

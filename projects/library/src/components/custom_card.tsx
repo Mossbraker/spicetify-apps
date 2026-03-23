@@ -42,9 +42,9 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 				break;
 			}
 			case "artist": {
-				const parts = uri.split(":");
-				const path = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
-				Spicetify.Platform.History.push(path);
+				const artistParts = uri.split(":");
+				const artistPath = artistParts.length >= 3 ? `/${artistParts[1]}/${artistParts.slice(2).join(":")}` : uri;
+				Spicetify.Platform.History.push(artistPath);
 				break;
 			}
 		}
