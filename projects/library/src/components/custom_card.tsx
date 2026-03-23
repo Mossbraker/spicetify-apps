@@ -33,7 +33,7 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 				Spicetify.LocalStorage.set("library:active-link", `Collections/${uri}`);
 				break;
 			case "localalbum":
-				Spicetify.Platform.History.push({ pathname: "better-local-files/album", state: { uri } });
+				Spicetify.Platform.History.push({ pathname: "/better-local-files/album", state: { uri } });
 				break;
 			case "show": {
 				const parts = uri.split(":");
