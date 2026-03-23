@@ -422,16 +422,15 @@
 }
 
 // ================================================================
-// Settings modal: OAuth Status display row — single-line, right-aligned
+// Settings modal: OAuth Status display row — use full available width
 // ================================================================
 .GenericModal[aria-label="Stats Settings"] .config-container .config-display-value {
     color: var(--spice-subtext);
+    flex: 1 1 auto;
     font-size: 0.8rem;
-    max-width: 60%;
+    margin-left: 6px;
     text-align: right;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 // ================================================================

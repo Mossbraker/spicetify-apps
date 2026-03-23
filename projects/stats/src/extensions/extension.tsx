@@ -262,7 +262,7 @@ window.SpicetifyStats = new SpicetifyStats();
 	function tryInjectArtistButton(artistId: string, attempt: number): void {
 		if (artistId !== currentTargetArtistId) return;
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
-		if (!config?.["show-artist-stats-button"]) {
+		if (config?.["show-artist-stats-button"] === false) {
 			return;
 		}
 
@@ -354,6 +354,25 @@ window.SpicetifyStats = new SpicetifyStats();
 			tryInjectArtistButton(uid, 0);
 		}
 	}
+
+	// MutationObserver: re-attempt injection when action bar appears in DOM
+	// (mirrors the sort-play extension's approach for reliable detection)
+	const actionBarObserver = new MutationObserver((mutations) => {
+		if (!currentTargetArtistId) return;
+		if (document.getElementById("stats-artist-inject-btn")) return;
+		const hasRelevantNode = mutations.some((m) =>
+			Array.from(m.addedNodes).some((n) =>
+				n instanceof Element &&
+				(n.classList?.contains("main-actionBar-ActionBarRow") ||
+				 n.querySelector?.(".main-actionBar-ActionBarRow") ||
+				 n.querySelector?.('[data-testid="action-bar-row"]')),
+			),
+		);
+		if (hasRelevantNode) {
+			tryInjectArtistButton(currentTargetArtistId, 0);
+		}
+	});
+	actionBarObserver.observe(document.body, { childList: true, subtree: true });
 
 	handleNavigation(History.location.pathname);
 
