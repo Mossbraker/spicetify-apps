@@ -133,6 +133,7 @@ export type ArtistTopTracksResponse = {
 			listeners: string;
 			url: string;
 			artist: { name: string; url: string };
+			image?: { "#text": string }[];
 		}[];
 	};
 };

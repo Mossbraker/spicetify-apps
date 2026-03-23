@@ -438,6 +438,7 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    margin-top: 0 !important;
 }
 
 // The OverlayScrollbars viewport inside the modal adds its own top
@@ -609,6 +610,16 @@
 
 .GenericModal:has(#stats-artist-page) .stats-shelfTitle {
     font-size: 1.25rem;
+}
+
+// ================================================================
+// Artist Stats modal: context menu z-index fix
+// ================================================================
+// Spicetify ContextMenu portals to <body> via Tippy, which renders
+// behind the GenericModal overlay. Bump z-index only when our modal
+// is open so we don't affect the rest of the UI.
+body:has(.GenericModal:has(#stats-artist-page)) > [data-tippy-root] {
+    z-index: 99999 !important;
 }
 
 // Genre bar hover effect

@@ -113,7 +113,14 @@ export const getArtistInfo = async (key: string, artist: string, username?: stri
 export const getArtistGlobalTopTracks = async (key: string, artist: string, limit = 50) => {
 	const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getTopTracks&artist=${encodeURIComponent(artist)}&api_key=${key}&limit=${limit}&format=json`;
 	const res = await apiFetch<LastFM.ArtistTopTracksResponse>("lfmArtistTopTracks", url, false);
-	return res?.toptracks?.track ?? [];
+	return (res?.toptracks?.track ?? []).map((track) => ({
+		name: track.name,
+		playcount: track.playcount,
+		listeners: track.listeners,
+		url: track.url,
+		artist: track.artist,
+		imageUrl: getLastFmImageUrl(track.image),
+	}));
 };
 
 export const getUserTopTracksForArtist = async (
@@ -121,14 +128,14 @@ export const getUserTopTracksForArtist = async (
 	artist: string,
 	username: string,
 	limit = 20,
-): Promise<{ name: string; url: string; userPlaycount: number }[]> => {
+): Promise<{ name: string; url: string; userPlaycount: number; imageUrl?: string }[]> => {
 	// Fetch artist's global top tracks
 	const globalTracks = await getArtistGlobalTopTracks(key, artist, limit);
 	if (!globalTracks.length) return [];
 
 	// Enrich each track with user play count via track.getInfo
 	const CONCURRENCY = 5;
-	const results: { name: string; url: string; userPlaycount: number }[] = [];
+	const results: { name: string; url: string; userPlaycount: number; imageUrl?: string }[] = [];
 
 	for (let i = 0; i < globalTracks.length; i += CONCURRENCY) {
 		const batch = globalTracks.slice(i, i + CONCURRENCY);
@@ -136,11 +143,12 @@ export const getUserTopTracksForArtist = async (
 			batch.map(async (track) => {
 				const cacheKey = `lfmTrackUserInfo:${artist}:${track.name}`;
 				const url = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(track.name)}&username=${encodeURIComponent(username)}&api_key=${key}&autocorrect=1&format=json`;
-				const res = await apiFetch<{ track?: { userplaycount?: string; url?: string } }>(cacheKey, url, false);
+				const res = await apiFetch<{ track?: { userplaycount?: string; url?: string; album?: { image?: LastFmImage[] } } }>(cacheKey, url, false);
 				return {
 					name: track.name,
 					url: track.url,
 					userPlaycount: Number(res?.track?.userplaycount ?? 0),
+					imageUrl: getLastFmImageUrl(res?.track?.album?.image) ?? track.imageUrl,
 				};
 			}),
 		);

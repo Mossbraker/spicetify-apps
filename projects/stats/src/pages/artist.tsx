@@ -43,8 +43,8 @@ const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
 
 const _mainCache     = new Map<string, { data: ArtistData; ts: number }>();
 const _playlistCache = new Map<string, { data: PlaylistAppearance[]; ts: number }>();
-const _lfmTracksCache = new Map<string, { data: { name: string; playcount: string; listeners: string; url: string }[]; ts: number }>();
-const _userTracksCache = new Map<string, { data: { name: string; url: string; userPlaycount: number }[]; ts: number }>();
+const _lfmTracksCache = new Map<string, { data: { name: string; playcount: string; listeners: string; url: string; imageUrl?: string }[]; ts: number }>();
+const _userTracksCache = new Map<string, { data: { name: string; url: string; userPlaycount: number; imageUrl?: string }[]; ts: number }>();
 
 function fromCache<T>(map: Map<string, { data: T; ts: number }>, key: string): T | null {
 	const entry = map.get(key);
@@ -76,10 +76,10 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 	const [playlistProgress, setPlaylistProgress] = React.useState<{ current: number; total: number } | null>(null);
 	const [playlistLoading, setPlaylistLoading] = React.useState(false);
 	const [showAllPlaylists, setShowAllPlaylists] = React.useState(false);
-	const [lfmTopTracks, setLfmTopTracks] = React.useState<{ name: string; playcount: string; listeners: string; url: string }[] | null>(
+	const [lfmTopTracks, setLfmTopTracks] = React.useState<{ name: string; playcount: string; listeners: string; url: string; imageUrl?: string }[] | null>(
 		() => fromCache(_lfmTracksCache, artistId));
 	const [lfmTopTracksLoading, setLfmTopTracksLoading] = React.useState(false);
-	const [userTopTracks, setUserTopTracks] = React.useState<{ name: string; url: string; userPlaycount: number }[] | null>(
+	const [userTopTracks, setUserTopTracks] = React.useState<{ name: string; url: string; userPlaycount: number; imageUrl?: string }[] | null>(
 		() => fromCache(_userTracksCache, artistId));
 	const [userTopTracksLoading, setUserTopTracksLoading] = React.useState(false);
 	const isMountedRef = React.useRef(true);
@@ -518,6 +518,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 									index={idx + 1}
 									name={track.name}
 									stat={`${formatNumber(Number(track.listeners))} listeners`}
+									imageUrl={track.imageUrl}
 									href={track.url}
 									onClickOverride={preferSpotifyLinks ? (e) => {
 										e.preventDefault();
@@ -559,6 +560,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 									index={idx + 1}
 									name={track.name}
 									stat={`${formatNumber(track.userPlaycount)} scrobbles`}
+									imageUrl={track.imageUrl}
 									href={track.url}
 									onClickOverride={preferSpotifyLinks ? (e) => {
 										e.preventDefault();
