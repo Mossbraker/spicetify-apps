@@ -8,10 +8,11 @@ interface SpotifyCardProps {
 	imageUrl?: string;
 	badge?: string | React.ReactElement;
 	provider?: "spotify" | "lastfm";
+	onClickOverride?: (e: React.MouseEvent | React.KeyboardEvent) => void;
 }
 
 function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement> {
-	const { type, header, uri, imageUrl, subheader, badge, provider = "spotify" } = props;
+	const { type, header, uri, imageUrl, subheader, badge, provider = "spotify", onClickOverride } = props;
 	const [imageFailed, setImageFailed] = React.useState(false);
 	const fallbackLabel = header
 		.split(/\s+/)
@@ -21,6 +22,12 @@ function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement
 		.join("") || "?";
 
 	const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+		if (onClickOverride) {
+			event.preventDefault();
+			onClickOverride(event);
+			return;
+		}
+
 		if (provider === "lastfm") {
 			return;
 		}

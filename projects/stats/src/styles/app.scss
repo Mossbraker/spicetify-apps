@@ -150,11 +150,11 @@
     .extend-button {
         background-color: transparent;
         border: none;
-        position: absolute;
-        right: 20px;
-        bottom: 20px;
+        cursor: pointer;
         font-size: 14px;
         color: var(--spice-subtext);
+        align-self: flex-end;
+        padding: 0;
 
         &:hover {
             color: var(--spice-text);
@@ -179,6 +179,13 @@
         font-size: 0.95rem;
         font-weight: 600;
         margin-top: 6px;
+    }
+
+    .stats-statCard {
+        background: var(--spice-player);
+        border: 1px solid rgba(var(--spice-rgb-selected-row), 0.1);
+        border-radius: 8px;
+        padding: 14px 18px;
     }
 
     .stats-shelfTitle {
@@ -347,7 +354,7 @@
     color: var(--spice-text);
 }
 
-.GenericModal[aria-label="Artist Stats"] .main-embedWidgetGenerator-container {
+.GenericModal:has(#stats-artist-page) .main-embedWidgetGenerator-container {
     width: 80vw;
     height: 80vh;
     background-color: var(--spice-main);
@@ -364,10 +371,16 @@
     }
 
     .stats-genreTooltip {
-        color: var(--spice-subtext);
-        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        vertical-align: middle;
+        fill: var(--spice-subtext);
         cursor: help;
         margin-left: 8px;
+
+        &:hover {
+            fill: var(--spice-text);
+        }
     }
 
     .stats-playlistAppearances-loadBtn,
@@ -398,21 +411,6 @@
         gap: 6px;
         padding: 8px 0;
     }
-
-    .stats-lfmTrackRow {
-        display: flex;
-        justify-content: space-between;
-        padding: 4px 8px;
-        font-size: 0.875rem;
-
-        .stats-lfmTrackName {
-            color: var(--spice-text);
-        }
-
-        .stats-lfmTrackListeners {
-            color: var(--spice-subtext);
-        }
-    }
 }
 
 // ================================================================
@@ -431,7 +429,7 @@
 // Artist Stats modal: layout — flex column with consistent gap,
 // no top whitespace, side/bottom gutters from padding
 // ================================================================
-.GenericModal[aria-label="Artist Stats"] #stats-app {
+.GenericModal:has(#stats-artist-page) #stats-app {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -440,14 +438,14 @@
 
 // The OverlayScrollbars viewport inside the modal adds its own top
 // padding derived from Spotify's page layout — override it to zero.
-.GenericModal[aria-label="Artist Stats"] .os-viewport,
-.GenericModal[aria-label="Artist Stats"] .os-content {
+.GenericModal:has(#stats-artist-page) .os-viewport,
+.GenericModal:has(#stats-artist-page) .os-content {
     padding-top: 0 !important;
 }
 
 // page-content inherited margins on #stats-app direct children
 // (e.g. 64px margin-top on the first section) — zero them out.
-.GenericModal[aria-label="Artist Stats"] #stats-app > section {
+.GenericModal:has(#stats-artist-page) #stats-app > section {
     margin-top: 0 !important;
 }
 
@@ -455,19 +453,19 @@
 // Artist Stats modal: shelves — zero out all default Spotify
 // margin/padding so only the parent gap controls spacing
 // ================================================================
-.GenericModal[aria-label="Artist Stats"] .main-shelf-shelf {
+.GenericModal:has(#stats-artist-page) .main-shelf-shelf {
     margin: 0;
     min-height: unset !important;
     padding: 0;
 }
 
-.GenericModal[aria-label="Artist Stats"] .main-shelf-shelf > section {
+.GenericModal:has(#stats-artist-page) .main-shelf-shelf > section {
     margin: 0;
     min-height: unset !important;
     padding: 0;
 }
 
-.GenericModal[aria-label="Artist Stats"] .main-shelf-header {
+.GenericModal:has(#stats-artist-page) .main-shelf-header {
     margin-bottom: 4px;
     padding: 0;
 }
@@ -485,34 +483,6 @@
 }
 
 // ================================================================
-// Artist Stats modal: clickable track rows
-// ================================================================
-#stats-app .stats-lfmTrackRow--clickable {
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.1s;
-
-    &:hover {
-        background: rgba(var(--spice-rgb-selected-row), 0.1);
-    }
-}
-
-#stats-app .stats-lfmTrackRow--link {
-    border-radius: 4px;
-    color: inherit;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 8px;
-    text-decoration: none;
-    transition: background 0.1s;
-
-    &:hover {
-        background: rgba(var(--spice-rgb-selected-row), 0.1);
-    }
-}
-
-// ================================================================
 // Playlist appearances: See more button
 // ================================================================
 #stats-app .stats-seeMoreBtn {
@@ -527,6 +497,119 @@
 
     &:hover {
         color: var(--spice-text);
+    }
+}
+
+// ================================================================
+// Artist Stats modal: ArtistTrackRow component
+// ================================================================
+.stats-artistTrackRow {
+    align-items: center;
+    border-radius: 4px;
+    display: flex;
+    gap: 12px;
+    padding: 6px 8px;
+    transition: background 0.1s;
+    text-decoration: none;
+    color: inherit;
+
+    &:hover {
+        background: rgba(var(--spice-rgb-selected-row), 0.1);
+    }
+}
+
+.stats-artistTrackRow-rank {
+    color: var(--spice-subtext);
+    flex: 0 0 28px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.stats-artistTrackRow-art {
+    border-radius: 4px;
+    flex: 0 0 40px;
+    height: 40px;
+    overflow: hidden;
+    position: relative;
+}
+
+.stats-artistTrackRow-art img {
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+.stats-artistTrackRow-artFallback {
+    align-items: center;
+    background: rgba(var(--spice-rgb-selected-row), 0.15);
+    color: var(--spice-subtext);
+    display: flex;
+    font-size: 0.75rem;
+    font-weight: 600;
+    height: 100%;
+    justify-content: center;
+    width: 100%;
+}
+
+.stats-artistTrackRow-playOverlay {
+    align-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    border: none;
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 0;
+    opacity: 0;
+    position: absolute;
+    transition: opacity 0.12s;
+    fill: white;
+    cursor: pointer;
+}
+
+.stats-artistTrackRow:hover .stats-artistTrackRow-playOverlay {
+    opacity: 1;
+}
+
+.stats-artistTrackRow-name {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--spice-text);
+}
+
+.stats-artistTrackRow-stat {
+    color: var(--spice-subtext);
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+}
+
+// ================================================================
+// Artist Stats modal: user row accent border
+// ================================================================
+.GenericModal:has(#stats-artist-page) .stats-artistOverview-userRow .stats-statCard {
+    border-color: rgba(var(--spice-rgb-button), 0.2);
+}
+
+// ================================================================
+// Artist Stats modal: section separators + layout improvements
+// ================================================================
+.GenericModal:has(#stats-artist-page) .main-shelf-shelf + .main-shelf-shelf {
+    border-top: 1px solid rgba(var(--spice-rgb-selected-row), 0.08);
+    padding-top: 12px;
+}
+
+.GenericModal:has(#stats-artist-page) .stats-shelfTitle {
+    font-size: 1.25rem;
+}
+
+// Genre bar hover effect
+.stats-genreRowFill {
+    transition: filter 0.15s;
+
+    &:hover {
+        filter: brightness(1.2);
     }
 }
 

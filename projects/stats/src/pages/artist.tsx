@@ -2,9 +2,11 @@ import React, { useCallback } from "react";
 import StatCard from "../components/cards/stat_card";
 import ChartCard from "../components/cards/chart_card";
 import SpotifyCard from "@shared/components/spotify_card";
+import ArtistTrackRow from "../components/artist_track_row";
 import Shelf from "../components/shelf";
 import useStatus from "@shared/status/useStatus";
 import { usePopupQuery } from "../utils/usePopupQuery";
+import { searchAndNavigate } from "../utils/spotify_search";
 import { getArtistOverview } from "../api/platform";
 import { getArtistInfo, getArtistTopTags, getArtistGlobalTopTracks, getUserTopTracksForArtist } from "../api/lastfm";
 import type { ArtistUnion, PlaylistAppearance } from "../types/artist_overview";
@@ -52,23 +54,18 @@ function fromCache<T>(map: Map<string, { data: T; ts: number }>, key: string): T
 	return null;
 }
 
-// Wraps a track row element so that right-click opens Spotify's native track context menu.
-// Uses the same useMemo pattern as TrackRow to avoid the React #31 crash path.
-const TrackContextMenu: React.FC<{ uri: string; children: React.ReactElement }> = ({ uri, children }) => {
-	const Menu = React.useMemo(
-		() =>
-			function TrackCtxMenu(props: any) {
-				return <Spicetify.ReactComponent.AlbumMenu {...props} uri={uri} />;
-			},
-		[uri],
-	);
-	if (!Spicetify.ReactComponent?.ContextMenu) return children;
-	return (
-		<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="right-click" preventScrollingWhileOpen={false}>
-			{children}
-		</Spicetify.ReactComponent.ContextMenu>
-	);
-};
+export function getCachedArtistName(artistId: string): string | null {
+	const cached = fromCache(_mainCache, artistId);
+	return cached?.overview.profile.name ?? null;
+}
+
+const TooltipIcon = () => (
+	<svg role="img" height="16" width="16" viewBox="0 0 16 16">
+		<path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8z" />
+		<path d="M7.25 12.026v-1.5h1.5v1.5h-1.5zm.884-7.096A1.125 1.125 0 007.06 6.39l-1.431.448a2.625 2.625 0 115.13-.784c0 .54-.156 1.015-.503 1.488-.3.408-.7.652-.973.818l-.112.068c-.185.116-.26.203-.302.283-.046.087-.097.245-.097.57h-1.5c0-.47.072-.898.274-1.277.206-.385.507-.645.827-.846l.147-.092c.285-.177.413-.257.526-.41.169-.23.213-.397.213-.602 0-.622-.503-1.125-1.125-1.125z" />
+	</svg>
+);
+
 
 
 const ArtistPage = ({ uri }: { uri: string }) => {
@@ -96,6 +93,17 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		};
 	}, []);
 
+	// Close modal on Esc key
+	React.useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape" && !e.defaultPrevented) {
+				Spicetify.PopupModal.hide?.();
+			}
+		};
+		document.addEventListener("keydown", handleKeyDown);
+		return () => document.removeEventListener("keydown", handleKeyDown);
+	}, []);
+
 	// Read config inside callback body to avoid unstable config reference in deps
 	const fetchData = useCallback(async (): Promise<ArtistData> => {
 		const cached = fromCache(_mainCache, artistId);
@@ -106,7 +114,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 
 		let lastfmInfo = null;
 		let lastfmTags: { name: string; count: number }[] = [];
-		if (config?.["api-key"] && (config["use-lastfm"] || config["lastfm-only"])) {
+		if (config?.["api-key"]) {
 			try {
 				const [info, tags] = await Promise.all([
 					getArtistInfo(config["api-key"], overview.profile.name, config["lastfm-user"] || undefined),
@@ -254,7 +262,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 	React.useEffect(() => {
 		if (status !== "success" || !data) return;
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
-		if (!config?.["api-key"] || !(config["use-lastfm"] || config["lastfm-only"])) return;
+		if (!config?.["api-key"]) return;
 		const autoLoad = config?.["auto-load-lastfm-top-tracks"] === true;
 		if (autoLoad && lfmTopTracks === null && !lfmTopTracksLoading) {
 			loadLfmTopTracks();
@@ -265,7 +273,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 	React.useEffect(() => {
 		if (status !== "success" || !data) return;
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
-		if (!config?.["api-key"] || !config?.["lastfm-user"] || !(config["use-lastfm"] || config["lastfm-only"])) return;
+		if (!config?.["api-key"] || !config?.["lastfm-user"]) return;
 		const autoLoad = config?.["auto-load-user-top-tracks"] === true;
 		if (autoLoad && userTopTracks === null && !userTopTracksLoading) {
 			loadUserTopTracks();
@@ -277,8 +285,8 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 
 	const { overview, lastfmInfo, lastfmTags } = data as NonNullable<typeof data>;
 	const config = window.SpicetifyStats?.ConfigWrapper?.Config;
-	const hasLastFm = Boolean(config?.["api-key"] && (config["use-lastfm"] || config["lastfm-only"]));
-	const hasLastFmUser = Boolean(config?.["api-key"] && config?.["lastfm-user"] && (config["use-lastfm"] || config["lastfm-only"]));
+	const hasLastFm = Boolean(config?.["api-key"]);
+	const hasLastFmUser = Boolean(config?.["api-key"] && config?.["lastfm-user"]);
 	const autoLoadPlaylists = config?.["auto-load-playlist-appearances"] !== false;
 	const autoLoadLfmTopTracks = config?.["auto-load-lastfm-top-tracks"] === true;
 	const autoLoadUserTopTracks = config?.["auto-load-user-top-tracks"] === true;
@@ -300,10 +308,11 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		}
 	}
 
-	// Build genre chart data from Last.fm tags
+	// Build genre chart data from Last.fm tags (filter out 0-count tags)
 	const genreData: Record<string, number> = {};
 	if (lastfmTags.length > 0) {
-		for (const tag of lastfmTags.slice(0, 20)) {
+		const nonZeroTags = lastfmTags.filter((tag) => tag.count > 0);
+		for (const tag of nonZeroTags.slice(0, 20)) {
 			genreData[tag.name] = tag.count;
 		}
 	}
@@ -370,8 +379,12 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		/>
 	));
 
+	const preferSpotifyLinks = config?.["prefer-spotify-links"] === true;
+	const artistName = overview.profile?.name ?? "";
+
 	return (
 		<div id="stats-app" className="page-content encore-dark-theme encore-base-set">
+		<div id="stats-artist-page">
 			{/* Artist-level stats */}
 			<section className="stats-artistOverview">
 				<StatCard label="Monthly Listeners" value={formatNumber(overview.stats?.monthlyListeners ?? 0)} />
@@ -387,7 +400,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			{(Number(lastfmInfo?.stats?.userplaycount) > 0 || estimatedListeningTime) && (
 				<section className="stats-artistOverview-userRow">
 					{Number(lastfmInfo?.stats?.userplaycount) > 0 && (
-						<StatCard label="Your Scrobbles" value={formatNumber(Number(lastfmInfo.stats.userplaycount))} />
+						<StatCard label="Your Scrobbles" value={formatNumber(Number(lastfmInfo?.stats?.userplaycount))} />
 					)}
 					{estimatedListeningTime && (
 						<StatCard label="Est. Listening Time" value={estimatedListeningTime} />
@@ -403,7 +416,22 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					<div className="main-card-card stats-genreCard stats-genreCardEmpty">
 						{hasLastFm
 							? "No genre data available"
-							: <>No genre data available <span className="stats-genreTooltip" title="Connect Last.fm in Stats settings for richer genre data">(?)</span></>
+							: <>No genre data available{" "}
+							{Spicetify.ReactComponent?.TooltipWrapper ? (
+								<Spicetify.ReactComponent.TooltipWrapper
+									label={<div>Connect Last.fm in Stats settings for richer genre data</div>}
+									renderInline={true}
+									showDelay={10}
+									placement="top"
+									labelClassName="tooltip"
+									disabled={false}
+								>
+									<span className="stats-genreTooltip"><TooltipIcon /></span>
+								</Spicetify.ReactComponent.TooltipWrapper>
+							) : (
+								<span className="stats-genreTooltip" title="Connect Last.fm in Stats settings for richer genre data"><TooltipIcon /></span>
+							)}
+						</>
 						}
 					</div>
 				)}
@@ -452,37 +480,16 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			{topTracks.length > 0 && (
 				<Shelf title="Top Tracks">
 					<div className="stats-lfmTrackList">
-						{topTracks.map((item, idx) => {
-							const trackId = item.track?.uri?.split(":")?.[2];
-							return (
-								<TrackContextMenu key={item.track?.uri ?? idx} uri={item.track?.uri ?? ""}>
-									<div
-										className="stats-lfmTrackRow stats-lfmTrackRow--clickable"
-									role="button"
-									tabIndex={0}
-									onClick={() => {
-										if (trackId) {
-											Spicetify.PopupModal.hide?.();
-											Spicetify.Platform.History.push(`/track/${trackId}`);
-										}
-									}}
-									onKeyDown={(e) => {
-										if ((e.key === "Enter" || e.key === " ") && trackId) {
-											Spicetify.PopupModal.hide?.();
-											Spicetify.Platform.History.push(`/track/${trackId}`);
-										}
-									}}
-								>
-									<span className="stats-lfmTrackName">
-										{idx + 1}. {item.track?.name ?? "Unknown"}
-									</span>
-									<span className="stats-lfmTrackListeners">
-										{item.track?.playcount ? formatNumber(Number(item.track.playcount)) : "N/A"} plays
-									</span>
-									</div>
-								</TrackContextMenu>
-							);
-						})}
+						{topTracks.map((item, idx) => (
+							<ArtistTrackRow
+								key={item.track?.uri ?? idx}
+								index={idx + 1}
+								name={item.track?.name ?? "Unknown"}
+								stat={`${item.track?.playcount ? formatNumber(Number(item.track.playcount)) : "N/A"} plays`}
+								uri={item.track?.uri}
+								imageUrl={item.track?.album?.coverArt?.sources?.[0]?.url}
+							/>
+						))}
 					</div>
 				</Shelf>
 			)}
@@ -506,20 +513,18 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					) : lfmTopTracks.length > 0 ? (
 						<div className="stats-lfmTrackList">
 							{lfmTopTracks.map((track, idx) => (
-								<a
+								<ArtistTrackRow
 									key={`${track.name}-${idx}`}
-									className="stats-lfmTrackRow stats-lfmTrackRow--link"
+									index={idx + 1}
+									name={track.name}
+									stat={`${formatNumber(Number(track.listeners))} listeners`}
 									href={track.url}
-									target="_blank"
-									rel="noreferrer"
-								>
-									<span className="stats-lfmTrackName">
-										{idx + 1}. {track.name}
-									</span>
-									<span className="stats-lfmTrackListeners">
-										{formatNumber(Number(track.listeners))} listeners
-									</span>
-								</a>
+									onClickOverride={preferSpotifyLinks ? (e) => {
+										e.preventDefault();
+										Spicetify.PopupModal.hide?.();
+										searchAndNavigate("track", `${track.name} ${artistName}`, track.url);
+									} : undefined}
+								/>
 							))}
 						</div>
 					) : (
@@ -549,20 +554,18 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					) : userTopTracks.length > 0 ? (
 						<div className="stats-lfmTrackList">
 							{userTopTracks.map((track, idx) => (
-								<a
+								<ArtistTrackRow
 									key={`${track.name}-${idx}`}
-									className="stats-lfmTrackRow stats-lfmTrackRow--link"
+									index={idx + 1}
+									name={track.name}
+									stat={`${formatNumber(track.userPlaycount)} scrobbles`}
 									href={track.url}
-									target="_blank"
-									rel="noreferrer"
-								>
-									<span className="stats-lfmTrackName">
-										{idx + 1}. {track.name}
-									</span>
-									<span className="stats-lfmTrackListeners">
-										{formatNumber(track.userPlaycount)} scrobbles
-									</span>
-								</a>
+									onClickOverride={preferSpotifyLinks ? (e) => {
+										e.preventDefault();
+										Spicetify.PopupModal.hide?.();
+										searchAndNavigate("track", `${track.name} ${artistName}`, track.url);
+									} : undefined}
+								/>
 							))}
 						</div>
 					) : (
@@ -593,6 +596,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					<div className="main-gridContainer-gridContainer grid">{relatedArtistCards}</div>
 				</Shelf>
 			)}
+		</div>
 		</div>
 	);
 };

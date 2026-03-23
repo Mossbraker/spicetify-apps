@@ -1,9 +1,10 @@
 import React from "react";
 import PlaylistPage from "../pages/playlist";
-import ArtistPage from "../pages/artist";
+import ArtistPage, { getCachedArtistName } from "../pages/artist";
 import { version as STATS_VERSION } from "../../package.json";
 import ConfigWrapper from "@shared/config/config_wrapper";
 import { startAuthFlow, handleCallback, clearTokens, getConnectionStatus } from "../api/oauth";
+import { getArtistOverview } from "../api/platform";
 
 const getOAuthStatusLabel = () => {
 	const { connected, expiresAt } = getConnectionStatus();
@@ -193,6 +194,13 @@ class SpicetifyStats {
 				desc: "Automatically fetch your personal top scrobbled tracks for the artist when viewing Artist Stats. Requires a Last.fm API key and username.",
 			},
 			{
+				name: "Prefer Spotify Links",
+				key: "prefer-spotify-links",
+				type: "toggle",
+				def: false,
+				desc: "Replace Last.fm links with Spotify navigation. When enabled, clicking a Last.fm entity will search Spotify and navigate to the top result.",
+			},
+			{
 				name: "Show Debug Console",
 				key: "show-debug-console",
 				type: "toggle",
@@ -257,10 +265,20 @@ window.SpicetifyStats = new SpicetifyStats();
 	artistStats.element.classList.add("artist-stats-button");
 	artistStats.element.style.display = "none";
 
-	function openArtistStats(artistId: string): void {
+	async function openArtistStats(artistId: string): Promise<void> {
 		const artistUri = `spotify:artist:${artistId}`;
+		let artistName = getCachedArtistName(artistId);
+		if (!artistName) {
+			try {
+				const overview = await getArtistOverview(artistUri);
+				artistName = overview.profile.name;
+			} catch {
+				artistName = null;
+			}
+		}
+		const title = artistName ? `${artistName} Stats` : "Artist Stats";
 		// @ts-ignore
-		PopupModal.display({ title: "Artist Stats", content: <ArtistPage uri={artistUri} />, isLarge: true });
+		PopupModal.display({ title, content: <ArtistPage uri={artistUri} />, isLarge: true });
 	}
 
 	function removeInjectedArtistButton(): void {

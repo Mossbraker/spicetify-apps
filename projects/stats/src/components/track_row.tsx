@@ -1,13 +1,33 @@
 import React from "react";
 import type { LastFMMinifiedTrack, SpotifyMinifiedTrack } from "../types/stats_types";
 import { formatNumber } from "../pages/charts";
+import { searchAndNavigate } from "../utils/spotify_search";
 
 const ArtistLink = ({ name, uri, index, length }: { name: string; uri: string; index: number; length: number }) => {
+	const isLastFm = uri.startsWith("https://www.last.fm/");
+	const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+	const preferSpotify = isLastFm && config?.["prefer-spotify-links"] === true;
+
 	return (
 		<>
-			<a draggable="true" dir="auto" href={uri} tabIndex={-1}>
-				{name}
-			</a>
+			{preferSpotify ? (
+				<a
+					draggable="true"
+					dir="auto"
+					href="#"
+					tabIndex={-1}
+					onClick={(e) => {
+						e.preventDefault();
+						searchAndNavigate("artist", name, uri);
+					}}
+				>
+					{name}
+				</a>
+			) : (
+				<a draggable="true" dir="auto" href={uri} tabIndex={-1}>
+					{name}
+				</a>
+			)}
 			{index === length ? null : ", "}
 		</>
 	);
@@ -145,7 +165,7 @@ const TrackRow = (props: TrackRowProps) => {
 	);
 
 	const ArtistLinks = props.artists.map((artist, index) => {
-		return <ArtistLink index={index} length={props.artists.length - 1} name={artist.name} uri={artist.uri} />;
+		return <ArtistLink key={artist.uri} index={index} length={props.artists.length - 1} name={artist.name} uri={artist.uri} />;
 	});
 
 	return (
