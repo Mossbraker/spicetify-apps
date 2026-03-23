@@ -26,6 +26,8 @@ export interface Config {
 	"show-shows": boolean;
 	"show-collections": boolean;
 	"show-debug-console": boolean;
+	"show-item-count": boolean;
+	"artist-album-view": boolean;
 }
 
 export interface ConfigWrapper {

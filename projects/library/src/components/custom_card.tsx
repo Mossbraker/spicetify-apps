@@ -1,12 +1,13 @@
 import React from "react";
 
 interface CustomCardProps {
-	type: "folder" | "show" | "collection" | "localalbum";
+	type: "folder" | "show" | "collection" | "localalbum" | "artist";
 	uri: string;
 	header: string;
 	subheader: string;
 	imageUrl?: string;
 	badge?: string | React.ReactElement;
+	onClick?: (e: React.MouseEvent) => void;
 }
 
 function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> {
@@ -40,12 +41,18 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 				Spicetify.Platform.History.push(path);
 				break;
 			}
+			case "artist": {
+				const artistParts = uri.split(":");
+				const artistPath = artistParts.length >= 3 ? `/${artistParts[1]}/${artistParts.slice(2).join(":")}` : uri;
+				Spicetify.Platform.History.push(artistPath);
+				break;
+			}
 		}
 	};
 
 	return (
 		<div className="stats-plain-card-wrapper">
-			<button className="stats-plain-card" type="button" onClick={handleClick}>
+			<button className="stats-plain-card" type="button" onClick={props.onClick || handleClick}>
 				<div className="stats-plain-card-image">
 					{imageUrl && !imageFailed ? (
 						<img src={imageUrl} alt="" loading="lazy" onError={() => setImageFailed(true)} />

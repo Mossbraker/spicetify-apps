@@ -81,11 +81,11 @@ function AddButton({ menuItems }: AddButtonProps): React.ReactElement {
 			}
 		};
 		document.addEventListener("click", handleClickOutside, true);
-		document.addEventListener("keydown", handleKeyDown, true);
+		document.addEventListener("keydown", handleKeyDown);
 		requestAnimationFrame(() => focusMenuItem(0));
 		return () => {
 			document.removeEventListener("click", handleClickOutside, true);
-			document.removeEventListener("keydown", handleKeyDown, true);
+			document.removeEventListener("keydown", handleKeyDown);
 		};
 	}, [closeMenu, focusMenuItem, isOpen]);
 

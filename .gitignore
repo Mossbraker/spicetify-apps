@@ -154,12 +154,18 @@ stats-from-issue-242/
 dist/
 *.dist.js
 
+# Claude AI related files
 claudekit/
 .claude/
+.mcp.json
 
+# scratch files
 docs/untitty.txt
 docs/squanch-pad.md
 
 # Release artifacts (built by CI)
 releases/
 projects/*/dist/
+
+# PR description
+docs/PR-desc.md

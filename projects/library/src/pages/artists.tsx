@@ -9,9 +9,10 @@ import AddButton from "../components/add_button";
 import TextInputDialog from "../components/text_input_dialog";
 import useStatus from "@shared/status/useStatus";
 import { useInfiniteQuery } from "@shared/types/react_query";
-import type { ArtistItem, GetContentsResponse, UpdateEvent } from "../types/platform";
+import type { AlbumItem, ArtistItem, GetContentsResponse, UpdateEvent } from "../types/platform";
 import PinIcon from "../components/pin_icon";
 import useSortDropdownMenu from "@shared/dropdown/useSortDropdownMenu";
+import CustomCard from "../components/custom_card";
 
 const getAddMenuItems = () => {
 	const addArtist = () => {
@@ -42,9 +43,129 @@ const sortOptions = [
 	{ id: "1", name: "Date Added" },
 ];
 
+const ArtistAlbums = ({
+	artist,
+	onBack,
+	configWrapper,
+}: { artist: ArtistItem; onBack: () => void; configWrapper: ConfigWrapper }) => {
+	const [albums, setAlbums] = React.useState<AlbumItem[]>([]);
+	const [loading, setLoading] = React.useState(true);
+
+	React.useEffect(() => {
+		let cancelled = false;
+		const fetchAlbums = async () => {
+			setLoading(true);
+			try {
+				let allItems: AlbumItem[] = [];
+				let offset = 0;
+				let total = Infinity;
+
+				while (!cancelled && offset < total) {
+					const res = (await Spicetify.Platform.LibraryAPI.getContents({
+						filters: ["0"],
+						sortOrder: "0",
+						textFilter: artist.name,
+						offset,
+						limit,
+					})) as GetContentsResponse<AlbumItem>;
+
+					const pageItems = res.items || [];
+					allItems = allItems.concat(pageItems);
+
+					if (typeof res.totalLength === "number") {
+						total = res.totalLength;
+					} else {
+						total = allItems.length;
+					}
+
+					offset += pageItems.length;
+					if (pageItems.length === 0) break;
+				}
+
+				// Filter to only albums by this specific artist
+				const normalizedArtistName = artist.name?.trim().toLowerCase();
+				const artistAlbums = allItems.filter((album) =>
+					album.artists?.some((a) => {
+						// Prefer exact URI match when available
+						if (artist.uri && a.uri) {
+							return a.uri === artist.uri;
+						}
+						// Fallback: match by normalized name when URIs are missing
+						const albumArtistName = a.name?.trim().toLowerCase();
+						return (
+							normalizedArtistName !== undefined &&
+							albumArtistName !== undefined &&
+							albumArtistName === normalizedArtistName
+						);
+					}),
+				);
+				if (!cancelled) setAlbums(artistAlbums);
+			} catch (e) {
+				console.error("Failed to fetch artist albums", e);
+				if (!cancelled) setAlbums([]);
+			}
+			if (!cancelled) setLoading(false);
+		};
+		fetchAlbums();
+		return () => { cancelled = true; };
+	}, [artist.uri, artist.name]);
+
+	const albumCards = albums.map((album) => (
+		album.type === "album" ? (
+			<SpotifyCard
+				key={album.uri}
+				type="album"
+				uri={album.uri}
+				header={album.name}
+				subheader={album.artists?.[0]?.name || ""}
+				imageUrl={album.images?.[0]?.url}
+				badge={album.pinned ? <PinIcon /> : undefined}
+			/>
+		) : (
+			<CustomCard
+				key={album.uri}
+				type="localalbum"
+				uri={album.uri}
+				header={album.name}
+				subheader={album.artists?.[0]?.name || ""}
+				imageUrl={album.images?.[0]?.url}
+				badge={album.pinned ? <PinIcon /> : undefined}
+			/>
+		)
+	));
+
+	return (
+		<PageContainer
+			lhs={[
+				<button type="button" className="library-backButton" onClick={onBack} aria-label="Back to artists">
+					<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+						<path d="M15.957 2.793a1 1 0 0 1 0 1.414L8.164 12l7.793 7.793a1 1 0 1 1-1.414 1.414L5.336 12l9.207-9.207a1 1 0 0 1 1.414 0z" />
+					</svg>
+				</button>,
+				artist.name,
+			]}
+			rhs={[<SettingsButton configWrapper={configWrapper} />]}
+		>
+			{loading ? (
+				<div className="library-item-count">Loading albums...</div>
+			) : albums.length === 0 ? (
+				<div className="library-item-count">No saved albums found for this artist</div>
+			) : (
+				<>
+					{configWrapper.config["show-item-count"] ? (
+						<div className="library-item-count">{albums.length} albums</div>
+					) : null}
+					<div className="main-gridContainer-gridContainer grid">{albumCards}</div>
+				</>
+			)}
+		</PageContainer>
+	);
+};
+
 const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [sortDropdown, sortOption, isReversed] = useSortDropdownMenu(sortOptions, "library:artists");
 	const [textFilter, setTextFilter] = React.useState("");
+	const [selectedArtist, setSelectedArtist] = React.useState<ArtistItem | null>(null);
 
 	const fetchArtists = async ({ pageParam }: { pageParam: number }) => {
 		const res = (await Spicetify.Platform.LibraryAPI.getContents({
@@ -93,25 +214,62 @@ const ArtistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	if (Status) return <PageContainer {...props}>{Status}</PageContainer>;
 
+	if (selectedArtist) {
+		return (
+			<ArtistAlbums
+				artist={selectedArtist}
+				onBack={() => setSelectedArtist(null)}
+				configWrapper={configWrapper}
+			/>
+		);
+	}
+
 	const contents = data as NonNullable<typeof data>;
 
 	const artists = contents.pages.flatMap((page) => page.items);
 
-	const artistCards = artists.filter(isValidArtist).map((artist) => (
-		<SpotifyCard
-			type="artist"
-			uri={artist.uri}
-			header={artist.name}
-			subheader={""}
-			imageUrl={artist.images?.at(0)?.url}
-			badge={artist.pinned ? <PinIcon /> : undefined}
-		/>
-	));
+	const validArtists = artists.filter(isValidArtist);
 
-	if (hasNextPage) artistCards.push(<LoadMoreCard callback={fetchNextPage} />);
+	const artistCards = validArtists.map((artist) => {
+		if (configWrapper.config["artist-album-view"]) {
+			return (
+				<CustomCard
+					key={artist.uri}
+					type="artist"
+					uri={artist.uri}
+					header={artist.name}
+					subheader={""}
+					imageUrl={artist.images?.at(0)?.url}
+					badge={artist.pinned ? <PinIcon /> : undefined}
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						setSelectedArtist(artist);
+					}}
+				/>
+			);
+		}
+
+		return (
+			<SpotifyCard
+				key={artist.uri}
+				type="artist"
+				uri={artist.uri}
+				header={artist.name}
+				subheader={""}
+				imageUrl={artist.images?.at(0)?.url}
+				badge={artist.pinned ? <PinIcon /> : undefined}
+			/>
+		);
+	});
+
+	if (hasNextPage) artistCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
 
 	return (
 		<PageContainer {...props}>
+			{configWrapper.config["show-item-count"] ? (
+				<div className="library-item-count">{validArtists.length} artists</div>
+			) : null}
 			<div className={"main-gridContainer-gridContainer grid"}>{artistCards}</div>
 		</PageContainer>
 	);
