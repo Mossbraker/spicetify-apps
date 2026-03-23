@@ -261,13 +261,15 @@ window.SpicetifyStats = new SpicetifyStats();
 
 		const SELECTORS = [
 			'[data-testid="action-bar-row"]',
-			".main-actionBarRow-ActionBarRow",
-			".main-actionBarRow-actions",
+			'[data-testid="action-bar"]',
+			".main-actionBar-ActionBarRow",
+			".main-actionBar-ActionBar",
+			".main-actionButtons",
 		];
 		const actionBar = SELECTORS.reduce<Element | null>((found, sel) => found ?? document.querySelector(sel), null);
 
 		if (!actionBar) {
-			if (attempt < 6) {
+			if (attempt < 10) {
 				setTimeout(() => tryInjectArtistButton(artistId, attempt + 1), 300);
 			} else {
 				// Fallback: use Topbar button

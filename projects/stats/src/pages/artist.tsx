@@ -35,6 +35,27 @@ const formatNumber = (num: number): string => {
 
 const PLAYLIST_PREVIEW_COUNT = 6;
 
+// Wraps a track row element so that right-click opens Spotify's native track context menu.
+// Uses the same useMemo pattern as TrackRow to avoid the React #31 crash path.
+const TrackContextMenu: React.FC<{ uri: string; children: React.ReactElement }> = ({ uri, children }) => {
+	const Menu = React.useMemo(
+		() =>
+			function TrackCtxMenu(props: any) {
+				const TrackMenu = (Spicetify as any).ReactComponent?.TrackMenu;
+				if (!TrackMenu) return null;
+				return <TrackMenu {...props} uri={uri} />;
+			},
+		[uri],
+	);
+	if (!(Spicetify as any).ReactComponent?.ContextMenu) return children;
+	return (
+		<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="right-click">
+			{children}
+		</Spicetify.ReactComponent.ContextMenu>
+	);
+};
+
+
 const ArtistPage = ({ uri }: { uri: string }) => {
 	const artistId = uri.replace("spotify:artist:", "");
 
@@ -363,9 +384,9 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 						{topTracks.map((item, idx) => {
 							const trackId = item.track?.uri?.split(":")?.[2];
 							return (
-								<div
-									key={item.track?.uri ?? idx}
-									className="stats-lfmTrackRow stats-lfmTrackRow--clickable"
+								<TrackContextMenu key={item.track?.uri ?? idx} uri={item.track?.uri ?? ""}>
+									<div
+										className="stats-lfmTrackRow stats-lfmTrackRow--clickable"
 									role="button"
 									tabIndex={0}
 									onClick={() => {
@@ -387,7 +408,8 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 									<span className="stats-lfmTrackListeners">
 										{item.track?.playcount ? formatNumber(Number(item.track.playcount)) : "N/A"} plays
 									</span>
-								</div>
+									</div>
+								</TrackContextMenu>
 							);
 						})}
 					</div>

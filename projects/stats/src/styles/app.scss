@@ -455,6 +455,22 @@
     padding-top: 8px;
 }
 
+.GenericModal[aria-label="Artist Stats"] .page-content {
+    padding: 0 16px 16px;
+}
+
+// ================================================================
+// Artist Stats modal: tighten shelf spacing
+// ================================================================
+.GenericModal[aria-label="Artist Stats"] .main-shelf-shelf {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.GenericModal[aria-label="Artist Stats"] .main-shelf-header {
+    margin-bottom: 4px;
+}
+
 // ================================================================
 // Artist Stats modal: user stats row
 // ================================================================
