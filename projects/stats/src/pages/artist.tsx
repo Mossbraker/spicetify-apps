@@ -188,11 +188,13 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		}
 	}, [status, data, artistId, scanPlaylists, playlistAppearances, playlistLoading]);
 
-	const handleLoadPlaylists = () => {
+	const handleLoadPlaylists = (e: React.MouseEvent) => {
+		e.stopPropagation();
 		scanPlaylists(`spotify:artist:${artistId}`);
 	};
 
-	const handleLoadLfmTopTracks = async () => {
+	const handleLoadLfmTopTracks = async (e: React.MouseEvent) => {
+		e.stopPropagation();
 		if (lfmTopTracksLoading) return;
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
 		if (!config?.["api-key"] || !data?.overview?.profile?.name) return;
@@ -210,7 +212,8 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		}
 	};
 
-	const handleLoadUserTopTracks = async () => {
+	const handleLoadUserTopTracks = async (e: React.MouseEvent) => {
+		e.stopPropagation();
 		if (userTopTracksLoading) return;
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
 		if (!config?.["api-key"] || !config?.["lastfm-user"] || !data?.overview?.profile?.name) return;

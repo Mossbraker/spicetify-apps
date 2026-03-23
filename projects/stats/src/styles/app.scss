@@ -347,18 +347,12 @@
     color: var(--spice-text);
 }
 
-.playlist-stats-button.hidden {
-    display: none;
-}
-
 .GenericModal[aria-label="Artist Stats"] .main-embedWidgetGenerator-container {
     width: 80vw;
     height: 80vh;
     background-color: var(--spice-main);
-}
-
-.artist-stats-button.hidden {
-    display: none;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 #stats-app {
@@ -434,14 +428,6 @@
 }
 
 // ================================================================
-// Artist Stats modal: border radius
-// ================================================================
-.GenericModal[aria-label="Artist Stats"] .main-embedWidgetGenerator-container {
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-// ================================================================
 // Artist Stats modal: layout — flex column with consistent gap,
 // no top whitespace, side/bottom gutters from padding
 // ================================================================
@@ -459,17 +445,25 @@
     padding-top: 0 !important;
 }
 
+// page-content inherited margins on #stats-app direct children
+// (e.g. 64px margin-top on the first section) — zero them out.
+.GenericModal[aria-label="Artist Stats"] #stats-app > section {
+    margin-top: 0 !important;
+}
+
 // ================================================================
 // Artist Stats modal: shelves — zero out all default Spotify
 // margin/padding so only the parent gap controls spacing
 // ================================================================
 .GenericModal[aria-label="Artist Stats"] .main-shelf-shelf {
     margin: 0;
+    min-height: unset !important;
     padding: 0;
 }
 
 .GenericModal[aria-label="Artist Stats"] .main-shelf-shelf > section {
     margin: 0;
+    min-height: unset !important;
     padding: 0;
 }
 

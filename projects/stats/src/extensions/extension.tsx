@@ -263,6 +263,7 @@ window.SpicetifyStats = new SpicetifyStats();
 	}
 
 	let currentTargetArtistId: string | null = null;
+	let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
 	// Core injection function — called by MutationObserver and navigation handler.
 	// Guards prevent redundant calls. No retry loop — the observer retries for us.
@@ -284,7 +285,7 @@ window.SpicetifyStats = new SpicetifyStats();
 			document.querySelector('button[data-testid="more-button"]')?.parentElement ??
 			null;
 
-if (!actionBar) return; // Not rendered yet — observer will retry
+		if (!actionBar) return; // Not rendered yet — observer will retry
 
 		const btn = document.createElement("button");
 		btn.id = "stats-artist-inject-btn";
@@ -296,7 +297,19 @@ if (!actionBar) return; // Not rendered yet — observer will retry
 		const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 		svgEl.setAttribute("viewBox", "0 0 16 16");
 		svgEl.setAttribute("aria-hidden", "true");
-		svgEl.innerHTML = (Spicetify as any).SVGIcons?.["chart-down"] ?? "";
+		const svgMarkup = (Spicetify as any).SVGIcons?.["chart-down"] ?? "";
+		if (svgMarkup) {
+			const parsed = new DOMParser().parseFromString(
+				`<svg xmlns="http://www.w3.org/2000/svg">${svgMarkup}</svg>`,
+				"image/svg+xml",
+			);
+			const errorNode = parsed.querySelector("parsererror");
+			if (!errorNode) {
+				for (const child of Array.from(parsed.documentElement.childNodes)) {
+					svgEl.appendChild(document.importNode(child, true));
+				}
+			}
+		}
 
 		const textEl = document.createElement("span");
 		textEl.textContent = "Artist Stats";
@@ -322,25 +335,34 @@ if (!actionBar) return; // Not rendered yet — observer will retry
 
 		currentTargetArtistId = isArtistPage ? uid : null;
 
+		// Clear any pending fallback timer from a previous navigation
+		if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+
 		playlistEdit.element.style.display = isPlaylistPage ? "" : "none";
 		artistStats.element.style.display = "none";
 		removeInjectedArtistButton();
 
 		if (isArtistPage) {
+			// Connect observer for artist pages
+			actionBarObserver.observe(document.body, { childList: true, subtree: true });
 			insertArtistButton();
 			// Fallback: if injection hasn't succeeded after 5 s, show topbar button
 			const fallbackId = uid;
-			setTimeout(() => {
+			fallbackTimer = setTimeout(() => {
+				fallbackTimer = null;
 				if (currentTargetArtistId === fallbackId && !document.getElementById("stats-artist-inject-btn")) {
 					artistStats.element.style.display = "";
 				}
 			}, 5000);
+		} else {
+			// Disconnect observer when leaving artist pages to avoid unnecessary work
+			if (injectTimer) { clearTimeout(injectTimer); injectTimer = null; }
+			actionBarObserver.disconnect();
 		}
 	}
 
 	// ── MutationObserver (primary injection trigger) ────────────
-	// Sort-play approach: when the exact action bar node appears in the DOM,
-	// inject immediately (no debounce). For all other mutations, debounce.
+	// Only active while on an artist page. Connected/disconnected by handleNavigation.
 	let injectTimer: ReturnType<typeof setTimeout> | null = null;
 	const actionBarObserver = new MutationObserver((mutations) => {
 		if (!currentTargetArtistId) return;
@@ -371,7 +393,7 @@ if (!actionBar) return; // Not rendered yet — observer will retry
 			insertArtistButton();
 		}, 150);
 	});
-	actionBarObserver.observe(document.body, { childList: true, subtree: true });
+	// Observer starts disconnected — handleNavigation connects it on artist pages
 
 	handleNavigation(History.location.pathname);
 

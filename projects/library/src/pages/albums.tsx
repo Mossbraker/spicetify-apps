@@ -177,7 +177,10 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		};
 	}, [isCustomOrder, forceUpdate]);
 
-	// Reconcile custom order when data arrives (only when no text filter)
+	// Reconcile custom order when data arrives (only when no text filter).
+	// Note: customData may include local album URIs (filters: ["0"]).
+	// They sort to the end via sortByOrder and can't be repositioned in
+	// the reorder modal (which excludes local albums intentionally).
 	useEffect(() => {
 		if (!isCustomOrder || !customData || textFilter) return;
 		const uris = customData.items?.map((a) => a.uri) ?? [];
@@ -192,9 +195,9 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	// Populated after status guards below.
 	let albums: AlbumItem[] = [];
 
-	// Reorder modal opener
+	// Reorder modal opener — only includes standard (non-local) albums
 	const openReorderModal = () => {
-		const validItems = albums.filter(isValidAlbum).map((item) => ({
+		const validItems = albums.filter((item) => isValidAlbum(item) && item.type === "album").map((item) => ({
 			uri: item.uri,
 			name: item.name,
 			artist: item.artists[0]?.name ?? "Unknown",
@@ -223,7 +226,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			<AddButton menuItems={getAddMenuItems()} />,
 			filterDropdown,
 			sortDropdown,
-			isCustomOrder && !textFilter && activeStatus === "success" ? (
+			isCustomOrder && !textFilter && filterOption.id !== "2" && activeStatus === "success" ? (
 				<button
 					type="button"
 					className="library-reorder-button"

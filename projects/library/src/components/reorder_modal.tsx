@@ -17,6 +17,31 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 	const [items, setItems] = React.useState(initialItems);
 	const dragIndexRef = React.useRef<number | null>(null);
 	const [dropTarget, setDropTarget] = React.useState<number | null>(null);
+	const rowRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+
+	const moveItem = (fromIndex: number, toIndex: number) => {
+		if (toIndex < 0 || toIndex >= items.length) return;
+		setItems((prev) => {
+			const updated = [...prev];
+			const [moved] = updated.splice(fromIndex, 1);
+			updated.splice(toIndex, 0, moved);
+			return updated;
+		});
+		// Focus the moved item at its new position after render
+		requestAnimationFrame(() => {
+			rowRefs.current[toIndex]?.focus();
+		});
+	};
+
+	const handleKeyDown = (index: number) => (e: React.KeyboardEvent) => {
+		if (e.key === "ArrowUp" && index > 0) {
+			e.preventDefault();
+			moveItem(index, index - 1);
+		} else if (e.key === "ArrowDown" && index < items.length - 1) {
+			e.preventDefault();
+			moveItem(index, index + 1);
+		}
+	};
 
 	const handleDragStart = (index: number) => (e: React.DragEvent) => {
 		dragIndexRef.current = index;
@@ -32,17 +57,9 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 	const handleDrop = (targetIndex: number) => (e: React.DragEvent) => {
 		e.preventDefault();
 		const sourceIndex = dragIndexRef.current;
-		if (sourceIndex === null || sourceIndex === targetIndex) {
-			setDropTarget(null);
-			return;
+		if (sourceIndex !== null && sourceIndex !== targetIndex) {
+			moveItem(sourceIndex, targetIndex);
 		}
-
-		setItems((prev) => {
-			const updated = [...prev];
-			const [moved] = updated.splice(sourceIndex, 1);
-			updated.splice(targetIndex, 0, moved);
-			return updated;
-		});
 		dragIndexRef.current = null;
 		setDropTarget(null);
 	};
@@ -68,14 +85,17 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 				{items.map((item, index) => (
 					<div
 						key={item.uri}
+						ref={(el) => { rowRefs.current[index] = el; }}
 						className={`reorder-modal-row ${dropTarget === index ? "reorder-drop-target" : ""}`}
 						draggable
+						tabIndex={0}
 						role="listitem"
-						aria-label={`${item.name} by ${item.artist}`}
+						aria-label={`${item.name} by ${item.artist}, position ${index + 1} of ${items.length}. Use arrow keys to reorder.`}
 						onDragStart={handleDragStart(index)}
 						onDragOver={handleDragOver(index)}
 						onDrop={handleDrop(index)}
 						onDragEnd={handleDragEnd}
+						onKeyDown={handleKeyDown(index)}
 					>
 						<span className="reorder-modal-drag-handle">
 							<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
