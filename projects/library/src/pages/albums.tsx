@@ -66,6 +66,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [textFilter, setTextFilter] = React.useState("");
 
 	const isCustomOrder = sortOption.id === "custom";
+	const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
 
 	const fetchAlbums = async ({ pageParam }: { pageParam: number }) => {
 		libraryDebug.info(`Albums: fetching page offset=${pageParam}, sort=${sortOption.id}, reversed=${isReversed}`);
@@ -91,7 +92,8 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		let albums = localAlbums.values().toArray() as AlbumItem[];
 
 		if (textFilter) {
-			const regex = new RegExp(`\\b${textFilter}`, "i");
+			const escaped = textFilter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			const regex = new RegExp(`\\b${escaped}`, "i");
 			albums = albums.filter((album) => {
 				return regex.test(album.name) || album.artists.some((artist) => regex.test(artist.name));
 			});
@@ -163,17 +165,17 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		};
 	}, [activeRefetch]);
 
-	// Listen for custom order store changes (N2: setOrder dispatches "change", triggering refetch)
+	// Listen for custom order store changes (re-render to apply new sort order without re-fetching)
 	useEffect(() => {
 		if (!isCustomOrder) return;
 		const handleChange = () => {
-			customRefetch();
+			forceUpdate();
 		};
 		customOrderStore.addEventListener("change", handleChange);
 		return () => {
 			customOrderStore.removeEventListener("change", handleChange);
 		};
-	}, [isCustomOrder, customRefetch]);
+	}, [isCustomOrder, forceUpdate]);
 
 	// Reconcile custom order when data arrives (only when no text filter)
 	useEffect(() => {
@@ -199,15 +201,19 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			imageUrl: item.images?.[0]?.url,
 		}));
 
-		// N2: onSave only calls setOrder — the "change" event listener handles refetch
+		// N2: onSave only calls setOrder — the "change" event listener handles re-render
 		const onSave = (uris: string[]) => {
 			customOrderStore.setOrder(uris);
+		};
+
+		const onReset = () => {
+			customOrderStore.setOrder([]);
 		};
 
 		// @ts-ignore — Spicetify types expect DOM element, not JSX
 		Spicetify.PopupModal.display({
 			title: "Reorder Albums",
-			content: <ReorderModal items={validItems} onSave={onSave} />,
+			content: <ReorderModal items={validItems} onSave={onSave} onReset={onReset} />,
 		});
 	};
 
@@ -258,7 +264,8 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 		// Apply text filter client-side
 		if (textFilter) {
-			const regex = new RegExp(`\\b${textFilter}`, "i");
+			const escaped = textFilter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			const regex = new RegExp(`\\b${escaped}`, "i");
 			albums = albums.filter((album) =>
 				regex.test(album.name) || album.artists.some((artist) => regex.test(artist.name))
 			);

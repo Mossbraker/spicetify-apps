@@ -163,12 +163,19 @@ class SpicetifyStats {
 				desc: "Requires Last.fm API key",
 			},
 			{
+				name: "Show Artist Stats Button",
+				key: "show-artist-stats-button",
+				type: "toggle",
+				def: true,
+				desc: "Show a button in the topbar when viewing an artist page to open the Artist Stats popup.",
+				sectionHeader: "Artist Stats",
+			},
+			{
 				name: "Auto-Load Playlist Appearances",
 				key: "auto-load-playlist-appearances",
 				type: "toggle",
 				def: true,
 				desc: "Automatically scan your playlists for this artist when viewing Artist Stats. Disable to show a manual load button instead.",
-				sectionHeader: "Artist Stats",
 			},
 		],
 		"stats",
@@ -227,10 +234,13 @@ window.SpicetifyStats = new SpicetifyStats();
 		const [, type, uid] = pathname.split("/");
 		const isPlaylistPage = type === "playlist" && uid;
 		const isArtistPage = type === "artist" && uid;
+		const showArtistBtn = window.SpicetifyStats?.ConfigWrapper?.Config?.["show-artist-stats-button"] ?? true;
 		playlistEdit.element.classList.toggle("hidden", !isPlaylistPage);
-		artistStats.element.classList.toggle("hidden", !isArtistPage);
+		artistStats.element.classList.toggle("hidden", !isArtistPage || !showArtistBtn);
 	}
 	setTopbarButtonVisibility(History.location.pathname);
+	// Defensive re-check: Topbar may not be fully mounted on first call
+	setTimeout(() => setTopbarButtonVisibility(History.location.pathname), 500);
 
 	History.listen(({ pathname }: { pathname: string }) => {
 		setTopbarButtonVisibility(pathname);

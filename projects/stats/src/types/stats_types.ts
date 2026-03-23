@@ -28,6 +28,7 @@ export interface Config {
 	"show-library": boolean;
 	"show-charts": boolean;
 	"auto-load-playlist-appearances": boolean;
+	"show-artist-stats-button": boolean;
 }
 
 export interface ConfigWrapper {

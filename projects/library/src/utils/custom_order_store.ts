@@ -20,8 +20,13 @@ class CustomOrderStore extends EventTarget {
 	}
 
 	private save() {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(this.order));
-		this.dispatchEvent(new Event("change"));
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(this.order));
+		} catch {
+			// Ignore storage errors so UI can continue to function
+		} finally {
+			this.dispatchEvent(new Event("change"));
+		}
 	}
 
 	/** Get the full ordered URI list */

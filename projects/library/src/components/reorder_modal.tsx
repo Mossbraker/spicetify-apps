@@ -1,5 +1,4 @@
 import React from "react";
-import customOrderStore from "../utils/custom_order_store";
 
 interface ReorderItem {
 	uri: string;
@@ -11,9 +10,10 @@ interface ReorderItem {
 interface ReorderModalProps {
 	items: ReorderItem[];
 	onSave: (uris: string[]) => void;
+	onReset?: () => void;
 }
 
-const ReorderModal = ({ items: initialItems, onSave }: ReorderModalProps) => {
+const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProps) => {
 	const [items, setItems] = React.useState(initialItems);
 	const dragIndexRef = React.useRef<number | null>(null);
 	const [dropTarget, setDropTarget] = React.useState<number | null>(null);
@@ -58,18 +58,20 @@ const ReorderModal = ({ items: initialItems, onSave }: ReorderModalProps) => {
 	};
 
 	const handleReset = () => {
-		customOrderStore.setOrder([]);
+		onReset?.();
 		Spicetify.PopupModal.hide();
 	};
 
 	return (
 		<div className="reorder-modal">
-			<div className="reorder-modal-list">
+			<div className="reorder-modal-list" role="list" aria-label="Album order">
 				{items.map((item, index) => (
 					<div
 						key={item.uri}
 						className={`reorder-modal-row ${dropTarget === index ? "reorder-drop-target" : ""}`}
 						draggable
+						role="listitem"
+						aria-label={`${item.name} by ${item.artist}`}
 						onDragStart={handleDragStart(index)}
 						onDragOver={handleDragOver(index)}
 						onDrop={handleDrop(index)}
@@ -98,9 +100,11 @@ const ReorderModal = ({ items: initialItems, onSave }: ReorderModalProps) => {
 				<button type="button" className="reorder-modal-save" onClick={handleSave}>
 					Save Order
 				</button>
-				<button type="button" className="reorder-modal-reset" onClick={handleReset}>
-					Reset to Default
-				</button>
+				{onReset && (
+					<button type="button" className="reorder-modal-reset" onClick={handleReset}>
+						Reset to Default
+					</button>
+				)}
 			</div>
 		</div>
 	);
