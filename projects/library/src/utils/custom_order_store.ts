@@ -12,7 +12,12 @@ class CustomOrderStore extends EventTarget {
 		try {
 			const raw = localStorage.getItem(STORAGE_KEY);
 			if (raw) {
-				this.order = JSON.parse(raw) as string[];
+				const parsed = JSON.parse(raw);
+				if (Array.isArray(parsed)) {
+					this.order = parsed.filter((value) => typeof value === "string");
+				} else {
+					this.order = [];
+				}
 			}
 		} catch {
 			this.order = [];

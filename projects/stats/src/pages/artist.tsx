@@ -46,7 +46,10 @@ const _userTracksCache = new Map<string, { data: { name: string; url: string; us
 
 function fromCache<T>(map: Map<string, { data: T; ts: number }>, key: string): T | null {
 	const entry = map.get(key);
-	return entry && Date.now() - entry.ts < CACHE_TTL_MS ? entry.data : null;
+	if (!entry) return null;
+	if (Date.now() - entry.ts < CACHE_TTL_MS) return entry.data;
+	map.delete(key);
+	return null;
 }
 
 // Wraps a track row element so that right-click opens Spotify's native track context menu.
@@ -55,15 +58,13 @@ const TrackContextMenu: React.FC<{ uri: string; children: React.ReactElement }> 
 	const Menu = React.useMemo(
 		() =>
 			function TrackCtxMenu(props: any) {
-				const TrackMenu = (Spicetify as any).ReactComponent?.TrackMenu;
-				if (!TrackMenu) return null;
-				return <TrackMenu {...props} uri={uri} />;
+				return <Spicetify.ReactComponent.AlbumMenu {...props} uri={uri} />;
 			},
 		[uri],
 	);
-	if (!(Spicetify as any).ReactComponent?.ContextMenu) return children;
+	if (!Spicetify.ReactComponent?.ContextMenu) return children;
 	return (
-		<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="right-click">
+		<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="right-click" preventScrollingWhileOpen={false}>
 			{children}
 		</Spicetify.ReactComponent.ContextMenu>
 	);
@@ -85,6 +86,8 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		() => fromCache(_userTracksCache, artistId));
 	const [userTopTracksLoading, setUserTopTracksLoading] = React.useState(false);
 	const isMountedRef = React.useRef(true);
+	const lfmLoadingRef = React.useRef(false);
+	const userLoadingRef = React.useRef(false);
 
 	React.useEffect(() => {
 		isMountedRef.current = true;
@@ -103,7 +106,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 
 		let lastfmInfo = null;
 		let lastfmTags: { name: string; count: number }[] = [];
-		if (config?.["api-key"]) {
+		if (config?.["api-key"] && (config["use-lastfm"] || config["lastfm-only"])) {
 			try {
 				const [info, tags] = await Promise.all([
 					getArtistInfo(config["api-key"], overview.profile.name, config["lastfm-user"] || undefined),
@@ -193,11 +196,11 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		scanPlaylists(`spotify:artist:${artistId}`);
 	};
 
-	const handleLoadLfmTopTracks = async (e: React.MouseEvent) => {
-		e.stopPropagation();
-		if (lfmTopTracksLoading) return;
+	const loadLfmTopTracks = React.useCallback(async () => {
+		if (lfmLoadingRef.current) return;
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
 		if (!config?.["api-key"] || !data?.overview?.profile?.name) return;
+		lfmLoadingRef.current = true;
 		setLfmTopTracksLoading(true);
 		try {
 			const tracks = await getArtistGlobalTopTracks(config["api-key"], data.overview.profile.name);
@@ -208,15 +211,21 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		} catch {
 			if (isMountedRef.current) setLfmTopTracks([]);
 		} finally {
+			lfmLoadingRef.current = false;
 			if (isMountedRef.current) setLfmTopTracksLoading(false);
 		}
+	}, [artistId, data]);
+
+	const handleLoadLfmTopTracks = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		loadLfmTopTracks();
 	};
 
-	const handleLoadUserTopTracks = async (e: React.MouseEvent) => {
-		e.stopPropagation();
-		if (userTopTracksLoading) return;
+	const loadUserTopTracks = React.useCallback(async () => {
+		if (userLoadingRef.current) return;
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
 		if (!config?.["api-key"] || !config?.["lastfm-user"] || !data?.overview?.profile?.name) return;
+		userLoadingRef.current = true;
 		setUserTopTracksLoading(true);
 		try {
 			const tracks = await getUserTopTracksForArtist(
@@ -231,18 +240,48 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		} catch {
 			if (isMountedRef.current) setUserTopTracks([]);
 		} finally {
+			userLoadingRef.current = false;
 			if (isMountedRef.current) setUserTopTracksLoading(false);
 		}
+	}, [artistId, data]);
+
+	const handleLoadUserTopTracks = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		loadUserTopTracks();
 	};
+
+	// Auto-load Last.fm top tracks
+	React.useEffect(() => {
+		if (status !== "success" || !data) return;
+		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+		if (!config?.["api-key"] || !(config["use-lastfm"] || config["lastfm-only"])) return;
+		const autoLoad = config?.["auto-load-lastfm-top-tracks"] === true;
+		if (autoLoad && lfmTopTracks === null && !lfmTopTracksLoading) {
+			loadLfmTopTracks();
+		}
+	}, [status, data, loadLfmTopTracks, lfmTopTracks, lfmTopTracksLoading]);
+
+	// Auto-load user top scrobbled tracks
+	React.useEffect(() => {
+		if (status !== "success" || !data) return;
+		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+		if (!config?.["api-key"] || !config?.["lastfm-user"] || !(config["use-lastfm"] || config["lastfm-only"])) return;
+		const autoLoad = config?.["auto-load-user-top-tracks"] === true;
+		if (autoLoad && userTopTracks === null && !userTopTracksLoading) {
+			loadUserTopTracks();
+		}
+	}, [status, data, loadUserTopTracks, userTopTracks, userTopTracksLoading]);
 
 	const Status = useStatus(status, error);
 	if (Status) return Status;
 
 	const { overview, lastfmInfo, lastfmTags } = data as NonNullable<typeof data>;
 	const config = window.SpicetifyStats?.ConfigWrapper?.Config;
-	const hasLastFm = Boolean(config?.["api-key"]);
-	const hasLastFmUser = Boolean(config?.["api-key"] && config?.["lastfm-user"]);
+	const hasLastFm = Boolean(config?.["api-key"] && (config["use-lastfm"] || config["lastfm-only"]));
+	const hasLastFmUser = Boolean(config?.["api-key"] && config?.["lastfm-user"] && (config["use-lastfm"] || config["lastfm-only"]));
 	const autoLoadPlaylists = config?.["auto-load-playlist-appearances"] !== false;
+	const autoLoadLfmTopTracks = config?.["auto-load-lastfm-top-tracks"] === true;
+	const autoLoadUserTopTracks = config?.["auto-load-user-top-tracks"] === true;
 
 	// Compute estimated listening time from user scrobbles
 	let estimatedListeningTime: string | null = null;
@@ -452,14 +491,18 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			{hasLastFm && (
 				<Shelf title="Last.fm Global Top Tracks">
 					{lfmTopTracks === null ? (
-						<button
-							type="button"
-							className="stats-lfmTopTracks-loadBtn"
-							onClick={handleLoadLfmTopTracks}
-							disabled={lfmTopTracksLoading}
-						>
-							{lfmTopTracksLoading ? "Loading..." : "Load Last.fm Top Tracks"}
-						</button>
+						!autoLoadLfmTopTracks ? (
+							<button
+								type="button"
+								className="stats-lfmTopTracks-loadBtn"
+								onClick={handleLoadLfmTopTracks}
+								disabled={lfmTopTracksLoading}
+							>
+								{lfmTopTracksLoading ? "Loading..." : "Load Last.fm Top Tracks"}
+							</button>
+						) : lfmTopTracksLoading ? (
+							<div className="stats-playlistProgress">Loading Last.fm top tracks...</div>
+						) : null
 					) : lfmTopTracks.length > 0 ? (
 						<div className="stats-lfmTrackList">
 							{lfmTopTracks.map((track, idx) => (
@@ -491,14 +534,18 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			{hasLastFmUser && (
 				<Shelf title="Your Top Scrobbled Tracks">
 					{userTopTracks === null ? (
-						<button
-							type="button"
-							className="stats-lfmTopTracks-loadBtn"
-							onClick={handleLoadUserTopTracks}
-							disabled={userTopTracksLoading}
-						>
-							{userTopTracksLoading ? "Loading..." : "Load My Top Tracks"}
-						</button>
+						!autoLoadUserTopTracks ? (
+							<button
+								type="button"
+								className="stats-lfmTopTracks-loadBtn"
+								onClick={handleLoadUserTopTracks}
+								disabled={userTopTracksLoading}
+							>
+								{userTopTracksLoading ? "Loading..." : "Load My Top Tracks"}
+							</button>
+						) : userTopTracksLoading ? (
+							<div className="stats-playlistProgress">Loading your top scrobbled tracks...</div>
+						) : null
 					) : userTopTracks.length > 0 ? (
 						<div className="stats-lfmTrackList">
 							{userTopTracks.map((track, idx) => (

@@ -179,6 +179,20 @@ class SpicetifyStats {
 				desc: "Automatically scan your playlists for this artist when viewing Artist Stats. Disable to show a manual load button instead.",
 			},
 			{
+				name: "Auto-Load Last.fm Top Tracks",
+				key: "auto-load-lastfm-top-tracks",
+				type: "toggle",
+				def: false,
+				desc: "Automatically fetch global top tracks from Last.fm when viewing Artist Stats. Requires a Last.fm API key.",
+			},
+			{
+				name: "Auto-Load My Top Scrobbled Tracks",
+				key: "auto-load-user-top-tracks",
+				type: "toggle",
+				def: false,
+				desc: "Automatically fetch your personal top scrobbled tracks for the artist when viewing Artist Stats. Requires a Last.fm API key and username.",
+			},
+			{
 				name: "Show Debug Console",
 				key: "show-debug-console",
 				type: "toggle",
@@ -242,15 +256,6 @@ window.SpicetifyStats = new SpicetifyStats();
 	}, false);
 	artistStats.element.classList.add("artist-stats-button");
 	artistStats.element.style.display = "none";
-
-	// Capture-phase click handler — bypasses any event interception
-	artistStats.element.addEventListener("click", (e: MouseEvent) => {
-		const parts = History.location.pathname.split("/");
-		if (parts[1] === "artist" && parts[2]) {
-			e.stopPropagation();
-			openArtistStats(parts[2]);
-		}
-	}, true);
 
 	function openArtistStats(artistId: string): void {
 		const artistUri = `spotify:artist:${artistId}`;
