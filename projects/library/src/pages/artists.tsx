@@ -56,17 +56,48 @@ const ArtistAlbums = ({
 		const fetchAlbums = async () => {
 			setLoading(true);
 			try {
-				const res = (await Spicetify.Platform.LibraryAPI.getContents({
-					filters: ["0"],
-					sortOrder: "0",
-					textFilter: artist.name,
-					offset: 0,
-					limit: 200,
-				})) as GetContentsResponse<AlbumItem>;
+				let allItems: AlbumItem[] = [];
+				let offset = 0;
+				let total = Infinity;
+
+				while (!cancelled && offset < total) {
+					const res = (await Spicetify.Platform.LibraryAPI.getContents({
+						filters: ["0"],
+						sortOrder: "0",
+						textFilter: artist.name,
+						offset,
+						limit,
+					})) as GetContentsResponse<AlbumItem>;
+
+					const pageItems = res.items || [];
+					allItems = allItems.concat(pageItems);
+
+					if (typeof res.totalLength === "number") {
+						total = res.totalLength;
+					} else {
+						total = allItems.length;
+					}
+
+					offset += pageItems.length;
+					if (pageItems.length === 0) break;
+				}
 
 				// Filter to only albums by this specific artist
-				const artistAlbums = (res.items || []).filter((album) =>
-					album.artists?.some((a) => a.uri === artist.uri),
+				const normalizedArtistName = artist.name?.trim().toLowerCase();
+				const artistAlbums = allItems.filter((album) =>
+					album.artists?.some((a) => {
+						// Prefer exact URI match when available
+						if (artist.uri && a.uri) {
+							return a.uri === artist.uri;
+						}
+						// Fallback: match by normalized name when URIs are missing
+						const albumArtistName = a.name?.trim().toLowerCase();
+						return (
+							normalizedArtistName !== undefined &&
+							albumArtistName !== undefined &&
+							albumArtistName === normalizedArtistName
+						);
+					}),
 				);
 				if (!cancelled) setAlbums(artistAlbums);
 			} catch (e) {
