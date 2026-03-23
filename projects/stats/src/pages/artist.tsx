@@ -487,7 +487,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 								name={item.track?.name ?? "Unknown"}
 								stat={`${item.track?.playcount ? formatNumber(Number(item.track.playcount)) : "N/A"} plays`}
 								uri={item.track?.uri}
-								imageUrl={item.track?.album?.coverArt?.sources?.[0]?.url}
+								imageUrl={item.track?.album?.coverArt?.sources?.[0]?.url ?? item.track?.albumOfTrack?.coverArt?.sources?.[0]?.url}
 							/>
 						))}
 					</div>
@@ -522,7 +522,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 									onClickOverride={preferSpotifyLinks ? (e) => {
 										e.preventDefault();
 										Spicetify.PopupModal.hide?.();
-										searchAndNavigate("track", `${track.name} ${artistName}`, track.url);
+										searchAndNavigate("track", track.name, track.url, artistName);
 									} : undefined}
 								/>
 							))}
@@ -563,7 +563,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 									onClickOverride={preferSpotifyLinks ? (e) => {
 										e.preventDefault();
 										Spicetify.PopupModal.hide?.();
-										searchAndNavigate("track", `${track.name} ${artistName}`, track.url);
+										searchAndNavigate("track", track.name, track.url, artistName);
 									} : undefined}
 								/>
 							))}

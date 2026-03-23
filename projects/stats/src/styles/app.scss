@@ -426,14 +426,18 @@
 }
 
 // ================================================================
-// Artist Stats modal: layout — flex column with consistent gap,
-// no top whitespace, side/bottom gutters from padding
+// Artist Stats modal: layout — flex column, no top whitespace
 // ================================================================
 .GenericModal:has(#stats-artist-page) #stats-app {
+    padding: 0 16px 16px;
+    // page-content class from Spotify adds margin-top — kill it
+    margin-top: 0 !important;
+}
+
+.GenericModal:has(#stats-artist-page) #stats-artist-page {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 0 16px 16px;
 }
 
 // The OverlayScrollbars viewport inside the modal adds its own top
@@ -443,9 +447,8 @@
     padding-top: 0 !important;
 }
 
-// page-content inherited margins on #stats-app direct children
-// (e.g. 64px margin-top on the first section) — zero them out.
-.GenericModal:has(#stats-artist-page) #stats-app > section {
+// page-content inherited margins on child sections — zero them.
+.GenericModal:has(#stats-artist-page) #stats-app section {
     margin-top: 0 !important;
 }
 
@@ -595,9 +598,13 @@
 // ================================================================
 // Artist Stats modal: section separators + layout improvements
 // ================================================================
+// Section separators: use padding-top on the shelf to push content
+// below the border. The flex gap on #stats-artist-page provides
+// spacing above the border itself.
 .GenericModal:has(#stats-artist-page) .main-shelf-shelf + .main-shelf-shelf {
     border-top: 1px solid rgba(var(--spice-rgb-selected-row), 0.08);
-    padding-top: 12px;
+    margin-top: 0;
+    padding-top: 8px;
 }
 
 .GenericModal:has(#stats-artist-page) .stats-shelfTitle {

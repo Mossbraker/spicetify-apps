@@ -106,7 +106,7 @@ const ArtistTrackRow = ({ index, name, stat, imageUrl, uri, href, onClickOverrid
 
 		if (!Spicetify.ReactComponent?.ContextMenu) return row;
 		return (
-			<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="right-click" preventScrollingWhileOpen={false}>
+			<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="right-click">
 				{row}
 			</Spicetify.ReactComponent.ContextMenu>
 		);

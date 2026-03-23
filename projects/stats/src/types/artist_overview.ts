@@ -68,6 +68,12 @@ export interface ArtistTopTrack {
 			name: string;
 			coverArt: { sources: { url: string }[] };
 		};
+		// Some Spotify client versions use albumOfTrack instead of album
+		albumOfTrack?: {
+			uri: string;
+			name: string;
+			coverArt: { sources: { url: string }[] };
+		};
 		artists: { items: { uri: string; profile: { name: string } }[] };
 	};
 }
