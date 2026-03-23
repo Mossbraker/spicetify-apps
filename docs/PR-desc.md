@@ -12,7 +12,7 @@
 ## New features & enhancements
 
 ### Stats: Artist Stats page (#78)
-- Adds a popup modal on artist pages (via topbar button) showing comprehensive artist data
+- Adds a popup modal on artist pages showing comprehensive artist data
 - Overview stats: monthly listeners, followers, world rank, album/single counts
 - Genre chart from Last.fm tags with graceful degradation when not configured
 - Throttled playlist scanning (5 concurrent, 200 max) with progress indicator and auto-load setting
@@ -20,6 +20,18 @@
 - Discography shelves (albums, singles/EPs) and related artists
 - Extracts `usePopupQuery` hook from playlist.tsx for shared reuse
 - Estimated listening time calculation from user scrobbles + average track duration
+
+### Stats: Artist Stats page — UI improvements
+- **Button injection**: Replaces the tiny topbar icon with a pill button (icon + "Artist Stats" label) injected directly into the artist page action bar; falls back to the topbar button if the action bar is absent
+- **Button position**: Configurable via a slider setting (order values −3 to 5) so users can fine-tune placement in the action bar
+- **Auto-load setting**: New toggle to auto-scan playlists on open vs. showing a manual "Load" button
+- **Modal layout**: Stats overview split into two rows — artist-level stats (listeners, followers, rank, albums, singles) and a user-level row (your scrobbles + estimated listening time) separated by a subtle divider; only shown when user data exists
+- **Modal polish**: Reduced top whitespace and softened border radius (12px)
+- **Playlist Appearances**: Collapsed to 6 cards initially; "Show all N playlists" / "Show fewer" toggle for long lists; playlist card images fetched and displayed
+- **Clickable Spotify top tracks**: Each track row navigates to the Spotify track page on click (modal closes automatically)
+- **Linked Last.fm tracks**: Last.fm Global Top Tracks rows are `<a>` elements linking to Last.fm track pages in a new tab
+- **"Your Top Scrobbled Tracks" section**: New shelf (requires Last.fm API key + username) showing per-track user scrobble counts, fetched via `track.getInfo?username=X` and sorted by plays
+- **Settings reorganisation**: Last.fm Integration at top, OAuth section consolidated (Status before Disconnect, Use Direct Fetch folded in), Diagnostics at bottom
 
 ### Library: Custom Album Sorting (#76)
 - Adds "Custom Order" sort option to the Albums page with drag-and-drop reorder modal
@@ -206,11 +218,23 @@ Both builds complete successfully.
 - [ ] Verify PopupModal dialogs close on Escape key
 - [ ] Verify Playlists page header wraps without overflow
 - [ ] Verify CI build workflow passes on push
-- [ ] Verify Artist Stats topbar button appears/hides on artist pages
+- [ ] Verify Artist Stats topbar button appears/hides on artist pages (fallback only)
+- [ ] Verify Artist Stats pill button is injected into the artist page action bar
+- [ ] Verify button position slider moves the button left/right in the action bar
+- [ ] Verify "Show Artist Stats Button" toggle hides/shows the injected button
 - [ ] Verify Artist Stats popup shows overview stats, genres, top tracks, discography
+- [ ] Verify artist-level stats row and user-level stats row render separately (user row hidden when no scrobble data)
 - [ ] Verify Artist Stats Last.fm integration (scrobbles, genre tags, global top tracks)
 - [ ] Verify Artist Stats graceful degradation without Last.fm
 - [ ] Verify Artist Stats playlist scanning with progress indicator
+- [ ] Verify Playlist Appearances collapses to 6 cards with "Show all N playlists" toggle
+- [ ] Verify playlist cards display cover images
+- [ ] Verify clicking a Spotify top track navigates to the track page (modal closes)
+- [ ] Verify Last.fm Global Top Tracks rows link to Last.fm in a new tab
+- [ ] Verify "Your Top Scrobbled Tracks" section appears with Last.fm key + username configured
+- [ ] Verify "Your Top Scrobbled Tracks" hidden without Last.fm username
+- [ ] Verify Stats Settings section order: Last.fm → OAuth → Pages → Artist Stats → Diagnostics
+- [ ] Verify OAuth Status row displays full multi-line text without overflow
 - [ ] Verify Custom Order sort option in Library Albums dropdown
 - [ ] Verify reorder modal drag-and-drop and save/reset functionality
 - [ ] Verify custom order persists across page reloads

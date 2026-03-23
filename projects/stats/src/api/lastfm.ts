@@ -115,3 +115,41 @@ export const getArtistGlobalTopTracks = async (key: string, artist: string, limi
 	const res = await apiFetch<LastFM.ArtistTopTracksResponse>("lfmArtistTopTracks", url, false);
 	return res?.toptracks?.track ?? [];
 };
+
+export const getUserTopTracksForArtist = async (
+	key: string,
+	artist: string,
+	username: string,
+	limit = 20,
+): Promise<{ name: string; url: string; userPlaycount: number }[]> => {
+	// Fetch artist's global top tracks
+	const globalTracks = await getArtistGlobalTopTracks(key, artist, limit);
+	if (!globalTracks.length) return [];
+
+	// Enrich each track with user play count via track.getInfo
+	const CONCURRENCY = 5;
+	const results: { name: string; url: string; userPlaycount: number }[] = [];
+
+	for (let i = 0; i < globalTracks.length; i += CONCURRENCY) {
+		const batch = globalTracks.slice(i, i + CONCURRENCY);
+		const batchResults = await Promise.allSettled(
+			batch.map(async (track) => {
+				const cacheKey = `lfmTrackUserInfo:${artist}:${track.name}`;
+				const url = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(track.name)}&username=${encodeURIComponent(username)}&api_key=${key}&autocorrect=1&format=json`;
+				const res = await apiFetch<{ track?: { userplaycount?: string; url?: string } }>(cacheKey, url, false);
+				return {
+					name: track.name,
+					url: track.url,
+					userPlaycount: Number(res?.track?.userplaycount ?? 0),
+				};
+			}),
+		);
+		for (const r of batchResults) {
+			if (r.status === "fulfilled" && r.value.userPlaycount > 0) {
+				results.push(r.value);
+			}
+		}
+	}
+
+	return results.sort((a, b) => b.userPlaycount - a.userPlaycount);
+};

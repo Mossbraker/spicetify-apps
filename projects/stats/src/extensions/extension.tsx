@@ -10,97 +10,19 @@ const getOAuthStatusLabel = () => {
 	const hasRefreshToken = Boolean(localStorage.getItem("stats:oauth:refresh_token"));
 
 	if (!connected && !hasRefreshToken) return "Disconnected";
-	if (!connected && hasRefreshToken) return "Refresh token available; access token will be restored on next request";
-	if (!expiresAt) return hasRefreshToken ? "Connected; refresh token available" : "Connected; no refresh token stored";
+	if (!connected && hasRefreshToken) return "Offline \u2014 auto-reconnect available";
+	if (!expiresAt) return hasRefreshToken ? "Connected" : "Connected (no refresh token)";
 
 	const expiresText = expiresAt.toLocaleString();
 	return hasRefreshToken
-		? `Connected; access token expires ${expiresText}; refresh token available`
-		: `Connected; access token expires ${expiresText}; no refresh token stored`;
+		? `Connected \u00B7 expires ${expiresText}`
+		: `Connected \u00B7 expires ${expiresText} (no refresh token)`;
 };
 
 // contruct global class for stats methods
 class SpicetifyStats {
 	ConfigWrapper = new ConfigWrapper(
 		[
-			{
-				name: "Spotify Client ID",
-				key: "oauth-client-id",
-				type: "text",
-				def: null,
-				placeholder: "Enter Client ID from Spotify Developer Dashboard",
-				desc: `Create an app at developer.spotify.com/dashboard. Add redirect URI: http://127.0.0.1:5173/callback`,
-				sectionHeader: "OAuth (Bypass Rate Limits)",
-			},
-			{
-				name: "Use OAuth",
-				key: "use-oauth",
-				type: "toggle",
-				def: false,
-				desc: "Use your own Spotify Developer App instead of the built-in API",
-				callback: (enabled: boolean) => {
-					if (enabled) {
-						startAuthFlow();
-					}
-				},
-				initializeCallback: false,
-			},
-			{
-				name: "Paste Callback URL",
-				key: "oauth-callback",
-				type: "text",
-				def: null,
-				placeholder: "http://127.0.0.1:5173/callback?code=...",
-				desc: "After authorizing, copy the full URL from your browser and paste it here",
-				initializeCallback: false,
-				callback: async (url: string) => {
-					if (url && url.includes("code=")) {
-						await handleCallback(url);
-					}
-				},
-			},
-			{
-				name: "Disconnect OAuth",
-				key: "oauth-disconnect",
-				type: "toggle",
-				def: false,
-				desc: "Toggle to disconnect your Spotify Developer App",
-				callback: (value: boolean) => {
-					if (value) {
-						clearTokens();
-						localStorage.setItem("stats:config:use-oauth", "false");
-						localStorage.removeItem("stats:config:oauth-callback");
-						Spicetify.showNotification("OAuth disconnected", false);
-						// Reset the toggle
-						localStorage.setItem("stats:config:oauth-disconnect", "false");
-					}
-				},
-				initializeCallback: false,
-			},
-			{
-				name: "OAuth Status",
-				key: "oauth-status",
-				type: "display",
-				def: null,
-				desc: "Shows whether Stats currently has a usable access token and whether a refresh token is stored for automatic recovery.",
-				displayValue: getOAuthStatusLabel,
-			},
-			{
-				name: "Use Direct Fetch (Experimental)",
-				key: "use-direct-fetch",
-				type: "toggle",
-				def: false,
-				desc: "Bypass CosmosAsync and use direct API calls. May help with rate limiting issues.",
-				sectionHeader: "Workarounds",
-			},
-			{
-				name: "Show Debug Console",
-				key: "show-debug-console",
-				type: "toggle",
-				def: false,
-				desc: "Show recent request logs, delayed enrichment work, and cache diagnostics inside Stats.",
-				sectionHeader: "Diagnostics",
-			},
 			{
 				name: "Last.fm Api Key",
 				key: "api-key",
@@ -139,6 +61,75 @@ class SpicetifyStats {
 				desc: "Augment genre analysis with MusicBrainz tags derived from the current timeframe's top tracks and top artists.",
 			},
 			{
+				name: "Spotify Client ID",
+				key: "oauth-client-id",
+				type: "text",
+				def: null,
+				placeholder: "Enter Client ID from Spotify Developer Dashboard",
+				desc: `Create an app at developer.spotify.com/dashboard. Add redirect URI: http://127.0.0.1:5173/callback`,
+				sectionHeader: "OAuth (Bypass Rate Limits)",
+			},
+			{
+				name: "Use OAuth",
+				key: "use-oauth",
+				type: "toggle",
+				def: false,
+				desc: "Use your own Spotify Developer App instead of the built-in API",
+				callback: (enabled: boolean) => {
+					if (enabled) {
+						startAuthFlow();
+					}
+				},
+				initializeCallback: false,
+			},
+			{
+				name: "Paste Callback URL",
+				key: "oauth-callback",
+				type: "text",
+				def: null,
+				placeholder: "http://127.0.0.1:5173/callback?code=...",
+				desc: "After authorizing, copy the full URL from your browser and paste it here",
+				initializeCallback: false,
+				callback: async (url: string) => {
+					if (url && url.includes("code=")) {
+						await handleCallback(url);
+					}
+				},
+			},
+			{
+				name: "OAuth Status",
+				key: "oauth-status",
+				type: "display",
+				def: null,
+				desc: "Shows whether Stats currently has a usable access token and whether a refresh token is stored for automatic recovery.",
+				displayValue: getOAuthStatusLabel,
+			},
+			{
+				name: "Disconnect OAuth",
+				key: "oauth-disconnect",
+				type: "toggle",
+				def: false,
+				desc: "Toggle to disconnect your Spotify Developer App",
+				callback: (value: boolean) => {
+					if (value) {
+						clearTokens();
+						localStorage.setItem("stats:config:use-oauth", "false");
+						localStorage.removeItem("stats:config:oauth-callback");
+						Spicetify.showNotification("OAuth disconnected", false);
+						// Reset the toggle
+						localStorage.setItem("stats:config:oauth-disconnect", "false");
+					}
+				},
+				initializeCallback: false,
+			},
+			{
+				name: "Use Direct Fetch (Experimental)",
+				key: "use-direct-fetch",
+				type: "toggle",
+				def: false,
+				desc: "Bypass CosmosAsync and use direct API calls. May help with rate limiting issues.",
+			},
+			{
 				name: "Artists Page",
 				key: "show-artists",
 				type: "toggle",
@@ -167,8 +158,18 @@ class SpicetifyStats {
 				key: "show-artist-stats-button",
 				type: "toggle",
 				def: true,
-				desc: "Show a button in the topbar when viewing an artist page to open the Artist Stats popup.",
+				desc: "Show a button on artist pages to open the Artist Stats popup.",
 				sectionHeader: "Artist Stats",
+			},
+			{
+				name: "Button Position",
+				key: "artist-stats-button-order",
+				type: "slider",
+				min: -3,
+				max: 5,
+				step: 1,
+				def: 0,
+				desc: "Controls where the Artist Stats button appears in the artist page action bar. Lower values move it left, higher values move it right.",
 			},
 			{
 				name: "Auto-Load Playlist Appearances",
@@ -176,6 +177,14 @@ class SpicetifyStats {
 				type: "toggle",
 				def: true,
 				desc: "Automatically scan your playlists for this artist when viewing Artist Stats. Disable to show a manual load button instead.",
+			},
+			{
+				name: "Show Debug Console",
+				key: "show-debug-console",
+				type: "toggle",
+				def: false,
+				desc: "Show recent request logs, delayed enrichment work, and cache diagnostics inside Stats.",
+				sectionHeader: "Diagnostics",
 			},
 		],
 		"stats",
@@ -222,6 +231,7 @@ window.SpicetifyStats = new SpicetifyStats();
 	playlistEdit.element.classList.add("playlist-stats-button");
 	playlistEdit.element.classList.toggle("hidden", true);
 
+	// Artist stats topbar button kept as fallback only (hidden by default)
 	const artistStats = new Topbar.Button("artist-stats", "chart-down", () => {
 		const artistUri = `spotify:artist:${History.location.pathname.split("/")[2]}`;
 		// @ts-ignore
@@ -230,19 +240,92 @@ window.SpicetifyStats = new SpicetifyStats();
 	artistStats.element.classList.add("artist-stats-button");
 	artistStats.element.classList.toggle("hidden", true);
 
-	function setTopbarButtonVisibility(pathname: string): void {
-		const [, type, uid] = pathname.split("/");
-		const isPlaylistPage = type === "playlist" && uid;
-		const isArtistPage = type === "artist" && uid;
-		const showArtistBtn = window.SpicetifyStats?.ConfigWrapper?.Config?.["show-artist-stats-button"] ?? true;
-		playlistEdit.element.classList.toggle("hidden", !isPlaylistPage);
-		artistStats.element.classList.toggle("hidden", !isArtistPage || !showArtistBtn);
+	function openArtistStats(artistId: string): void {
+		const artistUri = `spotify:artist:${artistId}`;
+		// @ts-ignore
+		PopupModal.display({ title: "Artist Stats", content: <ArtistPage uri={artistUri} />, isLarge: true });
 	}
-	setTopbarButtonVisibility(History.location.pathname);
-	// Defensive re-check: Topbar may not be fully mounted on first call
-	setTimeout(() => setTopbarButtonVisibility(History.location.pathname), 500);
+
+	function removeInjectedArtistButton(): void {
+		document.getElementById("stats-artist-inject-btn")?.remove();
+	}
+
+	let currentTargetArtistId: string | null = null;
+
+	function tryInjectArtistButton(artistId: string, attempt: number): void {
+		if (artistId !== currentTargetArtistId) return;
+		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+		if (!config?.["show-artist-stats-button"]) {
+			return;
+		}
+
+		const SELECTORS = [
+			'[data-testid="action-bar-row"]',
+			".main-actionBarRow-ActionBarRow",
+			".main-actionBarRow-actions",
+		];
+		const actionBar = SELECTORS.reduce<Element | null>((found, sel) => found ?? document.querySelector(sel), null);
+
+		if (!actionBar) {
+			if (attempt < 6) {
+				setTimeout(() => tryInjectArtistButton(artistId, attempt + 1), 300);
+			} else {
+				// Fallback: use Topbar button
+				artistStats.element.classList.remove("hidden");
+			}
+			return;
+		}
+
+		// Remove any stale injected button before adding new one
+		removeInjectedArtistButton();
+
+		const btn = document.createElement("button");
+		btn.id = "stats-artist-inject-btn";
+		btn.className = "stats-artist-inject-btn";
+		btn.type = "button";
+		btn.setAttribute("aria-label", "Artist Stats");
+
+		const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		svgEl.setAttribute("viewBox", "0 0 16 16");
+		svgEl.setAttribute("aria-hidden", "true");
+		svgEl.innerHTML = (Spicetify as any).SVGIcons?.["chart-down"] ?? "";
+
+		const textEl = document.createElement("span");
+		textEl.textContent = "Artist Stats";
+
+		btn.appendChild(svgEl);
+		btn.appendChild(textEl);
+
+		const orderValue = config?.["artist-stats-button-order"] ?? 0;
+		btn.style.order = String(orderValue);
+
+		btn.addEventListener("click", () => openArtistStats(artistId));
+
+		actionBar.appendChild(btn);
+	}
+
+	function handleNavigation(pathname: string): void {
+		const [, type, uid] = pathname.split("/");
+		const isPlaylistPage = type === "playlist" && Boolean(uid);
+		const isArtistPage = type === "artist" && Boolean(uid);
+
+		currentTargetArtistId = isArtistPage ? uid : null;
+
+		// Playlist stats Topbar button
+		playlistEdit.element.classList.toggle("hidden", !isPlaylistPage);
+
+		// Artist stats: hide Topbar fallback and remove injected button first
+		artistStats.element.classList.add("hidden");
+		removeInjectedArtistButton();
+
+		if (isArtistPage) {
+			tryInjectArtistButton(uid, 0);
+		}
+	}
+
+	handleNavigation(History.location.pathname);
 
 	History.listen(({ pathname }: { pathname: string }) => {
-		setTopbarButtonVisibility(pathname);
+		handleNavigation(pathname);
 	});
 })();

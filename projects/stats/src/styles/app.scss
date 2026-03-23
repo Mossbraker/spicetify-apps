@@ -420,3 +420,131 @@
         }
     }
 }
+
+// ================================================================
+// Settings modal: OAuth Status display row — allow multi-line text
+// ================================================================
+.GenericModal[aria-label="Stats Settings"] .config-container .setting-row:has(.config-display-value) {
+    height: auto;
+    min-height: 25px;
+    align-items: flex-start;
+    padding-block: 3px;
+}
+
+.GenericModal[aria-label="Stats Settings"] .config-container .config-display-value {
+    color: var(--spice-subtext);
+    font-size: 0.8rem;
+    max-width: 55%;
+    text-align: right;
+    white-space: normal;
+    word-break: break-word;
+}
+
+// ================================================================
+// Artist Stats modal: border radius
+// ================================================================
+.GenericModal[aria-label="Artist Stats"] .main-embedWidgetGenerator-container {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+// ================================================================
+// Artist Stats modal: reduce top whitespace
+// ================================================================
+.GenericModal[aria-label="Artist Stats"] #stats-app {
+    padding-top: 8px;
+}
+
+// ================================================================
+// Artist Stats modal: user stats row
+// ================================================================
+#stats-app .stats-artistOverview-userRow {
+    align-items: center;
+    border-top: 1px solid rgba(var(--spice-rgb-selected-row), 0.12);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 12px;
+}
+
+// ================================================================
+// Artist Stats modal: clickable track rows
+// ================================================================
+#stats-app .stats-lfmTrackRow--clickable {
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.1s;
+
+    &:hover {
+        background: rgba(var(--spice-rgb-selected-row), 0.1);
+    }
+}
+
+#stats-app .stats-lfmTrackRow--link {
+    border-radius: 4px;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 8px;
+    text-decoration: none;
+    transition: background 0.1s;
+
+    &:hover {
+        background: rgba(var(--spice-rgb-selected-row), 0.1);
+    }
+}
+
+// ================================================================
+// Playlist appearances: See more button
+// ================================================================
+#stats-app .stats-seeMoreBtn {
+    background: transparent;
+    border: none;
+    color: var(--spice-subtext);
+    cursor: pointer;
+    font-size: 0.875rem;
+    margin-top: 8px;
+    padding: 4px 0;
+    text-decoration: underline;
+
+    &:hover {
+        color: var(--spice-text);
+    }
+}
+
+// ================================================================
+// Injected Artist Stats button in artist page action bar
+// ================================================================
+.stats-artist-inject-btn {
+    align-items: center;
+    background: transparent;
+    border: 1px solid rgba(var(--spice-rgb-text), 0.3);
+    border-radius: 500px;
+    color: var(--spice-text);
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 0.875rem;
+    font-weight: 700;
+    gap: 6px;
+    height: 32px;
+    padding: 0 16px;
+    transition: border-color 0.1s, opacity 0.1s;
+    white-space: nowrap;
+
+    svg {
+        fill: currentColor;
+        flex-shrink: 0;
+        height: 16px;
+        width: 16px;
+    }
+
+    &:hover {
+        border-color: var(--spice-text);
+    }
+
+    &:active {
+        opacity: 0.7;
+    }
+}

@@ -29,6 +29,7 @@ export interface Config {
 	"show-charts": boolean;
 	"auto-load-playlist-appearances": boolean;
 	"show-artist-stats-button": boolean;
+	"artist-stats-button-order": number;
 }
 
 export interface ConfigWrapper {

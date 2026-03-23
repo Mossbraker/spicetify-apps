@@ -6,7 +6,7 @@ import Shelf from "../components/shelf";
 import useStatus from "@shared/status/useStatus";
 import { usePopupQuery } from "../utils/usePopupQuery";
 import { getArtistOverview } from "../api/platform";
-import { getArtistInfo, getArtistTopTags, getArtistGlobalTopTracks } from "../api/lastfm";
+import { getArtistInfo, getArtistTopTags, getArtistGlobalTopTracks, getUserTopTracksForArtist } from "../api/lastfm";
 import type { ArtistUnion, PlaylistAppearance } from "../types/artist_overview";
 
 interface ArtistData {
@@ -33,14 +33,19 @@ const formatNumber = (num: number): string => {
 	return num.toLocaleString();
 };
 
+const PLAYLIST_PREVIEW_COUNT = 6;
+
 const ArtistPage = ({ uri }: { uri: string }) => {
 	const artistId = uri.replace("spotify:artist:", "");
 
 	const [playlistAppearances, setPlaylistAppearances] = React.useState<PlaylistAppearance[] | null>(null);
 	const [playlistProgress, setPlaylistProgress] = React.useState<{ current: number; total: number } | null>(null);
 	const [playlistLoading, setPlaylistLoading] = React.useState(false);
-	const [lfmTopTracks, setLfmTopTracks] = React.useState<{ name: string; playcount: string; listeners: string }[] | null>(null);
+	const [showAllPlaylists, setShowAllPlaylists] = React.useState(false);
+	const [lfmTopTracks, setLfmTopTracks] = React.useState<{ name: string; playcount: string; listeners: string; url: string }[] | null>(null);
 	const [lfmTopTracksLoading, setLfmTopTracksLoading] = React.useState(false);
+	const [userTopTracks, setUserTopTracks] = React.useState<{ name: string; url: string; userPlaycount: number }[] | null>(null);
+	const [userTopTracksLoading, setUserTopTracksLoading] = React.useState(false);
 	const isMountedRef = React.useRef(true);
 
 	React.useEffect(() => {
@@ -94,11 +99,16 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					const batchResults = await Promise.allSettled(
 						batch.map(async (pl: { uri: string; name: string; type: string }) => {
 							const playlistData = await Spicetify.Platform.PlaylistAPI.getPlaylist(pl.uri);
+							const pd = playlistData as any;
+							const imageUrl: string | undefined =
+								pd?.metadata?.images?.[0]?.url ??
+								pd?.images?.[0]?.url ??
+								undefined;
 							const items = (playlistData as { contents?: { items?: { artists?: { uri: string }[] }[] } }).contents?.items ?? [];
 							const matchCount = items.filter(
 								(t: { artists?: { uri: string }[] }) => t.artists?.some((a: { uri: string }) => a.uri === artistUri),
 							).length;
-							return matchCount > 0 ? { uri: pl.uri, name: pl.name, type: pl.type, matchCount } : null;
+							return matchCount > 0 ? { uri: pl.uri, name: pl.name, type: pl.type, matchCount, imageUrl } : null;
 						}),
 					);
 					for (const result of batchResults) {
@@ -153,12 +163,32 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		}
 	};
 
+	const handleLoadUserTopTracks = async () => {
+		if (userTopTracksLoading) return;
+		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+		if (!config?.["api-key"] || !config?.["lastfm-user"] || !data?.overview?.profile?.name) return;
+		setUserTopTracksLoading(true);
+		try {
+			const tracks = await getUserTopTracksForArtist(
+				config["api-key"],
+				data.overview.profile.name,
+				config["lastfm-user"],
+			);
+			if (isMountedRef.current) setUserTopTracks(tracks);
+		} catch {
+			if (isMountedRef.current) setUserTopTracks([]);
+		} finally {
+			if (isMountedRef.current) setUserTopTracksLoading(false);
+		}
+	};
+
 	const Status = useStatus(status, error);
 	if (Status) return Status;
 
 	const { overview, lastfmInfo, lastfmTags } = data as NonNullable<typeof data>;
 	const config = window.SpicetifyStats?.ConfigWrapper?.Config;
 	const hasLastFm = Boolean(config?.["api-key"]);
+	const hasLastFmUser = Boolean(config?.["api-key"] && config?.["lastfm-user"]);
 	const autoLoadPlaylists = config?.["auto-load-playlist-appearances"] !== false;
 
 	// Compute estimated listening time from user scrobbles
@@ -244,12 +274,13 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			uri={pl.uri}
 			header={pl.name}
 			subheader={`Appears in ${pl.matchCount} track${pl.matchCount !== 1 ? "s" : ""}`}
+			imageUrl={pl.imageUrl}
 		/>
 	));
 
 	return (
 		<div id="stats-app" className="page-content encore-dark-theme encore-base-set">
-			{/* Overview Stats */}
+			{/* Artist-level stats */}
 			<section className="stats-artistOverview">
 				<StatCard label="Monthly Listeners" value={formatNumber(overview.stats?.monthlyListeners ?? 0)} />
 				<StatCard label="Followers" value={formatNumber(overview.stats?.followers ?? 0)} />
@@ -258,13 +289,19 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 				)}
 				<StatCard label="Albums" value={overview.discography?.albums?.totalCount ?? 0} />
 				<StatCard label="Singles" value={overview.discography?.singles?.totalCount ?? 0} />
-				{lastfmInfo?.stats?.userplaycount && (
-					<StatCard label="Your Scrobbles" value={formatNumber(Number(lastfmInfo.stats.userplaycount))} />
-				)}
-				{estimatedListeningTime && (
-					<StatCard label="Est. Listening Time" value={estimatedListeningTime} />
-				)}
 			</section>
+
+			{/* User-level stats - only rendered if any user data available */}
+			{(Number(lastfmInfo?.stats?.userplaycount) > 0 || estimatedListeningTime) && (
+				<section className="stats-artistOverview-userRow">
+					{Number(lastfmInfo?.stats?.userplaycount) > 0 && (
+						<StatCard label="Your Scrobbles" value={formatNumber(Number(lastfmInfo.stats.userplaycount))} />
+					)}
+					{estimatedListeningTime && (
+						<StatCard label="Est. Listening Time" value={estimatedListeningTime} />
+					)}
+				</section>
+			)}
 
 			{/* Genres */}
 			<Shelf title="Genres">
@@ -293,7 +330,20 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					</div>
 				) : playlistAppearances !== null ? (
 					playlistCards.length > 0 ? (
-						<div className="main-gridContainer-gridContainer grid">{playlistCards}</div>
+						<>
+							<div className="main-gridContainer-gridContainer grid">
+								{showAllPlaylists ? playlistCards : playlistCards.slice(0, PLAYLIST_PREVIEW_COUNT)}
+							</div>
+							{playlistCards.length > PLAYLIST_PREVIEW_COUNT && (
+								<button
+									type="button"
+									className="stats-seeMoreBtn"
+									onClick={() => setShowAllPlaylists((v) => !v)}
+								>
+									{showAllPlaylists ? "Show fewer" : `Show all ${playlistCards.length} playlists`}
+								</button>
+							)}
+						</>
 					) : (
 						<div className="main-card-card stats-genreCard stats-genreCardEmpty">
 							No playlist appearances found
@@ -310,16 +360,36 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			{topTracks.length > 0 && (
 				<Shelf title="Top Tracks">
 					<div className="stats-lfmTrackList">
-						{topTracks.map((item, idx) => (
-							<div key={item.track?.uri ?? idx} className="stats-lfmTrackRow">
-								<span className="stats-lfmTrackName">
-									{idx + 1}. {item.track?.name ?? "Unknown"}
-								</span>
-								<span className="stats-lfmTrackListeners">
-									{item.track?.playcount ? formatNumber(Number(item.track.playcount)) : "N/A"} plays
-								</span>
-							</div>
-						))}
+						{topTracks.map((item, idx) => {
+							const trackId = item.track?.uri?.split(":")?.[2];
+							return (
+								<div
+									key={item.track?.uri ?? idx}
+									className="stats-lfmTrackRow stats-lfmTrackRow--clickable"
+									role="button"
+									tabIndex={0}
+									onClick={() => {
+										if (trackId) {
+											Spicetify.PopupModal.hide?.();
+											Spicetify.Platform.History.push(`/track/${trackId}`);
+										}
+									}}
+									onKeyDown={(e) => {
+										if ((e.key === "Enter" || e.key === " ") && trackId) {
+											Spicetify.PopupModal.hide?.();
+											Spicetify.Platform.History.push(`/track/${trackId}`);
+										}
+									}}
+								>
+									<span className="stats-lfmTrackName">
+										{idx + 1}. {item.track?.name ?? "Unknown"}
+									</span>
+									<span className="stats-lfmTrackListeners">
+										{item.track?.playcount ? formatNumber(Number(item.track.playcount)) : "N/A"} plays
+									</span>
+								</div>
+							);
+						})}
 					</div>
 				</Shelf>
 			)}
@@ -339,19 +409,64 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					) : lfmTopTracks.length > 0 ? (
 						<div className="stats-lfmTrackList">
 							{lfmTopTracks.map((track, idx) => (
-								<div key={`${track.name}-${idx}`} className="stats-lfmTrackRow">
+								<a
+									key={`${track.name}-${idx}`}
+									className="stats-lfmTrackRow stats-lfmTrackRow--link"
+									href={track.url}
+									target="_blank"
+									rel="noreferrer"
+								>
 									<span className="stats-lfmTrackName">
 										{idx + 1}. {track.name}
 									</span>
 									<span className="stats-lfmTrackListeners">
 										{formatNumber(Number(track.listeners))} listeners
 									</span>
-								</div>
+								</a>
 							))}
 						</div>
 					) : (
 						<div className="main-card-card stats-genreCard stats-genreCardEmpty">
 							No Last.fm top tracks available
+						</div>
+					)}
+				</Shelf>
+			)}
+
+			{/* Your Top Scrobbled Tracks */}
+			{hasLastFmUser && (
+				<Shelf title="Your Top Scrobbled Tracks">
+					{userTopTracks === null ? (
+						<button
+							type="button"
+							className="stats-lfmTopTracks-loadBtn"
+							onClick={handleLoadUserTopTracks}
+							disabled={userTopTracksLoading}
+						>
+							{userTopTracksLoading ? "Loading..." : "Load My Top Tracks"}
+						</button>
+					) : userTopTracks.length > 0 ? (
+						<div className="stats-lfmTrackList">
+							{userTopTracks.map((track, idx) => (
+								<a
+									key={`${track.name}-${idx}`}
+									className="stats-lfmTrackRow stats-lfmTrackRow--link"
+									href={track.url}
+									target="_blank"
+									rel="noreferrer"
+								>
+									<span className="stats-lfmTrackName">
+										{idx + 1}. {track.name}
+									</span>
+									<span className="stats-lfmTrackListeners">
+										{formatNumber(track.userPlaycount)} scrobbles
+									</span>
+								</a>
+							))}
+						</div>
+					) : (
+						<div className="main-card-card stats-genreCard stats-genreCardEmpty">
+							No scrobble data found for this artist
 						</div>
 					)}
 				</Shelf>

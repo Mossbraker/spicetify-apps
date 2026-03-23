@@ -90,4 +90,5 @@ export interface PlaylistAppearance {
 	name: string;
 	type: string;
 	matchCount: number;
+	imageUrl?: string;
 }
