@@ -422,22 +422,16 @@
 }
 
 // ================================================================
-// Settings modal: OAuth Status display row — allow multi-line text
+// Settings modal: OAuth Status display row — single-line, right-aligned
 // ================================================================
-.GenericModal[aria-label="Stats Settings"] .config-container .setting-row:has(.config-display-value) {
-    height: auto;
-    min-height: 25px;
-    align-items: flex-start;
-    padding-block: 3px;
-}
-
 .GenericModal[aria-label="Stats Settings"] .config-container .config-display-value {
     color: var(--spice-subtext);
     font-size: 0.8rem;
-    max-width: 55%;
+    max-width: 60%;
     text-align: right;
-    white-space: normal;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 // ================================================================

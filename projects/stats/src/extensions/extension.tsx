@@ -239,6 +239,13 @@ window.SpicetifyStats = new SpicetifyStats();
 	}, false);
 	artistStats.element.classList.add("artist-stats-button");
 	artistStats.element.classList.toggle("hidden", true);
+	// Ensure topbar fallback button is clickable — belt-and-suspenders click handler
+	artistStats.element.addEventListener("click", () => {
+		const parts = History.location.pathname.split("/");
+		if (parts[1] === "artist" && parts[2]) {
+			openArtistStats(parts[2]);
+		}
+	});
 
 	function openArtistStats(artistId: string): void {
 		const artistUri = `spotify:artist:${artistId}`;
@@ -259,6 +266,7 @@ window.SpicetifyStats = new SpicetifyStats();
 			return;
 		}
 
+		// Strategy 1: direct container selectors
 		const SELECTORS = [
 			'[data-testid="action-bar-row"]',
 			'[data-testid="action-bar"]',
@@ -266,7 +274,29 @@ window.SpicetifyStats = new SpicetifyStats();
 			".main-actionBar-ActionBar",
 			".main-actionButtons",
 		];
-		const actionBar = SELECTORS.reduce<Element | null>((found, sel) => found ?? document.querySelector(sel), null);
+		let actionBar: Element | null = SELECTORS.reduce<Element | null>(
+			(found, sel) => found ?? document.querySelector(sel), null,
+		);
+
+		// Strategy 2: find Follow/Following button and use its parent row
+		if (!actionBar) {
+			const followBtn = document.querySelector(
+				'button[data-testid="follow-button"], button[data-testid="following-button"]',
+			);
+			if (followBtn?.parentElement) {
+				actionBar = followBtn.parentElement;
+			}
+		}
+
+		// Strategy 3: find the more/options button ("...") and use its parent row
+		if (!actionBar) {
+			const moreBtn = document.querySelector(
+				'button[data-testid="more-button"]',
+			);
+			if (moreBtn?.parentElement) {
+				actionBar = moreBtn.parentElement;
+			}
+		}
 
 		if (!actionBar) {
 			if (attempt < 10) {
