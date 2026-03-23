@@ -157,6 +157,7 @@ dist/
 # Claude AI related files
 claudekit/
 .claude/
+.mcp.json
 
 # scratch files
 docs/untitty.txt

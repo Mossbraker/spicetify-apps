@@ -18,18 +18,25 @@ function collectionSort(order: string, reverse: boolean): (a: CollectionChild, b
                 {
                     const aAny = a as any;
                     const bAny = b as any;
-                    const aYear: number | null =
-                        typeof aAny.releaseYear === "number"
-                            ? aAny.releaseYear
-                            : aAny.releaseDate
-                                ? new Date(aAny.releaseDate).getFullYear()
-                                : null;
-                    const bYear: number | null =
-                        typeof bAny.releaseYear === "number"
-                            ? bAny.releaseYear
-                            : bAny.releaseDate
-                                ? new Date(bAny.releaseDate).getFullYear()
-                                : null;
+
+                    const getNormalizedReleaseYear = (itemAny: any): number | null => {
+                        // Prefer a numeric releaseYear when it is a finite number.
+                        if (typeof itemAny.releaseYear === "number" && Number.isFinite(itemAny.releaseYear)) {
+                            return itemAny.releaseYear;
+                        }
+
+                        // Otherwise, attempt to parse releaseDate when it is a non-empty string.
+                        if (typeof itemAny.releaseDate === "string" && itemAny.releaseDate.trim() !== "") {
+                            const parsed = new Date(itemAny.releaseDate);
+                            const year = parsed.getFullYear();
+                            return Number.isFinite(year) ? year : null;
+                        }
+
+                        return null;
+                    };
+
+                    const aYear: number | null = getNormalizedReleaseYear(aAny);
+                    const bYear: number | null = getNormalizedReleaseYear(bAny);
 
                     // Items without a release year go to the end.
                     if (aYear === null && bYear === null) return 0;
