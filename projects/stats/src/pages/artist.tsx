@@ -35,6 +35,20 @@ const formatNumber = (num: number): string => {
 
 const PLAYLIST_PREVIEW_COUNT = 6;
 
+// ── Module-level caches ──────────────────────────────────────────────────────
+// Survive modal close/reopen within the same Spotify session.
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
+
+const _mainCache     = new Map<string, { data: ArtistData; ts: number }>();
+const _playlistCache = new Map<string, { data: PlaylistAppearance[]; ts: number }>();
+const _lfmTracksCache = new Map<string, { data: { name: string; playcount: string; listeners: string; url: string }[]; ts: number }>();
+const _userTracksCache = new Map<string, { data: { name: string; url: string; userPlaycount: number }[]; ts: number }>();
+
+function fromCache<T>(map: Map<string, { data: T; ts: number }>, key: string): T | null {
+	const entry = map.get(key);
+	return entry && Date.now() - entry.ts < CACHE_TTL_MS ? entry.data : null;
+}
+
 // Wraps a track row element so that right-click opens Spotify's native track context menu.
 // Uses the same useMemo pattern as TrackRow to avoid the React #31 crash path.
 const TrackContextMenu: React.FC<{ uri: string; children: React.ReactElement }> = ({ uri, children }) => {
@@ -59,13 +73,16 @@ const TrackContextMenu: React.FC<{ uri: string; children: React.ReactElement }> 
 const ArtistPage = ({ uri }: { uri: string }) => {
 	const artistId = uri.replace("spotify:artist:", "");
 
-	const [playlistAppearances, setPlaylistAppearances] = React.useState<PlaylistAppearance[] | null>(null);
+	const [playlistAppearances, setPlaylistAppearances] = React.useState<PlaylistAppearance[] | null>(
+		() => fromCache(_playlistCache, `spotify:artist:${artistId}`));
 	const [playlistProgress, setPlaylistProgress] = React.useState<{ current: number; total: number } | null>(null);
 	const [playlistLoading, setPlaylistLoading] = React.useState(false);
 	const [showAllPlaylists, setShowAllPlaylists] = React.useState(false);
-	const [lfmTopTracks, setLfmTopTracks] = React.useState<{ name: string; playcount: string; listeners: string; url: string }[] | null>(null);
+	const [lfmTopTracks, setLfmTopTracks] = React.useState<{ name: string; playcount: string; listeners: string; url: string }[] | null>(
+		() => fromCache(_lfmTracksCache, artistId));
 	const [lfmTopTracksLoading, setLfmTopTracksLoading] = React.useState(false);
-	const [userTopTracks, setUserTopTracks] = React.useState<{ name: string; url: string; userPlaycount: number }[] | null>(null);
+	const [userTopTracks, setUserTopTracks] = React.useState<{ name: string; url: string; userPlaycount: number }[] | null>(
+		() => fromCache(_userTracksCache, artistId));
 	const [userTopTracksLoading, setUserTopTracksLoading] = React.useState(false);
 	const isMountedRef = React.useRef(true);
 
@@ -78,6 +95,9 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 
 	// Read config inside callback body to avoid unstable config reference in deps
 	const fetchData = useCallback(async (): Promise<ArtistData> => {
+		const cached = fromCache(_mainCache, artistId);
+		if (cached) return cached;
+
 		const overview = await getArtistOverview(`spotify:artist:${artistId}`);
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
 
@@ -95,10 +115,12 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 				// Last.fm failure is non-fatal — show Spotify data only
 			}
 		}
-		return { overview, lastfmInfo, lastfmTags };
+		const result = { overview, lastfmInfo, lastfmTags };
+		_mainCache.set(artistId, { data: result, ts: Date.now() });
+		return result;
 	}, [artistId]);
 
-	const { status, error, data } = usePopupQuery(fetchData);
+	const { status, error, data } = usePopupQuery(fetchData, fromCache(_mainCache, artistId) ?? undefined);
 
 	// Playlist scanning closure — needs access to setPlaylistProgress (component state)
 	const scanPlaylists = React.useCallback(
@@ -139,6 +161,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					}
 				}
 				if (isMountedRef.current) {
+					_playlistCache.set(artistUri, { data: results, ts: Date.now() });
 					setPlaylistAppearances(results);
 				}
 			} catch {
@@ -176,7 +199,10 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		setLfmTopTracksLoading(true);
 		try {
 			const tracks = await getArtistGlobalTopTracks(config["api-key"], data.overview.profile.name);
-			if (isMountedRef.current) setLfmTopTracks(tracks);
+			if (isMountedRef.current) {
+				_lfmTracksCache.set(artistId, { data: tracks, ts: Date.now() });
+				setLfmTopTracks(tracks);
+			}
 		} catch {
 			if (isMountedRef.current) setLfmTopTracks([]);
 		} finally {
@@ -195,7 +221,10 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 				data.overview.profile.name,
 				config["lastfm-user"],
 			);
-			if (isMountedRef.current) setUserTopTracks(tracks);
+			if (isMountedRef.current) {
+				_userTracksCache.set(artistId, { data: tracks, ts: Date.now() });
+				setUserTopTracks(tracks);
+			}
 		} catch {
 			if (isMountedRef.current) setUserTopTracks([]);
 		} finally {

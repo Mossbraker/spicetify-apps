@@ -442,26 +442,40 @@
 }
 
 // ================================================================
-// Artist Stats modal: reduce top whitespace
+// Artist Stats modal: layout — flex column with consistent gap,
+// no top whitespace, side/bottom gutters from padding
 // ================================================================
 .GenericModal[aria-label="Artist Stats"] #stats-app {
-    padding-top: 8px;
-}
-
-.GenericModal[aria-label="Artist Stats"] .page-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     padding: 0 16px 16px;
 }
 
+// The OverlayScrollbars viewport inside the modal adds its own top
+// padding derived from Spotify's page layout — override it to zero.
+.GenericModal[aria-label="Artist Stats"] .os-viewport,
+.GenericModal[aria-label="Artist Stats"] .os-content {
+    padding-top: 0 !important;
+}
+
 // ================================================================
-// Artist Stats modal: tighten shelf spacing
+// Artist Stats modal: shelves — zero out all default Spotify
+// margin/padding so only the parent gap controls spacing
 // ================================================================
 .GenericModal[aria-label="Artist Stats"] .main-shelf-shelf {
-    margin-bottom: 0;
-    padding-bottom: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.GenericModal[aria-label="Artist Stats"] .main-shelf-shelf > section {
+    margin: 0;
+    padding: 0;
 }
 
 .GenericModal[aria-label="Artist Stats"] .main-shelf-header {
     margin-bottom: 4px;
+    padding: 0;
 }
 
 // ================================================================
@@ -473,7 +487,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 4px;
     padding-top: 12px;
 }
 

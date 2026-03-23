@@ -229,7 +229,7 @@ window.SpicetifyStats = new SpicetifyStats();
 		PopupModal.display({ title: "Playlist Stats", content: <PlaylistPage uri={playlistUri} />, isLarge: true });
 	}, false);
 	playlistEdit.element.classList.add("playlist-stats-button");
-	playlistEdit.element.classList.toggle("hidden", true);
+	playlistEdit.element.style.display = "none";
 
 	// ── Artist Stats ─────────────────────────────────────────────
 	// Topbar button is kept as a fallback only (hidden by default).
@@ -241,7 +241,7 @@ window.SpicetifyStats = new SpicetifyStats();
 		}
 	}, false);
 	artistStats.element.classList.add("artist-stats-button");
-	artistStats.element.classList.toggle("hidden", true);
+	artistStats.element.style.display = "none";
 
 	// Capture-phase click handler — bypasses any event interception
 	artistStats.element.addEventListener("click", (e: MouseEvent) => {
@@ -279,13 +279,12 @@ window.SpicetifyStats = new SpicetifyStats();
 			document.querySelector('[data-testid="action-bar-row"]') ??
 			document.querySelector('[data-testid="action-bar"]') ??
 			document.querySelector(".main-actionBar-ActionBar") ??
-			document.querySelector(".main-actionButtons") ??
 			document.querySelector('button[data-testid="follow-button"]')?.parentElement ??
 			document.querySelector('button[data-testid="following-button"]')?.parentElement ??
 			document.querySelector('button[data-testid="more-button"]')?.parentElement ??
 			null;
 
-		if (!actionBar) return; // Not rendered yet — observer will retry
+if (!actionBar) return; // Not rendered yet — observer will retry
 
 		const btn = document.createElement("button");
 		btn.id = "stats-artist-inject-btn";
@@ -313,7 +312,7 @@ window.SpicetifyStats = new SpicetifyStats();
 
 		actionBar.appendChild(btn);
 		// Injection succeeded — ensure topbar fallback stays hidden
-		artistStats.element.classList.add("hidden");
+		artistStats.element.style.display = "none";
 	}
 
 	function handleNavigation(pathname: string): void {
@@ -323,8 +322,8 @@ window.SpicetifyStats = new SpicetifyStats();
 
 		currentTargetArtistId = isArtistPage ? uid : null;
 
-		playlistEdit.element.classList.toggle("hidden", !isPlaylistPage);
-		artistStats.element.classList.add("hidden");
+		playlistEdit.element.style.display = isPlaylistPage ? "" : "none";
+		artistStats.element.style.display = "none";
 		removeInjectedArtistButton();
 
 		if (isArtistPage) {
@@ -333,20 +332,39 @@ window.SpicetifyStats = new SpicetifyStats();
 			const fallbackId = uid;
 			setTimeout(() => {
 				if (currentTargetArtistId === fallbackId && !document.getElementById("stats-artist-inject-btn")) {
-					artistStats.element.classList.remove("hidden");
+					artistStats.element.style.display = "";
 				}
 			}, 5000);
 		}
 	}
 
 	// ── MutationObserver (primary injection trigger) ────────────
-	// Mirrors the sort-play extension's approach: watch for any DOM change,
-	// debounce, then try to insert the button. Guards inside insertArtistButton
-	// prevent duplicate work.
+	// Sort-play approach: when the exact action bar node appears in the DOM,
+	// inject immediately (no debounce). For all other mutations, debounce.
 	let injectTimer: ReturnType<typeof setTimeout> | null = null;
-	const actionBarObserver = new MutationObserver(() => {
+	const actionBarObserver = new MutationObserver((mutations) => {
 		if (!currentTargetArtistId) return;
 		if (document.getElementById("stats-artist-inject-btn")) return;
+
+		// Fast path: detect action bar node appearing directly
+		for (const mutation of mutations) {
+			for (const node of mutation.addedNodes) {
+				if (node.nodeType !== 1) continue;
+				const el = node as Element;
+				const cn = typeof el.className === "string" ? el.className : "";
+				if (
+					cn.includes("main-actionBar-ActionBarRow") ||
+					el.querySelector?.(".main-actionBar-ActionBarRow") ||
+					el.querySelector?.('[data-testid="action-bar-row"]')
+				) {
+					if (injectTimer) { clearTimeout(injectTimer); injectTimer = null; }
+					insertArtistButton();
+					return;
+				}
+			}
+		}
+
+		// Slow path: debounced retry for any other mutation
 		if (injectTimer) return;
 		injectTimer = setTimeout(() => {
 			injectTimer = null;
