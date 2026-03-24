@@ -6,7 +6,7 @@ import ArtistTrackRow from "../components/artist_track_row";
 import Shelf from "../components/shelf";
 import useStatus from "@shared/status/useStatus";
 import { usePopupQuery } from "../utils/usePopupQuery";
-import { searchAndNavigate } from "../utils/spotify_search";
+import { searchAndNavigate, resolveTrackUri } from "../utils/spotify_search";
 import { getArtistOverview } from "../api/platform";
 import { getArtistInfo, getArtistTopTags, getArtistGlobalTopTracks, getUserTopTracksForArtist } from "../api/lastfm";
 import type { ArtistUnion, PlaylistAppearance } from "../types/artist_overview";
@@ -82,9 +82,11 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 	const [userTopTracks, setUserTopTracks] = React.useState<{ name: string; url: string; userPlaycount: number; imageUrl?: string }[] | null>(
 		() => fromCache(_userTracksCache, artistId));
 	const [userTopTracksLoading, setUserTopTracksLoading] = React.useState(false);
+	const [resolvedUris, setResolvedUris] = React.useState<Map<string, string>>(new Map());
 	const isMountedRef = React.useRef(true);
 	const lfmLoadingRef = React.useRef(false);
 	const userLoadingRef = React.useRef(false);
+	const attemptedUrisRef = React.useRef<Set<string>>(new Set());
 
 	React.useEffect(() => {
 		isMountedRef.current = true;
@@ -103,6 +105,47 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		document.addEventListener("keydown", handleKeyDown);
 		return () => document.removeEventListener("keydown", handleKeyDown);
 	}, []);
+
+	// Background-resolve Spotify URIs for Last.fm tracks so clicks navigate
+	// instantly without hitting search API rate limits.
+	React.useEffect(() => {
+		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+		if (config?.["prefer-spotify-links"] !== true) return;
+
+		const allTracks: { name: string }[] = [
+			...(lfmTopTracks ?? []),
+			...(userTopTracks ?? []),
+		];
+		// Only resolve tracks we haven't already attempted
+		const unresolved = allTracks.filter((t) => !attemptedUrisRef.current.has(t.name));
+		if (unresolved.length === 0) return;
+
+		const artistName = data?.overview?.profile?.name;
+		if (!artistName) return;
+
+		let cancelled = false;
+		(async () => {
+			for (const track of unresolved) {
+				if (cancelled || !isMountedRef.current) break;
+				attemptedUrisRef.current.add(track.name);
+				try {
+					const uri = await resolveTrackUri(track.name, artistName);
+					if (cancelled || !isMountedRef.current) break;
+					if (uri) {
+						setResolvedUris((prev) => {
+							const next = new Map(prev);
+							next.set(track.name, uri);
+							return next;
+						});
+					}
+				} catch { /* skip this track */ }
+				// Stagger requests to avoid rate limits
+				if (!cancelled) await new Promise((r) => setTimeout(r, 300));
+			}
+		})();
+
+		return () => { cancelled = true; };
+	}, [lfmTopTracks, userTopTracks, data]);
 
 	// Read config inside callback body to avoid unstable config reference in deps
 	const fetchData = useCallback(async (): Promise<ArtistData> => {
@@ -512,21 +555,25 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 						) : null
 					) : lfmTopTracks.length > 0 ? (
 						<div className="stats-lfmTrackList">
-							{lfmTopTracks.map((track, idx) => (
-								<ArtistTrackRow
-									key={`${track.name}-${idx}`}
-									index={idx + 1}
-									name={track.name}
-									stat={`${formatNumber(Number(track.listeners))} listeners`}
-									imageUrl={track.imageUrl}
-									href={track.url}
-									onClickOverride={preferSpotifyLinks ? (e) => {
-										e.preventDefault();
-										Spicetify.PopupModal.hide?.();
-										searchAndNavigate("track", track.name, track.url, artistName);
-									} : undefined}
-								/>
-							))}
+							{lfmTopTracks.map((track, idx) => {
+								const resolved = resolvedUris.get(track.name);
+								return (
+									<ArtistTrackRow
+										key={`${track.name}-${idx}`}
+										index={idx + 1}
+										name={track.name}
+										stat={`${formatNumber(Number(track.listeners))} listeners`}
+										imageUrl={track.imageUrl}
+										uri={resolved}
+										href={resolved ? undefined : track.url}
+										onClickOverride={!resolved && preferSpotifyLinks ? (e) => {
+											e.preventDefault();
+											Spicetify.PopupModal.hide?.();
+											searchAndNavigate("track", track.name, track.url, artistName);
+										} : undefined}
+									/>
+								);
+							})}
 						</div>
 					) : (
 						<div className="main-card-card stats-genreCard stats-genreCardEmpty">
@@ -554,21 +601,25 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 						) : null
 					) : userTopTracks.length > 0 ? (
 						<div className="stats-lfmTrackList">
-							{userTopTracks.map((track, idx) => (
-								<ArtistTrackRow
-									key={`${track.name}-${idx}`}
-									index={idx + 1}
-									name={track.name}
-									stat={`${formatNumber(track.userPlaycount)} scrobbles`}
-									imageUrl={track.imageUrl}
-									href={track.url}
-									onClickOverride={preferSpotifyLinks ? (e) => {
-										e.preventDefault();
-										Spicetify.PopupModal.hide?.();
-										searchAndNavigate("track", track.name, track.url, artistName);
-									} : undefined}
-								/>
-							))}
+							{userTopTracks.map((track, idx) => {
+								const resolved = resolvedUris.get(track.name);
+								return (
+									<ArtistTrackRow
+										key={`${track.name}-${idx}`}
+										index={idx + 1}
+										name={track.name}
+										stat={`${formatNumber(track.userPlaycount)} scrobbles`}
+										imageUrl={track.imageUrl}
+										uri={resolved}
+										href={resolved ? undefined : track.url}
+										onClickOverride={!resolved && preferSpotifyLinks ? (e) => {
+											e.preventDefault();
+											Spicetify.PopupModal.hide?.();
+											searchAndNavigate("track", track.name, track.url, artistName);
+										} : undefined}
+									/>
+								);
+							})}
 						</div>
 					) : (
 						<div className="main-card-card stats-genreCard stats-genreCardEmpty">

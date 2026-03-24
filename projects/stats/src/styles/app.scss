@@ -636,6 +636,7 @@ body:has(.GenericModal:has(#stats-artist-page)) > [data-tippy-root] {
 // ================================================================
 .stats-artist-inject-btn {
     align-items: center;
+    align-self: center;
     background: transparent;
     border: 1px solid rgba(var(--spice-rgb-text), 0.3);
     border-radius: 500px;

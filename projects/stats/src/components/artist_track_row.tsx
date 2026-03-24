@@ -44,7 +44,7 @@ const ArtistTrackRow = ({ index, name, stat, imageUrl, uri, href, onClickOverrid
 	const Menu = React.useMemo(
 		() =>
 			function TrackCtxMenu(props: any) {
-				return <Spicetify.ReactComponent.AlbumMenu {...props} uri={uri} />;
+				return <Spicetify.ReactComponent.TrackMenu {...props} uri={uri} />;
 			},
 		[uri],
 	);

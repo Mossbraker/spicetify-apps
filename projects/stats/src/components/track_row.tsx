@@ -159,7 +159,7 @@ const TrackRow = (props: TrackRowProps) => {
 	const Menu = React.useMemo(
 		() =>
 			function Menu(menuProps: Spicetify.ReactComponent.MenuProps) {
-				return <Spicetify.ReactComponent.AlbumMenu {...menuProps} uri={props.uri} />;
+				return <Spicetify.ReactComponent.TrackMenu {...menuProps} uri={props.uri} />;
 			},
 		[props.uri],
 	);

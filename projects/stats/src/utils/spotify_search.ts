@@ -77,3 +77,38 @@ export async function searchAndNavigate(
 	}
 	window.open(fallbackUrl, "_blank", "noreferrer");
 }
+
+/**
+ * Resolve a Spotify track URI for a track name + artist.
+ * Returns the URI string or undefined if not found.
+ * Uses in-memory cache to avoid redundant API calls.
+ */
+export async function resolveTrackUri(
+	trackName: string,
+	artistName: string,
+): Promise<string | undefined> {
+	// Check cache first
+	const cacheKey = `track:${trackName}:${artistName}`;
+	const cached = getCosmosCached(cacheKey);
+	if (cached) return cached;
+
+	// Try apiFetch-based search
+	try {
+		const items = await searchForTrack(trackName, artistName);
+		const uri = items?.[0]?.uri;
+		if (uri) {
+			cosmosCache.set(cacheKey, { uri, ts: Date.now() });
+			return uri;
+		}
+	} catch (error: unknown) {
+		if (isSuppressedSpotifyError(error)) {
+			// Fall back to CosmosAsync
+			try {
+				return await cosmosFallbackSearch("track", trackName, artistName);
+			} catch {
+				return undefined;
+			}
+		}
+	}
+	return undefined;
+}
