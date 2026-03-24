@@ -84,7 +84,7 @@ export async function searchAndNavigate(
 			}
 		}
 	}
-	window.open(fallbackUrl, "_blank", "noreferrer");
+	window.open(fallbackUrl, "_blank", "noopener,noreferrer");
 }
 
 /**
