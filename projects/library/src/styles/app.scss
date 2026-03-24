@@ -1,11 +1,16 @@
 :root {
     --library-card-size: 180px;
-    --library-searchbar-size: 200px;
+    --library-searchbar-size: 140px;
 }
 
 #library-app {
     .header-right .x-filterBox-expandedOrHasFilter .x-filterBox-filterInput {
         width: var(--library-searchbar-size);
+        transition: width 0.2s ease;
+
+        &:focus {
+            width: 200px;
+        }
     }
 
     .grid {
@@ -382,20 +387,27 @@
 // Save icon button injected into PopupModal title bar
 .reorder-modal-header-save {
     align-items: center;
-    background: var(--spice-button);
+    background: transparent;
     border: none;
     border-radius: 50%;
-    color: var(--spice-player);
+    color: var(--spice-button);
     cursor: pointer;
     display: flex;
     height: 32px;
     justify-content: center;
     margin-left: auto;
+    margin-right: 8px;
     width: 32px;
 
     &:hover {
-        opacity: 0.85;
-        transform: scale(1.05);
+        color: var(--spice-text);
+        transform: scale(1.1);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--spice-button);
+        outline-offset: 2px;
+        border-radius: 4px;
     }
 }
 

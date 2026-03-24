@@ -132,10 +132,10 @@ button.stats-plain-card {
 }
 
 .page-header {
-    align-content: space-between;
     align-items: center;
     display: flex;
     flex-wrap: wrap;
+    gap: 12px;
     justify-content: space-between;
     margin: 16px 0;
 

@@ -22,7 +22,7 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 	const itemsRef = React.useRef(items);
 	itemsRef.current = items;
 
-	// Inject a small green save icon button into the PopupModal title bar
+	// Inject a save icon button into the PopupModal title bar
 	React.useEffect(() => {
 		const modal = document.querySelector('.GenericModal[aria-label="Reorder Albums"]');
 		if (!modal) return;
