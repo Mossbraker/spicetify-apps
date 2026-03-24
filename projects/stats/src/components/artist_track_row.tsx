@@ -72,7 +72,7 @@ const ArtistTrackRow = ({ index, name, stat, imageUrl, uri, href, onClickOverrid
 		</>
 	);
 
-	// Spotify track: clickable row with context menu
+	// Spotify track: clickable row (navigates to track page)
 	if (uri) {
 		const handleClick = () => {
 			Spicetify.PopupModal.hide?.();
@@ -120,7 +120,7 @@ const ArtistTrackRow = ({ index, name, stat, imageUrl, uri, href, onClickOverrid
 			);
 		}
 		return (
-			<a className="stats-artistTrackRow" href={href} target="_blank" rel="noreferrer">
+			<a className="stats-artistTrackRow" href={href} target="_blank" rel="noopener noreferrer">
 				{content}
 			</a>
 		);
