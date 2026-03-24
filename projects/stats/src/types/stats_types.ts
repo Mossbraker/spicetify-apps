@@ -28,6 +28,9 @@ export interface Config {
 	"show-library": boolean;
 	"show-charts": boolean;
 	"auto-load-playlist-appearances": boolean;
+	"auto-load-lastfm-top-tracks": boolean;
+	"auto-load-user-top-tracks": boolean;
+	"prefer-spotify-links": boolean;
 	"show-artist-stats-button": boolean;
 	"artist-stats-button-order": number;
 }
