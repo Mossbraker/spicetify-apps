@@ -110,7 +110,7 @@ export const getArtistInfo = async (key: string, artist: string, username?: stri
 	return res?.artist ?? null;
 };
 
-export const getArtistGlobalTopTracks = async (key: string, artist: string, limit = 50) => {
+export const getArtistGlobalTopTracks = async (key: string, artist: string, limit = 50, skipArtworkEnrichment = false) => {
 	const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getTopTracks&artist=${encodeURIComponent(artist)}&api_key=${key}&limit=${limit}&format=json`;
 	const res = await apiFetch<LastFM.ArtistTopTracksResponse>("lfmArtistTopTracks", url, false);
 	const tracks = (res?.toptracks?.track ?? []).map((track) => ({
@@ -122,23 +122,26 @@ export const getArtistGlobalTopTracks = async (key: string, artist: string, limi
 		imageUrl: getLastFmImageUrl(track.image),
 	}));
 
-	// Enrich tracks that have no album art via track.getInfo (batched)
-	const needsArt = tracks.filter((t) => !t.imageUrl);
-	if (needsArt.length > 0) {
-		const CONCURRENCY = 5;
-		for (let i = 0; i < needsArt.length; i += CONCURRENCY) {
-			const batch = needsArt.slice(i, i + CONCURRENCY);
-			const results = await Promise.allSettled(
-				batch.map(async (track) => {
-					const cacheKey = `lfmTrackInfo:${artist}:${track.name}`;
-					const infoUrl = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(track.name)}&api_key=${key}&autocorrect=1&format=json`;
-					const info = await apiFetch<{ track?: { album?: { image?: LastFmImage[] } } }>(cacheKey, infoUrl, false);
-					return { track, imageUrl: getLastFmImageUrl(info?.track?.album?.image) };
-				}),
-			);
-			for (const r of results) {
-				if (r.status === "fulfilled" && r.value.imageUrl) {
-					r.value.track.imageUrl = r.value.imageUrl;
+	// Enrich tracks that have no album art via track.getInfo (batched).
+	// Skipped when caller will fetch track.getInfo anyway (e.g. getUserTopTracksForArtist).
+	if (!skipArtworkEnrichment) {
+		const needsArt = tracks.filter((t) => !t.imageUrl);
+		if (needsArt.length > 0) {
+			const CONCURRENCY = 5;
+			for (let i = 0; i < needsArt.length; i += CONCURRENCY) {
+				const batch = needsArt.slice(i, i + CONCURRENCY);
+				const results = await Promise.allSettled(
+					batch.map(async (track) => {
+						const cacheKey = `lfmTrackInfo:${artist}:${track.name}`;
+						const infoUrl = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(track.name)}&api_key=${key}&autocorrect=1&format=json`;
+						const info = await apiFetch<{ track?: { album?: { image?: LastFmImage[] } } }>(cacheKey, infoUrl, false);
+						return { track, imageUrl: getLastFmImageUrl(info?.track?.album?.image) };
+					}),
+				);
+				for (const r of results) {
+					if (r.status === "fulfilled" && r.value.imageUrl) {
+						r.value.track.imageUrl = r.value.imageUrl;
+					}
 				}
 			}
 		}
@@ -153,8 +156,9 @@ export const getUserTopTracksForArtist = async (
 	username: string,
 	limit = 20,
 ): Promise<{ name: string; url: string; userPlaycount: number; imageUrl?: string }[]> => {
-	// Fetch artist's global top tracks
-	const globalTracks = await getArtistGlobalTopTracks(key, artist, limit);
+	// Fetch artist's global top tracks (skip artwork enrichment — we fetch
+	// track.getInfo with username below, which also returns album art)
+	const globalTracks = await getArtistGlobalTopTracks(key, artist, limit, true);
 	if (!globalTracks.length) return [];
 
 	// Enrich each track with user play count via track.getInfo
