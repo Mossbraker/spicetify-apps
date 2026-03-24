@@ -5,6 +5,9 @@
 
 #library-app {
     .header-right .x-filterBox-expandedOrHasFilter {
+        flex-shrink: 1;
+        min-width: 0;
+
         .x-filterBox-overlay {
             pointer-events: none;
         }
@@ -15,7 +18,7 @@
         }
 
         &:focus-within .x-filterBox-filterInput {
-            width: calc(var(--library-searchbar-size) + 80px);
+            width: calc(var(--library-searchbar-size) + 50px);
         }
     }
 

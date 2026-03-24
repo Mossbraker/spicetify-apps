@@ -41,8 +41,11 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 			Spicetify.PopupModal.hide();
 		});
 
-		// Insert before the close button (last child of header)
-		const closeBtn = header.querySelector("button");
+		// Insert before the close button
+		const closeBtn =
+			header.querySelector(".main-trackCreditsModal-closeBtn") ??
+			header.querySelector('button[aria-label="Close"]') ??
+			header.querySelector('button[aria-label="Close modal"]');
 		if (closeBtn) {
 			header.insertBefore(btn, closeBtn);
 		} else {

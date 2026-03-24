@@ -13,14 +13,28 @@ interface SortDropdownMenuProps {
 }
 
 const SortDropdownMenu = ({ options, activeOption, isReversed, switchCallback }: SortDropdownMenuProps) => {
+	const measureRef = React.useRef<HTMLSpanElement>(null);
+	const [selectWidth, setSelectWidth] = React.useState<number | undefined>(undefined);
+
+	React.useLayoutEffect(() => {
+		if (measureRef.current) {
+			// 32px right padding (arrow area) + 12px left padding + 2px border
+			setSelectWidth(measureRef.current.scrollWidth + 46);
+		}
+	}, [activeOption.id]);
+
 	return (
 		<div className="stats-native-select-wrapper">
 			<label className="stats-native-select-wrapper">
 				<span className="stats-native-select-label">Sort</span>
+				<span className="stats-native-select-measure" ref={measureRef} aria-hidden="true">
+					{activeOption.name}
+				</span>
 				<select
 					className="stats-native-select"
 					aria-label="Sort option"
 					value={activeOption.id}
+					style={selectWidth ? { width: `${selectWidth}px` } : undefined}
 					onChange={(event) => {
 						const option = options.find((item) => item.id === event.target.value);
 						if (option) switchCallback(option);

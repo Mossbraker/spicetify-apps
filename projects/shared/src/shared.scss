@@ -135,7 +135,7 @@ button.stats-plain-card {
     align-items: center;
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 8px 12px;
     justify-content: space-between;
     margin: 16px 0;
 
@@ -149,6 +149,8 @@ button.stats-plain-card {
 
     .header-right {
         justify-content: flex-end;
+        flex-shrink: 1;
+        min-width: 0;
     }
 
     .header-left {
@@ -184,6 +186,7 @@ button.stats-plain-card {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    position: relative;
 }
 
 .stats-native-select-label {
@@ -200,6 +203,18 @@ button.stats-plain-card {
     cursor: pointer;
     font-size: 0.875rem;
     padding: 8px 32px 8px 12px;
+    transition: width 0.15s ease;
+}
+
+// Hidden span used to measure the selected option's text width
+.stats-native-select-measure {
+    font-size: 0.875rem;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    visibility: hidden;
+    white-space: nowrap;
 }
 
 .stats-icon-button {
@@ -283,16 +298,19 @@ button.stats-plain-card {
 // events across its entire ~64px height.  Let clicks pass through the empty
 // regions so our navbar underneath remains clickable, then re-enable pointer
 // events on the actual interactive widgets inside the top bar.
-header.main-topBar-container {
-    pointer-events: none;
+// Scoped to only apply when one of our custom apps is mounted.
+body:has(#library-app), body:has(#stats-app) {
+    header.main-topBar-container {
+        pointer-events: none;
 
-    button,
-    a,
-    [role="button"],
-    [tabindex]:not([tabindex="-1"]),
-    input,
-    select {
-        pointer-events: auto;
+        button,
+        a,
+        [role="button"],
+        [tabindex]:not([tabindex="-1"]),
+        input,
+        select {
+            pointer-events: auto;
+        }
     }
 }
 
