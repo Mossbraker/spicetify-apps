@@ -106,47 +106,6 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		return () => document.removeEventListener("keydown", handleKeyDown);
 	}, []);
 
-	// Background-resolve Spotify URIs for Last.fm tracks so clicks navigate
-	// instantly without hitting search API rate limits.
-	React.useEffect(() => {
-		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
-		if (config?.["prefer-spotify-links"] !== true) return;
-
-		const allTracks: { name: string }[] = [
-			...(lfmTopTracks ?? []),
-			...(userTopTracks ?? []),
-		];
-		// Only resolve tracks we haven't already attempted
-		const unresolved = allTracks.filter((t) => !attemptedUrisRef.current.has(t.name));
-		if (unresolved.length === 0) return;
-
-		const artistName = data?.overview?.profile?.name;
-		if (!artistName) return;
-
-		let cancelled = false;
-		(async () => {
-			for (const track of unresolved) {
-				if (cancelled || !isMountedRef.current) break;
-				attemptedUrisRef.current.add(track.name);
-				try {
-					const uri = await resolveTrackUri(track.name, artistName);
-					if (cancelled || !isMountedRef.current) break;
-					if (uri) {
-						setResolvedUris((prev) => {
-							const next = new Map(prev);
-							next.set(track.name, uri);
-							return next;
-						});
-					}
-				} catch { /* skip this track */ }
-				// Stagger requests to avoid rate limits
-				if (!cancelled) await new Promise((r) => setTimeout(r, 300));
-			}
-		})();
-
-		return () => { cancelled = true; };
-	}, [lfmTopTracks, userTopTracks, data]);
-
 	// Read config inside callback body to avoid unstable config reference in deps
 	const fetchData = useCallback(async (): Promise<ArtistData> => {
 		const cached = fromCache(_mainCache, artistId);
@@ -322,6 +281,50 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			loadUserTopTracks();
 		}
 	}, [status, data, loadUserTopTracks, userTopTracks, userTopTracksLoading]);
+
+	// Background-resolve Spotify URIs for Last.fm tracks so clicks navigate
+	// instantly without hitting search API rate limits.
+	React.useEffect(() => {
+		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+		if (config?.["prefer-spotify-links"] !== true) return;
+
+		const allTracks: { name: string }[] = [
+			...(lfmTopTracks ?? []),
+			...(userTopTracks ?? []),
+		];
+		// Only resolve tracks we haven't already attempted
+		const unresolved = allTracks.filter((t) => !attemptedUrisRef.current.has(t.name));
+		if (unresolved.length === 0) return;
+
+		const artistName = data?.overview?.profile?.name;
+		if (!artistName) return;
+
+		let cancelled = false;
+		(async () => {
+			for (const track of unresolved) {
+				if (cancelled || !isMountedRef.current) break;
+				attemptedUrisRef.current.add(track.name);
+				try {
+					const uri = await resolveTrackUri(track.name, artistName);
+					if (cancelled || !isMountedRef.current) break;
+					if (uri) {
+						setResolvedUris((prev) => {
+							const next = new Map(prev);
+							next.set(track.name, uri);
+							return next;
+						});
+					}
+				} catch {
+					// Rate limited or suppressed — stop the entire loop
+					break;
+				}
+				// Stagger requests to avoid rate limits
+				if (!cancelled) await new Promise((r) => setTimeout(r, 800));
+			}
+		})();
+
+		return () => { cancelled = true; };
+	}, [lfmTopTracks, userTopTracks, data]);
 
 	const Status = useStatus(status, error);
 	if (Status) return Status;

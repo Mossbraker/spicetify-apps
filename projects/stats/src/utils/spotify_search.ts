@@ -27,6 +27,15 @@ async function cosmosFallbackSearch(
 	const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=${type}&limit=1&market=from_token`;
 
 	const res = await Spicetify.CosmosAsync.get(url);
+
+	// CosmosAsync may return rate limit responses as data rather than throwing
+	if (res?.code === 429 || res?.status === 429) {
+		const err = new Error("Rate limited") as Error & { status?: number; suppressed?: boolean };
+		err.status = 429;
+		err.suppressed = true;
+		throw err;
+	}
+
 	const items = type === "track" ? res?.tracks?.items : res?.artists?.items;
 	const uri: string | undefined = items?.[0]?.uri;
 
@@ -82,6 +91,8 @@ export async function searchAndNavigate(
  * Resolve a Spotify track URI for a track name + artist.
  * Returns the URI string or undefined if not found.
  * Uses in-memory cache to avoid redundant API calls.
+ *
+ * Throws on rate limit / suppression errors so callers can stop retrying.
  */
 export async function resolveTrackUri(
 	trackName: string,
@@ -102,13 +113,10 @@ export async function resolveTrackUri(
 		}
 	} catch (error: unknown) {
 		if (isSuppressedSpotifyError(error)) {
-			// Fall back to CosmosAsync
-			try {
-				return await cosmosFallbackSearch("track", trackName, artistName);
-			} catch {
-				return undefined;
-			}
+			// Propagate suppression to caller so it can stop the loop
+			throw error;
 		}
+		// Other errors: just return undefined
 	}
 	return undefined;
 }

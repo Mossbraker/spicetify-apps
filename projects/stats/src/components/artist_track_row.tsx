@@ -41,14 +41,6 @@ const PlayOverlay = ({ uri }: { uri: string }) => (
 const ArtistTrackRow = ({ index, name, stat, imageUrl, uri, href, onClickOverride }: ArtistTrackRowProps) => {
 	const [imageFailed, setImageFailed] = React.useState(false);
 
-	const Menu = React.useMemo(
-		() =>
-			function TrackCtxMenu(props: any) {
-				return <Spicetify.ReactComponent.TrackMenu {...props} uri={uri} />;
-			},
-		[uri],
-	);
-
 	const showImage = imageUrl && !imageFailed;
 
 	const artElement = (
@@ -104,12 +96,7 @@ const ArtistTrackRow = ({ index, name, stat, imageUrl, uri, href, onClickOverrid
 			</div>
 		);
 
-		if (!Spicetify.ReactComponent?.ContextMenu) return row;
-		return (
-			<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="right-click">
-				{row}
-			</Spicetify.ReactComponent.ContextMenu>
-		);
+		return row;
 	}
 
 	// External link (Last.fm)
