@@ -46,6 +46,8 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 	const handleDragStart = (index: number) => (e: React.DragEvent) => {
 		dragIndexRef.current = index;
 		e.dataTransfer.effectAllowed = "move";
+		// Some browsers (Firefox) require a non-empty payload for drag to start
+		e.dataTransfer.setData("text/plain", items[index]?.uri || "");
 	};
 
 	const handleDragOver = (index: number) => (e: React.DragEvent) => {
