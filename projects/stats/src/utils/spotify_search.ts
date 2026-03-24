@@ -1,7 +1,23 @@
 import { searchForTrack, searchForArtist, isSuppressedSpotifyError } from "../api/spotify";
 
 const COSMOS_CACHE_TTL_MS = 30 * 60 * 1000;
+const COSMOS_CACHE_MAX_SIZE = 200;
 const cosmosCache = new Map<string, { uri: string; ts: number }>();
+
+/** Evict expired entries and enforce max size when inserting. */
+function cosmosCacheSet(key: string, value: { uri: string; ts: number }): void {
+	// Evict expired entries first
+	const now = Date.now();
+	for (const [k, v] of cosmosCache) {
+		if (now - v.ts >= COSMOS_CACHE_TTL_MS) cosmosCache.delete(k);
+	}
+	// If still at capacity, remove the oldest entry
+	if (cosmosCache.size >= COSMOS_CACHE_MAX_SIZE) {
+		const firstKey = cosmosCache.keys().next().value;
+		if (firstKey !== undefined) cosmosCache.delete(firstKey);
+	}
+	cosmosCache.set(key, value);
+}
 
 function getCosmosCached(key: string): string | undefined {
 	const entry = cosmosCache.get(key);
@@ -40,7 +56,7 @@ async function cosmosFallbackSearch(
 	const uri: string | undefined = items?.[0]?.uri;
 
 	if (uri) {
-		cosmosCache.set(cacheKey, { uri, ts: Date.now() });
+		cosmosCacheSet(cacheKey, { uri, ts: Date.now() });
 	}
 	return uri;
 }
@@ -108,7 +124,7 @@ export async function resolveTrackUri(
 		const items = await searchForTrack(trackName, artistName);
 		const uri = items?.[0]?.uri;
 		if (uri) {
-			cosmosCache.set(cacheKey, { uri, ts: Date.now() });
+			cosmosCacheSet(cacheKey, { uri, ts: Date.now() });
 			return uri;
 		}
 	} catch (error: unknown) {
