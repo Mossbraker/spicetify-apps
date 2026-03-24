@@ -44,6 +44,7 @@ const sortOptions = [
 	{ id: "0", name: "Name" },
 	{ id: "1", name: "Date Added" },
 	{ id: "2", name: "Artist Name" },
+	{ id: "3", name: "Release Year" },
 	{ id: "6", name: "Recents" },
 	{ id: "custom", name: "Custom Order" },
 ];
@@ -68,7 +69,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
 
 	const fetchAlbums = async ({ pageParam }: { pageParam: number }) => {
-		if (isCustomOrder) return { items: [], totalLength: 0, offset: 0 } as GetContentsResponse<AlbumItem>;
+		if (isCustomOrder) return { items: [], totalLength: 0, offset: 0 } as unknown as GetContentsResponse<AlbumItem>;
 		libraryDebug.info(`Albums: fetching page offset=${pageParam}, sort=${sortOption.id}, reversed=${isReversed}`);
 		const res = (await Spicetify.Platform.LibraryAPI.getContents({
 			filters: ["0"],
