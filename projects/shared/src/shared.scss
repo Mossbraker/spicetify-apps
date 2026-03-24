@@ -243,7 +243,7 @@ button.stats-plain-card {
 }
 
 .stats-nav-shell {
-    margin-top: 8px;
+    margin-top: 0;
 }
 
 .stats-nav-inline {
@@ -280,5 +280,5 @@ button.stats-plain-card {
 }
 
 #library-app > :first-child, #stats-app > :first-child {
-    margin-top: 64px;
+    margin-top: 16px;
 }
