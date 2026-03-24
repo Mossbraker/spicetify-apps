@@ -284,16 +284,17 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 
 	// Background-resolve Spotify URIs for Last.fm tracks so clicks navigate
 	// instantly without hitting search API rate limits.
+	// Keys use "name::url" to avoid collisions on duplicate track names (e.g. "Intro").
 	React.useEffect(() => {
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
 		if (config?.["prefer-spotify-links"] !== true) return;
 
-		const allTracks: { name: string }[] = [
+		const allTracks: { name: string; url: string }[] = [
 			...(lfmTopTracks ?? []),
 			...(userTopTracks ?? []),
 		];
 		// Only resolve tracks we haven't already attempted
-		const unresolved = allTracks.filter((t) => !attemptedUrisRef.current.has(t.name));
+		const unresolved = allTracks.filter((t) => !attemptedUrisRef.current.has(`${t.name}::${t.url}`));
 		if (unresolved.length === 0) return;
 
 		const artistName = data?.overview?.profile?.name;
@@ -303,14 +304,15 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		(async () => {
 			for (const track of unresolved) {
 				if (cancelled || !isMountedRef.current) break;
-				attemptedUrisRef.current.add(track.name);
+				const key = `${track.name}::${track.url}`;
+				attemptedUrisRef.current.add(key);
 				try {
 					const uri = await resolveTrackUri(track.name, artistName);
 					if (cancelled || !isMountedRef.current) break;
 					if (uri) {
 						setResolvedUris((prev) => {
 							const next = new Map(prev);
-							next.set(track.name, uri);
+							next.set(key, uri);
 							return next;
 						});
 					}
@@ -559,7 +561,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					) : lfmTopTracks.length > 0 ? (
 						<div className="stats-lfmTrackList">
 							{lfmTopTracks.map((track, idx) => {
-								const resolved = resolvedUris.get(track.name);
+								const resolved = resolvedUris.get(`${track.name}::${track.url}`);
 								return (
 									<ArtistTrackRow
 										key={`${track.name}-${idx}`}
@@ -605,7 +607,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					) : userTopTracks.length > 0 ? (
 						<div className="stats-lfmTrackList">
 							{userTopTracks.map((track, idx) => {
-								const resolved = resolvedUris.get(track.name);
+								const resolved = resolvedUris.get(`${track.name}::${track.url}`);
 								return (
 									<ArtistTrackRow
 										key={`${track.name}-${idx}`}
