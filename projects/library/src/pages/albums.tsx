@@ -150,11 +150,12 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	});
 
 	// Active query routing
-	// Guard: useQuery sets status="success" when enabled=false without populating data.
-	// When switching to custom order, customData is still undefined despite customStatus="success".
+	// Guard: useQuery/useInfiniteQuery set status="success" when enabled=false without populating data.
+	// When switching between custom and standard sort, the previously-disabled query has status="success"
+	// but data is still undefined — override to "pending" so the loading guard prevents .items/.pages access.
 	const activeStatus = isCustomOrder
 		? (customStatus === "success" && customData == null ? "pending" : customStatus)
-		: status;
+		: (status === "success" && data == null ? "pending" : status);
 	const activeError = isCustomOrder ? customError : error;
 	const activeRefetch = isCustomOrder ? customRefetch : refetch;
 
@@ -269,12 +270,12 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		// Apply custom sort after merge
 		albums = customOrderStore.sortByOrder(albums);
 
-		// Apply text filter client-side
+		// Apply text filter client-side (skip local albums — already filtered by fetchLocalAlbums)
 		if (textFilter) {
 			const escaped = textFilter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 			const regex = new RegExp(`\\b${escaped}`, "i");
 			albums = albums.filter((album) =>
-				regex.test(album.name) || album.artists.some((artist) => regex.test(artist.name))
+				album.type === "localalbum" || regex.test(album.name) || album.artists.some((artist) => regex.test(artist.name))
 			);
 		}
 	} else {
