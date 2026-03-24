@@ -279,6 +279,23 @@ button.stats-plain-card {
     margin: 0;
 }
 
+// Spotify's fixed top bar overlays the app scroll area and intercepts pointer
+// events across its entire ~64px height.  Let clicks pass through the empty
+// regions so our navbar underneath remains clickable, then re-enable pointer
+// events on the actual interactive widgets inside the top bar.
+header.main-topBar-container {
+    pointer-events: none;
+
+    button,
+    a,
+    [role="button"],
+    [tabindex]:not([tabindex="-1"]),
+    input,
+    select {
+        pointer-events: auto;
+    }
+}
+
 #library-app > :first-child, #stats-app > :first-child {
-    margin-top: 64px;
+    margin-top: 16px;
 }

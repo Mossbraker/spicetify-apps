@@ -15,7 +15,7 @@
         }
 
         &:focus-within .x-filterBox-filterInput {
-            width: 200px;
+            width: calc(var(--library-searchbar-size) + 80px);
         }
     }
 
@@ -399,11 +399,10 @@
     color: var(--spice-button);
     cursor: pointer;
     display: flex;
-    height: 36px;
+    height: 32px;
     justify-content: center;
     margin-left: auto;
-    margin-right: 8px;
-    width: 36px;
+    width: 32px;
 
     &:hover {
         color: var(--spice-text);
@@ -415,6 +414,15 @@
         outline-offset: 2px;
         border-radius: 4px;
     }
+}
+
+// Normalize close button in Reorder Albums modal to match save button size
+.GenericModal[aria-label="Reorder Albums"] .main-trackCreditsModal-closeBtn {
+    height: 32px;
+    min-height: 32px;
+    min-width: 32px;
+    padding: 0;
+    width: 32px;
 }
 
 // Reorder button in albums header
