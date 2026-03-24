@@ -150,7 +150,11 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	});
 
 	// Active query routing
-	const activeStatus = isCustomOrder ? customStatus : status;
+	// Guard: useQuery sets status="success" when enabled=false without populating data.
+	// When switching to custom order, customData is still undefined despite customStatus="success".
+	const activeStatus = isCustomOrder
+		? (customStatus === "success" && customData == null ? "pending" : customStatus)
+		: status;
 	const activeError = isCustomOrder ? customError : error;
 	const activeRefetch = isCustomOrder ? customRefetch : refetch;
 
