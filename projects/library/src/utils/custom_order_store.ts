@@ -68,6 +68,10 @@ class CustomOrderStore extends EventTarget {
 	 *  Removes URIs no longer in the library, appends new URIs at the end.
 	 *  Short-circuits if the resulting order is identical (no save/event). */
 	reconcile(currentUris: string[]): void {
+		// Don't create a default order just by viewing custom sort —
+		// only reconcile when the user has explicitly saved an order
+		if (this.order.length === 0) return;
+
 		const currentSet = new Set(currentUris);
 		const existingSet = new Set(this.order);
 

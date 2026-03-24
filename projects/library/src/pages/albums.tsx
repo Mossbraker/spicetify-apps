@@ -107,7 +107,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		libraryDebug.info("Albums: fetching all albums for custom order");
 		const res = (await Spicetify.Platform.LibraryAPI.getContents({
 			filters: ["0"],
-			sortOrder: "1", // Date Added — doesn't matter, we re-sort client-side
+			sortOrder: "1", // Use "Date Added" as the baseline server order; client-side custom order and reconciliation derive from this
 			offset: 0,
 			limit: 9999, // Fetch all — matches CollectionsWrapper pattern
 		})) as GetContentsResponse<AlbumItem>;
