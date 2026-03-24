@@ -223,6 +223,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		Spicetify.PopupModal.display({
 			title: "Reorder Albums",
 			content: <ReorderModal items={validItems} onSave={onSave} onReset={onReset} />,
+			isLarge: true,
 		});
 	};
 

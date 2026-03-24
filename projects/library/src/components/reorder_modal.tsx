@@ -16,8 +16,41 @@ interface ReorderModalProps {
 const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProps) => {
 	const [items, setItems] = React.useState(initialItems);
 	const dragIndexRef = React.useRef<number | null>(null);
+	const dropTargetRef = React.useRef<number | null>(null);
 	const [dropTarget, setDropTarget] = React.useState<number | null>(null);
 	const rowRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+	const itemsRef = React.useRef(items);
+	itemsRef.current = items;
+
+	// Inject a small green save icon button into the PopupModal title bar
+	React.useEffect(() => {
+		const modal = document.querySelector('.GenericModal[aria-label="Reorder Albums"]');
+		if (!modal) return;
+		const header = modal.querySelector(".main-trackCreditsModal-header") ?? modal.querySelector("header");
+		if (!header) return;
+
+		const btn = document.createElement("button");
+		btn.type = "button";
+		btn.className = "reorder-modal-header-save";
+		btn.title = "Save Order";
+		btn.setAttribute("aria-label", "Save Order");
+		btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></svg>`;
+		btn.addEventListener("click", () => {
+			const uris = itemsRef.current.map((item) => item.uri);
+			onSave(uris);
+			Spicetify.PopupModal.hide();
+		});
+
+		// Insert before the close button (last child of header)
+		const closeBtn = header.querySelector("button");
+		if (closeBtn) {
+			header.insertBefore(btn, closeBtn);
+		} else {
+			header.appendChild(btn);
+		}
+
+		return () => { btn.remove(); };
+	}, [onSave]);
 
 	const moveItem = (fromIndex: number, toIndex: number) => {
 		if (toIndex < 0 || toIndex >= items.length) return;
@@ -53,7 +86,10 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 	const handleDragOver = (index: number) => (e: React.DragEvent) => {
 		e.preventDefault();
 		e.dataTransfer.dropEffect = "move";
-		setDropTarget(index);
+		if (dropTargetRef.current !== index) {
+			dropTargetRef.current = index;
+			setDropTarget(index);
+		}
 	};
 
 	const handleDrop = (targetIndex: number) => (e: React.DragEvent) => {
@@ -63,11 +99,13 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 			moveItem(sourceIndex, targetIndex);
 		}
 		dragIndexRef.current = null;
+		dropTargetRef.current = null;
 		setDropTarget(null);
 	};
 
 	const handleDragEnd = () => {
 		dragIndexRef.current = null;
+		dropTargetRef.current = null;
 		setDropTarget(null);
 	};
 
