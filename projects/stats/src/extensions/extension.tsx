@@ -366,17 +366,26 @@ window.SpicetifyStats = new SpicetifyStats();
 		removeInjectedArtistButton();
 
 		if (isArtistPage) {
-			// Connect observer for artist pages
-			actionBarObserver.observe(document.body, { childList: true, subtree: true });
-			insertArtistButton();
-			// Fallback: if injection hasn't succeeded after 5 s, show topbar button
-			const fallbackId = uid;
-			fallbackTimer = setTimeout(() => {
-				fallbackTimer = null;
-				if (currentTargetArtistId === fallbackId && !document.getElementById("stats-artist-inject-btn")) {
-					artistStats.element.style.display = "";
-				}
-			}, 5000);
+			const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+			const buttonEnabled = config?.["show-artist-stats-button"] !== false;
+
+			if (buttonEnabled) {
+				// Connect observer for artist pages
+				actionBarObserver.observe(document.body, { childList: true, subtree: true });
+				insertArtistButton();
+				// Fallback: if injection hasn't succeeded after 5 s, show topbar button
+				const fallbackId = uid;
+				fallbackTimer = setTimeout(() => {
+					fallbackTimer = null;
+					if (currentTargetArtistId === fallbackId && !document.getElementById("stats-artist-inject-btn")) {
+						artistStats.element.style.display = "";
+					}
+				}, 5000);
+			} else {
+				// Feature disabled — ensure observer/timers from a prior page are cleaned up
+				if (injectTimer) { clearTimeout(injectTimer); injectTimer = null; }
+				actionBarObserver.disconnect();
+			}
 		} else {
 			// Disconnect observer when leaving artist pages to avoid unnecessary work
 			if (injectTimer) { clearTimeout(injectTimer); injectTimer = null; }
