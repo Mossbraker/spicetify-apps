@@ -11,18 +11,18 @@ const ArtistLink = ({ name, uri, index, length }: { name: string; uri: string; i
 	return (
 		<>
 			{preferSpotify ? (
-				<a
+				<button
+					type="button"
+					className="stats-artistLinkButton"
 					draggable="true"
 					dir="auto"
-					href="#"
 					tabIndex={-1}
-					onClick={(e) => {
-						e.preventDefault();
+					onClick={() => {
 						searchAndNavigate("artist", name, uri);
 					}}
 				>
 					{name}
-				</a>
+				</button>
 			) : (
 				<a draggable="true" dir="auto" href={uri} tabIndex={-1}>
 					{name}
@@ -151,28 +151,36 @@ const TrackRow = (props: TrackRowProps) => {
 	const albumName = isSpotifyTrack ? props.album.name : "Unknown";
 	const liked = isSpotifyTrack && "liked" in props ? Boolean(props.liked) : false;
 
+	const isSpotifyUri = props.uri.startsWith("spotify:");
+
 	const trackMenu = (
 		<Spicetify.ReactComponent.Menu>
-			<Spicetify.ReactComponent.MenuItem
-				onClick={() => Spicetify.Player.playUri(props.uri)}
-			>
-				Play
-			</Spicetify.ReactComponent.MenuItem>
-			<Spicetify.ReactComponent.MenuItem
-				onClick={() => Spicetify.addToQueue?.([{ uri: props.uri }])}
-			>
-				Add to queue
-			</Spicetify.ReactComponent.MenuItem>
-			<Spicetify.ReactComponent.MenuItem
-				divider="before"
-				onClick={() => {
-					const id = props.uri.split(":")[2];
-					Spicetify.Platform.History.push(`/track/${id}`);
-				}}
-			>
-				Go to song
-			</Spicetify.ReactComponent.MenuItem>
-			{props.artists?.[0]?.uri && (
+			{isSpotifyUri && (
+				<Spicetify.ReactComponent.MenuItem
+					onClick={() => Spicetify.Player.playUri(props.uri)}
+				>
+					Play
+				</Spicetify.ReactComponent.MenuItem>
+			)}
+			{isSpotifyUri && (
+				<Spicetify.ReactComponent.MenuItem
+					onClick={() => Spicetify.addToQueue?.([{ uri: props.uri }])}
+				>
+					Add to queue
+				</Spicetify.ReactComponent.MenuItem>
+			)}
+			{isSpotifyUri && (
+				<Spicetify.ReactComponent.MenuItem
+					divider="before"
+					onClick={() => {
+						const id = props.uri.split(":")[2];
+						Spicetify.Platform.History.push(`/track/${id}`);
+					}}
+				>
+					Go to song
+				</Spicetify.ReactComponent.MenuItem>
+			)}
+			{isSpotifyUri && props.artists?.[0]?.uri?.startsWith("spotify:") && (
 				<Spicetify.ReactComponent.MenuItem
 					onClick={() => {
 						const id = props.artists[0].uri.split(":")[2];
@@ -182,7 +190,7 @@ const TrackRow = (props: TrackRowProps) => {
 					Go to artist
 				</Spicetify.ReactComponent.MenuItem>
 			)}
-			{albumUri && (
+			{albumUri?.startsWith("spotify:") && (
 				<Spicetify.ReactComponent.MenuItem
 					onClick={() => {
 						const id = albumUri!.split(":")[2];
@@ -192,14 +200,24 @@ const TrackRow = (props: TrackRowProps) => {
 					Go to album
 				</Spicetify.ReactComponent.MenuItem>
 			)}
-			<Spicetify.ReactComponent.MenuItem
-				divider="before"
-				onClick={() => {
-					Spicetify.Platform.ClipboardAPI?.copy(props.uri);
-				}}
-			>
-				Copy song link
-			</Spicetify.ReactComponent.MenuItem>
+			{isSpotifyUri ? (
+				<Spicetify.ReactComponent.MenuItem
+					divider="before"
+					onClick={() => {
+						Spicetify.Platform.ClipboardAPI?.copy(props.uri);
+					}}
+				>
+					Copy song link
+				</Spicetify.ReactComponent.MenuItem>
+			) : (
+				<Spicetify.ReactComponent.MenuItem
+					onClick={() => {
+						Spicetify.Platform.ClipboardAPI?.copy(props.uri);
+					}}
+				>
+					Copy link
+				</Spicetify.ReactComponent.MenuItem>
+			)}
 		</Spicetify.ReactComponent.Menu>
 	);
 
