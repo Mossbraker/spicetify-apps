@@ -31,7 +31,9 @@ function collectionSort(order: string, reverse: boolean): (a: CollectionChild, b
         }
     };
 
-    return reverse ? (a: CollectionChild, b: CollectionChild) => sortBy(b, a) : sortBy;
+    // For case "3" (Release Year), the server handles sort direction and local albums
+    // must always sort to the end — skip the global reverse wrapper for that case.
+    return reverse && order !== "3" ? (a: CollectionChild, b: CollectionChild) => sortBy(b, a) : sortBy;
 }
 
 export default collectionSort;
