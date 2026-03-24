@@ -45,6 +45,12 @@
 ![preview](previews/top_charts.png)
 
 ---
+
+### Artist Stats
+
+- Toggleable "Artist Stats" button on artist pages that surfaces user scrobble count, total listening time, playlist inclusions, top tracks, top genres, discography, and related artists.
+
+---
 ### Automatic Installation (Linux)
 
 ```sh
@@ -66,9 +72,12 @@ Download the zip file in the [latest release](https://github.com/harbassan/spice
  ┣ 📂marketplace
  ┣ etc...
  ┗ 📂stats
+ ┃ ┣ 📜cache.js
+ ┃ ┣ 📜debug.js
  ┃ ┣ 📜extension.js
  ┃ ┣ 📜index.js
  ┃ ┣ 📜manifest.json
+ ┃ ┣ 📜optional_enrichment.js
  ┃ ┗ 📜style.css
 ```
 
@@ -82,6 +91,8 @@ spicetify apply
 That's it. Enjoy.
 
 For more help on installing visit the [Spicetify Docs](https://spicetify.app/docs/advanced-usage/custom-apps#installing).
+
+For the best experience, you should set up Last.fm and OAuth in the Stats app settings.
 
 ### Optional OAuth Setup
 
