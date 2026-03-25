@@ -207,11 +207,11 @@ class SpicetifyStats {
 				desc: "Automatically fetch your personal top scrobbled tracks for the artist when viewing Artist Stats. Requires a Last.fm API key and username.",
 			},
 			{
-				name: "Prefer Spotify Links",
+				name: "Prefer Spotify Links (Experimental)",
 				key: "prefer-spotify-links",
 				type: "toggle",
 				def: false,
-				desc: "Replace Last.fm links with Spotify navigation. When enabled, clicking a Last.fm entity will search Spotify and navigate to the top result.",
+				desc: "⚠️ Experimental — partially implemented. Replaces Last.fm track links with Spotify navigation in the Artist Stats modal. Link replacement across main Stats pages (top tracks, top artists, charts) is not yet complete.",
 			},
 			{
 				name: "Show Debug Console",

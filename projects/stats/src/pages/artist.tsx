@@ -48,8 +48,8 @@ const MAX_CACHE_ENTRIES = 50;
 function userCacheKey(artistId: string): string {
 	const config = window.SpicetifyStats?.ConfigWrapper?.Config;
 	const user = config?.["lastfm-user"] ?? "";
-	const hasKey = config?.["api-key"] ? "1" : "0";
-	return `${artistId}|${user}|${hasKey}`;
+	const apiKey = config?.["api-key"] ?? "";
+	return `${artistId}|${user}|${apiKey}`;
 }
 
 const _mainCache     = new Map<string, { data: ArtistData; ts: number }>();
