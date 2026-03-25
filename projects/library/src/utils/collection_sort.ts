@@ -20,7 +20,10 @@ function collectionSort(order: string, reverse: boolean): (a: CollectionChild, b
                     const aLocal = a.type === "localalbum" ? 1 : 0;
                     const bLocal = b.type === "localalbum" ? 1 : 0;
                     if (aLocal !== bLocal) return aLocal - bLocal;
-                    if (aLocal && bLocal) return a.name.replace(/^the\s+/i, '').localeCompare(b.name.replace(/^the\s+/i, ''));
+                    if (aLocal && bLocal) {
+                        const nameCompare = a.name.replace(/^the\s+/i, '').localeCompare(b.name.replace(/^the\s+/i, ''));
+                        return reverse ? -nameCompare : nameCompare;
+                    }
                 }
                 return 0; // Both standard — preserve server order
             case "6":

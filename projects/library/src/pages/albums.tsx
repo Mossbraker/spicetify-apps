@@ -61,7 +61,7 @@ function isValidAlbum(album: AlbumItem) {
 }
 
 const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
-	const [sortDropdown, sortOption, isReversed] = useSortDropdownMenu(sortOptions, "library:albums");
+	const [sortDropdown, sortOption, isReversed] = useSortDropdownMenu(sortOptions, "library:albums", ["custom"]);
 	const [filterDropdown, filterOption] = useDropdownMenu(filterOptions);
 	const [textFilter, setTextFilter] = React.useState("");
 
