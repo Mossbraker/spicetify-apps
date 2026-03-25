@@ -34,7 +34,15 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 		btn.className = "reorder-modal-header-save";
 		btn.title = "Save Order";
 		btn.setAttribute("aria-label", "Save Order");
-		btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></svg>`;
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		svg.setAttribute("width", "18");
+		svg.setAttribute("height", "18");
+		svg.setAttribute("viewBox", "0 0 24 24");
+		svg.setAttribute("fill", "currentColor");
+		const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+		path.setAttribute("d", "M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z");
+		svg.appendChild(path);
+		btn.appendChild(svg);
 		btn.addEventListener("click", () => {
 			const uris = itemsRef.current.map((item) => item.uri);
 			onSave(uris);
