@@ -109,9 +109,11 @@ export const useInfiniteQuery = <TPage,>({
 	const [status, setStatus] = React.useState<QueryStatus>(enabled ? "pending" : "success");
 	const [error, setError] = React.useState<Error | null>(null);
 	const requestIdRef = React.useRef(0);
+	const dataRef = React.useRef(data);
 	const queryFnRef = React.useRef(queryFn);
 	const queryKeyRef = React.useRef(queryKey);
 
+	React.useEffect(() => { dataRef.current = data; }, [data]);
 	React.useEffect(() => {
 		queryFnRef.current = queryFn;
 		queryKeyRef.current = queryKey;
@@ -125,7 +127,7 @@ export const useInfiniteQuery = <TPage,>({
 		}
 
 		const requestId = ++requestIdRef.current;
-		setStatus("pending");
+		setStatus((current) => (current === "success" && dataRef.current !== undefined ? current : "pending"));
 		setError(null);
 
 		try {

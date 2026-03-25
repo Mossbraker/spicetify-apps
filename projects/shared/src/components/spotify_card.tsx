@@ -15,12 +15,15 @@ function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement
 	const { type, header, uri, imageUrl, subheader, badge, provider = "spotify", onClickOverride } = props;
 	const [imageFailed, setImageFailed] = React.useState(false);
 	const [imageLoaded, setImageLoaded] = React.useState(false);
+	const prevImageUrlRef = React.useRef(imageUrl);
 
-	// Reset load/error state when the URL changes
-	React.useEffect(() => {
-		setImageFailed(false);
-		setImageLoaded(false);
-	}, [imageUrl]);
+	// Reset load/error state when the URL changes — done during render
+	// (not in useEffect) to avoid racing with synchronous onLoad for cached images.
+	if (prevImageUrlRef.current !== imageUrl) {
+		prevImageUrlRef.current = imageUrl;
+		if (imageFailed) setImageFailed(false);
+		if (imageLoaded) setImageLoaded(false);
+	}
 
 	const fallbackLabel = header
 		.split(/\s+/)

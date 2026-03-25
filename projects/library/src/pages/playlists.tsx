@@ -272,7 +272,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 				uri={item.uri === "spotify:local-files" ? "spotify:collection:local-files" : item.uri}
 				header={item.name}
 				subheader={item.owner?.name || "System Playlist"}
-				imageUrl={item.images?.[0]?.url || playlistImages[item.uri]}
+				imageUrl={playlistImages[item.uri] || item.images?.[0]?.url}
 				badge={item.pinned ? <PinIcon /> : undefined}
 			/>
 	));
