@@ -24,8 +24,8 @@ const GITHUB_CACHE_KEY = "stats:github-releases-cache";
 const GITHUB_CACHE_TTL_MS = 60 * 60_000; // 1 hour
 
 const checkForUpdates = (setNewUpdate: (a: boolean) => void) => {
-	const processReleases = (result: { name: string }[]) => {
-		const releases = result.filter((release) => release.name.startsWith("stats"));
+	const processReleases = (result: { name: string | null }[]) => {
+		const releases = result.filter((release): release is { name: string } => release.name?.startsWith("stats") === true);
 		if (releases.length === 0) return;
 		setNewUpdate(releases[0].name.slice(7) !== version);
 	};
@@ -33,7 +33,7 @@ const checkForUpdates = (setNewUpdate: (a: boolean) => void) => {
 	try {
 		const raw = sessionStorage.getItem(GITHUB_CACHE_KEY);
 		if (raw) {
-			const cached = JSON.parse(raw) as { data: { name: string }[]; ts: number };
+			const cached = JSON.parse(raw) as { data: { name: string | null }[]; ts: number };
 			if (Date.now() - cached.ts < GITHUB_CACHE_TTL_MS) {
 				processReleases(cached.data);
 				return;
