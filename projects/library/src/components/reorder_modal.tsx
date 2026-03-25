@@ -119,7 +119,11 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 		e.preventDefault();
 		const sourceIndex = dragIndexRef.current;
 		if (sourceIndex !== null && sourceIndex !== targetIndex) {
-			moveItem(sourceIndex, targetIndex);
+			// When dragging downward, splice(fromIndex, 1) shifts later indices
+			// down by 1, so decrement targetIndex to land before the drop target
+			// (matching the border-top visual indicator).
+			const adjustedTarget = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+			moveItem(sourceIndex, adjustedTarget);
 		}
 		dragIndexRef.current = null;
 		dropTargetRef.current = null;

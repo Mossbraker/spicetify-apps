@@ -57,9 +57,15 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 					{imageUrl && !imageFailed ? (
 						<img src={imageUrl} alt="" loading="lazy" onError={() => setImageFailed(true)} />
 					) : isCollection ? (
-						<div className="stats-plain-card-imageFallback" aria-hidden="true">
-							<svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-								<path d="M1 4a2 2 0 0 1 2-2h5.155a3 3 0 0 1 2.598 1.5l.866 1.5H21a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4zm7.155 0H3v16h18V7H10.464L9.021 4.5a1 1 0 0 0-.866-.5z"/>
+						<div className="stats-plain-card-imageFallback stats-folder-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24" width="48" height="48" xmlns="http://www.w3.org/2000/svg">
+								<defs>
+									<linearGradient id="folderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+										<stop offset="0%" stopColor="#1ed760" />
+										<stop offset="100%" stopColor="#1db954" />
+									</linearGradient>
+								</defs>
+								<path fill="url(#folderGrad)" d="M1 4a2 2 0 0 1 2-2h5.155a3 3 0 0 1 2.598 1.5l.866 1.5H21a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4zm7.155 0H3v16h18V7H10.464L9.021 4.5a1 1 0 0 0-.866-.5z"/>
 							</svg>
 						</div>
 					) : (

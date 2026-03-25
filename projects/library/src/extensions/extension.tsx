@@ -46,7 +46,13 @@ const FolderPlaceholder = () => {
 				className="Svg-sc-ytk21e-0 Svg-img-icon-medium"
 				viewBox="0 0 24 24"
 			>
-				<path d="M1 4a2 2 0 0 1 2-2h5.155a3 3 0 0 1 2.598 1.5l.866 1.5H21a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4zm7.155 0H3v16h18V7H10.464L9.021 4.5a1 1 0 0 0-.866-.5z" />
+				<defs>
+					<linearGradient id="sidebarFolderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+						<stop offset="0%" stopColor="#1ed760" />
+						<stop offset="100%" stopColor="#1db954" />
+					</linearGradient>
+				</defs>
+				<path fill="url(#sidebarFolderGrad)" d="M1 4a2 2 0 0 1 2-2h5.155a3 3 0 0 1 2.598 1.5l.866 1.5H21a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4zm7.155 0H3v16h18V7H10.464L9.021 4.5a1 1 0 0 0-.866-.5z" />
 			</svg>
 		</div>
 	);
@@ -177,11 +183,12 @@ function main(LocalStorageAPI: LocalStorageAPI) {
 				const uri = el.querySelector("[aria-labelledby]")?.getAttribute("aria-labelledby")?.slice(14);
 				if (uri?.includes("folder")) {
 					const imageBox = el.querySelector(".x-entityImage-imageContainer");
-					if (!imageBox) return; // for compact view
+					if (!imageBox) continue; // skip this folder (compact view)
 
 					const imageUrl = FolderImageWrapper.getFolderImage(uri);
 
 					if (imageUrl) ReactDOM.render(<FolderImage url={imageUrl} />, imageBox);
+					else ReactDOM.render(<FolderPlaceholder />, imageBox);
 				}
 			}
 		}, 500); // timeout is easier than waiting for certain elements
