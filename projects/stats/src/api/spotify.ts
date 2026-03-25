@@ -36,6 +36,33 @@ const DEFAULT_SUPPRESSION_MS = 60_000;
 const endpointSuppressions = new Map<string, SuppressedEndpoint>();
 const sessionSearchCache = new Map<string, SessionSearchCacheEntry>();
 
+// ── In-memory cache for external (non-Spotify) API responses (e.g. Last.fm) ──
+const EXTERNAL_CACHE_TTL_MS = 30 * 60_000; // 30 min
+const EXTERNAL_CACHE_MAX = 200;
+const externalFetchCache = new Map<string, { data: unknown; ts: number }>();
+const externalInflight = new Map<string, Promise<unknown>>();
+
+function readExternalCache<T>(url: string): T | undefined {
+	const entry = externalFetchCache.get(url);
+	if (!entry) return undefined;
+	if (Date.now() - entry.ts < EXTERNAL_CACHE_TTL_MS) return entry.data as T;
+	externalFetchCache.delete(url);
+	return undefined;
+}
+
+function writeExternalCache<T>(url: string, data: T): T {
+	const now = Date.now();
+	for (const [k, v] of externalFetchCache) {
+		if (now - v.ts >= EXTERNAL_CACHE_TTL_MS) externalFetchCache.delete(k);
+	}
+	if (externalFetchCache.size >= EXTERNAL_CACHE_MAX) {
+		const oldest = externalFetchCache.keys().next().value;
+		if (oldest !== undefined) externalFetchCache.delete(oldest);
+	}
+	externalFetchCache.set(url, { data, ts: now });
+	return data;
+}
+
 const setSuppressionActivity = (endpointKey: string, suppression: SuppressedEndpoint) => {
 	statsDebug.setActivity({
 		key: `suppression:${endpointKey}`,
@@ -455,10 +482,22 @@ const attemptOAuthRefreshAndRetry = async <T>(name: string, url: string): Promis
  */
 export const apiFetch = async <T>(name: string, url: string, log = true): Promise<T> => {
 	if (!isSpotifyApiUrl(url)) {
+		const cached = readExternalCache<T>(url);
+		if (cached !== undefined) {
+			if (log) debugLog("stats -", name, "served from external fetch cache");
+			return cached;
+		}
+		// Deduplicate concurrent in-flight requests for the same URL
+		const pending = externalInflight.get(url);
+		if (pending) return pending as Promise<T>;
+
 		const timeStart = window.performance.now();
-		const response = await externalFetch<T>(url);
-		if (log) debugLog("stats -", name, "fetch time:", window.performance.now() - timeStart);
-		return response;
+		const promise = externalFetch<T>(url).then(
+			(data) => { externalInflight.delete(url); if (log) debugLog("stats -", name, "fetch time:", window.performance.now() - timeStart); return writeExternalCache(url, data); },
+			(err) => { externalInflight.delete(url); throw err; },
+		);
+		externalInflight.set(url, promise);
+		return promise;
 	}
 
 	const endpointKey = getEndpointKey(url);

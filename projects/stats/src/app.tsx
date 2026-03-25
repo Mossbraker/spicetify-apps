@@ -20,14 +20,42 @@ import "../../shared/src/shared.scss";
 import { ConfigWrapper } from "./types/stats_types";
 
 
+const GITHUB_CACHE_KEY = "stats:github-releases-cache";
+const GITHUB_CACHE_TTL_MS = 60 * 60_000; // 1 hour
+
 const checkForUpdates = (setNewUpdate: (a: boolean) => void) => {
+	const processReleases = (result: { name: string }[]) => {
+		const releases = result.filter((release) => release.name.startsWith("stats"));
+		if (releases.length === 0) return;
+		setNewUpdate(releases[0].name.slice(7) !== version);
+	};
+
+	try {
+		const raw = sessionStorage.getItem(GITHUB_CACHE_KEY);
+		if (raw) {
+			const cached = JSON.parse(raw) as { data: { name: string }[]; ts: number };
+			if (Date.now() - cached.ts < GITHUB_CACHE_TTL_MS) {
+				processReleases(cached.data);
+				return;
+			}
+		}
+	} catch {
+		// Corrupted cache — fall through to fetch
+	}
+
 	fetch("https://api.github.com/repos/harbassan/spicetify-apps/releases")
-		.then((res) => res.json())
+		.then((res) => {
+			if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+			return res.json();
+		})
 		.then(
 			(result) => {
-				const releases = result.filter((release: { name: string }) => release.name.startsWith("stats"));
-				if (releases.length === 0) return;
-				setNewUpdate(releases[0].name.slice(7) !== version);
+				try {
+					sessionStorage.setItem(GITHUB_CACHE_KEY, JSON.stringify({ data: result, ts: Date.now() }));
+				} catch {
+					// sessionStorage full or unavailable
+				}
+				processReleases(result);
 			},
 			(error) => {
 				console.warn("Failed to check for updates", error);

@@ -67,6 +67,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	const isCustomOrder = sortOption.id === "custom";
 	const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
+	const [customPage, setCustomPage] = React.useState(1);
 
 	const fetchAlbums = async ({ pageParam }: { pageParam: number }) => {
 		if (isCustomOrder) return { items: [], totalLength: 0, offset: 0 } as unknown as GetContentsResponse<AlbumItem>;
@@ -183,6 +184,11 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		};
 	}, [isCustomOrder, forceUpdate]);
 
+	// Reset custom page when sort or filter changes
+	useEffect(() => {
+		setCustomPage(1);
+	}, [sortOption.id, filterOption.id, textFilter]);
+
 	// Reconcile custom order when data arrives (only when no text filter).
 	// Note: customData may include local album URIs (filters: ["0"]).
 	// They sort to the end via sortByOrder and can't be repositioned in
@@ -200,10 +206,13 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	// Declare albums early so openReorderModal closure can reference it.
 	// Populated after status guards below.
 	let albums: AlbumItem[] = [];
+	let allCustomAlbums: AlbumItem[] = []; // Full unsliced list for reorder modal
+	let customTotalValid = 0;
 
-	// Reorder modal opener — only includes standard (non-local) albums
+	// Reorder modal opener — uses full unsliced list, only includes standard (non-local) albums
 	const openReorderModal = () => {
-		const validItems = albums.filter((item) => isValidAlbum(item) && item.type === "album").map((item) => ({
+		const source = allCustomAlbums.length > 0 ? allCustomAlbums : albums;
+		const validItems = source.filter((item) => isValidAlbum(item) && item.type === "album").map((item) => ({
 			uri: item.uri,
 			name: item.name,
 			artist: item.artists[0]?.name ?? "Unknown",
@@ -280,6 +289,11 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 				album.type === "localalbum" || regex.test(album.name) || album.artists.some((artist) => regex.test(artist.name))
 			);
 		}
+
+		// Client-side pagination: save full list for reorder modal, then slice to current page
+		customTotalValid = albums.filter(isValidAlbum).length;
+		allCustomAlbums = albums;
+		albums = albums.slice(0, customPage * limit);
 	} else {
 		const contents = data as NonNullable<typeof data>;
 		albums = filterOption.id !== "2" ? contents.pages.flatMap((page) => page.items) : [];
@@ -317,13 +331,17 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		)
 	));
 
-	// Only show LoadMoreCard for standard (non-custom) sort
-	if (!isCustomOrder && hasNextPage) albumCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
+	// LoadMoreCard for standard pagination or custom order client-side pagination
+	if (isCustomOrder && customTotalValid > validAlbums.length) {
+		albumCards.push(<LoadMoreCard key="load-more" callback={() => setCustomPage((p) => p + 1)} />);
+	} else if (!isCustomOrder && hasNextPage) {
+		albumCards.push(<LoadMoreCard key="load-more" callback={fetchNextPage} />);
+	}
 
 	return (
 		<PageContainer {...props}>
 			{configWrapper.config["show-item-count"] ? (
-				<div className="library-item-count">{validAlbums.length} albums</div>
+				<div className="library-item-count">{isCustomOrder ? customTotalValid : validAlbums.length} albums</div>
 			) : null}
 			<div className={"main-gridContainer-gridContainer grid"}>{albumCards}</div>
 		</PageContainer>
