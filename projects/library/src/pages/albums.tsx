@@ -190,12 +190,11 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	}, [sortOption.id, filterOption.id, textFilter]);
 
 	// Reconcile custom order when data arrives (only when no text filter).
-	// Note: customData may include local album URIs (filters: ["0"]).
-	// They sort to the end via sortByOrder and can't be repositioned in
-	// the reorder modal (which excludes local albums intentionally).
+	// Filter to standard albums only — local albums are excluded from
+	// custom order persistence (matching the reorder modal's filter).
 	useEffect(() => {
 		if (!isCustomOrder || !customData || textFilter) return;
-		const uris = customData.items?.map((a) => a.uri) ?? [];
+		const uris = (customData.items ?? []).filter((a) => a.type === "album").map((a) => a.uri);
 		customOrderStore.reconcile(uris);
 	}, [isCustomOrder, customData, textFilter]);
 
