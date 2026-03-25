@@ -43,6 +43,15 @@ const TRACK_PREVIEW_COUNT = 10;
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
 const MAX_CACHE_ENTRIES = 50;
 
+/** Build a cache key that incorporates user-specific config so switching
+ *  Last.fm username or API key invalidates stale entries. */
+function userCacheKey(artistId: string): string {
+	const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+	const user = config?.["lastfm-user"] ?? "";
+	const hasKey = config?.["api-key"] ? "1" : "0";
+	return `${artistId}|${user}|${hasKey}`;
+}
+
 const _mainCache     = new Map<string, { data: ArtistData; ts: number }>();
 const _overviewCache = new Map<string, { data: ArtistUnion; ts: number }>();
 const _playlistCache = new Map<string, { data: PlaylistAppearance[]; ts: number }>();
@@ -78,7 +87,7 @@ function fromCache<T>(map: Map<string, { data: T; ts: number }>, key: string): T
 }
 
 export function getCachedArtistName(artistId: string): string | null {
-	const cached = fromCache(_mainCache, artistId);
+	const cached = fromCache(_mainCache, userCacheKey(artistId));
 	return cached?.overview.profile.name ?? null;
 }
 
@@ -107,10 +116,10 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 	const [showAllLfmTracks, setShowAllLfmTracks] = React.useState(false);
 	const [showAllUserTracks, setShowAllUserTracks] = React.useState(false);
 	const [lfmTopTracks, setLfmTopTracks] = React.useState<{ name: string; playcount: string; listeners: string; url: string; imageUrl?: string }[] | null>(
-		() => fromCache(_lfmTracksCache, artistId));
+		() => fromCache(_lfmTracksCache, userCacheKey(artistId)));
 	const [lfmTopTracksLoading, setLfmTopTracksLoading] = React.useState(false);
 	const [userTopTracks, setUserTopTracks] = React.useState<{ name: string; url: string; userPlaycount: number; imageUrl?: string }[] | null>(
-		() => fromCache(_userTracksCache, artistId));
+		() => fromCache(_userTracksCache, userCacheKey(artistId)));
 	const [userTopTracksLoading, setUserTopTracksLoading] = React.useState(false);
 	const [resolvedUris, setResolvedUris] = React.useState<Map<string, string>>(new Map());
 	const isMountedRef = React.useRef(true);
@@ -141,7 +150,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 	// not the rate-limited public Spotify Web API. It is intentionally exempt from the
 	// "lastfm-only" setting, which only gates public API calls on Stats chart/list pages.
 	const fetchData = useCallback(async (): Promise<ArtistData> => {
-		const cached = fromCache(_mainCache, artistId);
+		const cached = fromCache(_mainCache, userCacheKey(artistId));
 		if (cached) return cached;
 
 		const overview = fromCache(_overviewCache, artistId)
@@ -163,11 +172,11 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			}
 		}
 		const result = { overview, lastfmInfo, lastfmTags };
-		toCache(_mainCache, artistId, result);
+		toCache(_mainCache, userCacheKey(artistId), result);
 		return result;
 	}, [artistId]);
 
-	const { status, error, data } = usePopupQuery(fetchData, fromCache(_mainCache, artistId) ?? undefined);
+	const { status, error, data } = usePopupQuery(fetchData, fromCache(_mainCache, userCacheKey(artistId)) ?? undefined);
 
 	// Playlist scanning closure — needs access to setPlaylistProgress (component state)
 	const scanPlaylists = React.useCallback(
@@ -249,7 +258,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		try {
 			const tracks = await getArtistGlobalTopTracks(config["api-key"], data.overview.profile.name);
 			if (isMountedRef.current) {
-				toCache(_lfmTracksCache, artistId, tracks);
+				toCache(_lfmTracksCache, userCacheKey(artistId), tracks);
 				setLfmTopTracks(tracks);
 			}
 		} catch {
@@ -278,7 +287,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 				config["lastfm-user"],
 			);
 			if (isMountedRef.current) {
-				toCache(_userTracksCache, artistId, tracks);
+				toCache(_userTracksCache, userCacheKey(artistId), tracks);
 				setUserTopTracks(tracks);
 			}
 		} catch {

@@ -44,7 +44,7 @@ const normalizeError = (error: unknown) => {
 export const useQuery = <TData,>({ queryKey, queryFn, enabled = true }: QueryOptions<TData>): QueryResult<TData> => {
 	const key = keyToString(queryKey);
 	const [data, setData] = React.useState<TData | undefined>(undefined);
-	const [status, setStatus] = React.useState<QueryStatus>(enabled ? "pending" : "success");
+	const [status, setStatus] = React.useState<QueryStatus>("pending");
 	const [error, setError] = React.useState<Error | null>(null);
 	const requestIdRef = React.useRef(0);
 	const dataRef = React.useRef(data);
@@ -59,7 +59,7 @@ export const useQuery = <TData,>({ queryKey, queryFn, enabled = true }: QueryOpt
 
 	const runQuery = React.useCallback(async () => {
 		if (!enabled) {
-			setStatus("success");
+			setStatus((current) => (current === "success" && dataRef.current !== undefined ? current : "pending"));
 			setError(null);
 			return dataRef.current;
 		}
@@ -87,7 +87,7 @@ export const useQuery = <TData,>({ queryKey, queryFn, enabled = true }: QueryOpt
 
 	React.useEffect(() => {
 		if (!enabled) {
-			setStatus("success");
+			setStatus((current) => (current === "success" && dataRef.current !== undefined ? current : "pending"));
 			setError(null);
 			return;
 		}
@@ -106,7 +106,7 @@ export const useInfiniteQuery = <TPage,>({
 }: InfiniteQueryOptions<TPage>): InfiniteQueryResult<TPage> => {
 	const key = keyToString(queryKey);
 	const [data, setData] = React.useState<{ pages: TPage[]; pageParams: number[] } | undefined>(undefined);
-	const [status, setStatus] = React.useState<QueryStatus>(enabled ? "pending" : "success");
+	const [status, setStatus] = React.useState<QueryStatus>("pending");
 	const [error, setError] = React.useState<Error | null>(null);
 	const requestIdRef = React.useRef(0);
 	const dataRef = React.useRef(data);
@@ -121,7 +121,7 @@ export const useInfiniteQuery = <TPage,>({
 
 	const loadInitial = React.useCallback(async () => {
 		if (!enabled) {
-			setStatus("success");
+			setStatus((current) => (current === "success" && dataRef.current !== undefined ? current : "pending"));
 			setError(null);
 			return;
 		}
@@ -147,7 +147,7 @@ export const useInfiniteQuery = <TPage,>({
 
 	React.useEffect(() => {
 		if (!enabled) {
-			setStatus("success");
+			setStatus((current) => (current === "success" && dataRef.current !== undefined ? current : "pending"));
 			setError(null);
 			return;
 		}

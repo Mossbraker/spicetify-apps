@@ -152,12 +152,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	});
 
 	// Active query routing
-	// Guard: useQuery/useInfiniteQuery set status="success" when enabled=false without populating data.
-	// When switching between custom and standard sort, the previously-disabled query has status="success"
-	// but data is still undefined — override to "pending" so the loading guard prevents .items/.pages access.
-	const activeStatus = isCustomOrder
-		? (customStatus === "success" && customData == null ? "pending" : customStatus)
-		: (status === "success" && data == null ? "pending" : status);
+	const activeStatus = isCustomOrder ? customStatus : status;
 	const activeError = isCustomOrder ? customError : error;
 	const activeRefetch = isCustomOrder ? customRefetch : refetch;
 
@@ -199,7 +194,8 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	}, [isCustomOrder, customData, textFilter]);
 
 	const Status = useStatus(activeStatus, activeError);
-	const LocalStatus = configWrapper.config.localAlbums && useStatus(localStatus, localError);
+	const localStatusResult = useStatus(localStatus, localError);
+	const LocalStatus = configWrapper.config.localAlbums ? localStatusResult : null;
 	const EmptyStatus = useStatus("error", new Error("No albums found")) as React.ReactElement;
 
 	// Declare albums early so openReorderModal closure can reference it.

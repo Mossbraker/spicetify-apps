@@ -260,6 +260,7 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	}, [refetch]);
 
 	const Status = useStatus(status, error);
+	const EmptyStatus = useStatus("error", new Error("No shows found")) as React.ReactElement;
 
 	const props = {
 		lhs: ["Shows"],
@@ -297,7 +298,6 @@ const ShowsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	});
 
 	if (shows.length === 0) {
-		const EmptyStatus = useStatus("error", new Error("No shows found")) as React.ReactElement;
 		return <PageContainer {...props}>{EmptyStatus}</PageContainer>;
 	}
 
