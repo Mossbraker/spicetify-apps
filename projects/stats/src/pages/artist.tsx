@@ -36,6 +36,7 @@ const formatNumber = (num: number): string => {
 };
 
 const PLAYLIST_PREVIEW_COUNT = 6;
+const TRACK_PREVIEW_COUNT = 10;
 
 // ── Module-level caches ──────────────────────────────────────────────────────
 // Survive modal close/reopen within the same Spotify session.
@@ -76,6 +77,8 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 	const [playlistProgress, setPlaylistProgress] = React.useState<{ current: number; total: number } | null>(null);
 	const [playlistLoading, setPlaylistLoading] = React.useState(false);
 	const [showAllPlaylists, setShowAllPlaylists] = React.useState(false);
+	const [showAllLfmTracks, setShowAllLfmTracks] = React.useState(false);
+	const [showAllUserTracks, setShowAllUserTracks] = React.useState(false);
 	const [lfmTopTracks, setLfmTopTracks] = React.useState<{ name: string; playcount: string; listeners: string; url: string; imageUrl?: string }[] | null>(
 		() => fromCache(_lfmTracksCache, artistId));
 	const [lfmTopTracksLoading, setLfmTopTracksLoading] = React.useState(false);
@@ -144,7 +147,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 				const rootlist = await Spicetify.Platform.RootlistAPI.getContents({ flatten: true });
 				const playlists = (rootlist as { items?: { uri: string; name: string; type: string }[] }).items
 					?.filter((i: { type: string }) => i.type === "playlist")
-					?.slice(0, 200) ?? [];
+					 ?? [];
 				const results: PlaylistAppearance[] = [];
 				const CONCURRENCY = 5;
 
@@ -559,8 +562,9 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 							<div className="stats-playlistProgress">Loading Last.fm top tracks...</div>
 						) : null
 					) : lfmTopTracks.length > 0 ? (
+						<>
 						<div className="stats-lfmTrackList">
-							{lfmTopTracks.map((track, idx) => {
+							{(showAllLfmTracks ? lfmTopTracks : lfmTopTracks.slice(0, TRACK_PREVIEW_COUNT)).map((track, idx) => {
 								const resolved = resolvedUris.get(`${track.name}::${track.url}`);
 								return (
 									<ArtistTrackRow
@@ -580,6 +584,16 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 								);
 							})}
 						</div>
+						{lfmTopTracks.length > TRACK_PREVIEW_COUNT && (
+							<button
+								type="button"
+								className="stats-seeMoreBtn"
+								onClick={() => setShowAllLfmTracks((v) => !v)}
+							>
+								{showAllLfmTracks ? "Show fewer" : `Show all ${lfmTopTracks.length} tracks`}
+							</button>
+						)}
+						</>
 					) : (
 						<div className="main-card-card stats-genreCard stats-genreCardEmpty">
 							No Last.fm top tracks available
@@ -605,8 +619,9 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 							<div className="stats-playlistProgress">Loading your top scrobbled tracks...</div>
 						) : null
 					) : userTopTracks.length > 0 ? (
+						<>
 						<div className="stats-lfmTrackList">
-							{userTopTracks.map((track, idx) => {
+							{(showAllUserTracks ? userTopTracks : userTopTracks.slice(0, TRACK_PREVIEW_COUNT)).map((track, idx) => {
 								const resolved = resolvedUris.get(`${track.name}::${track.url}`);
 								return (
 									<ArtistTrackRow
@@ -626,6 +641,16 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 								);
 							})}
 						</div>
+						{userTopTracks.length > TRACK_PREVIEW_COUNT && (
+							<button
+								type="button"
+								className="stats-seeMoreBtn"
+								onClick={() => setShowAllUserTracks((v) => !v)}
+							>
+								{showAllUserTracks ? "Show fewer" : `Show all ${userTopTracks.length} tracks`}
+							</button>
+						)}
+						</>
 					) : (
 						<div className="main-card-card stats-genreCard stats-genreCardEmpty">
 							No scrobble data found for this artist
