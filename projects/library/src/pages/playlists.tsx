@@ -82,6 +82,22 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [flattenDropdown, flattenOption] = useDropdownMenu(flattenOptions);
 	const [textFilter, setTextFilter] = React.useState("");
 	const [images, setImages] = React.useState({ ...FolderImageWrapper.getFolderImages() });
+	const [playlistImages, setPlaylistImages] = React.useState<Record<string, string>>({});
+
+	// Fetch playlist cover images from RootlistAPI (LibraryAPI doesn't include them)
+	useEffect(() => {
+		Spicetify.Platform.RootlistAPI.getContents({ flatten: true })
+			.then((res: { items: Array<{ uri: string; type: string; images?: Array<{ url: string }> }> }) => {
+				const imageMap: Record<string, string> = {};
+				for (const item of res.items) {
+					if (item.type === "playlist" && item.images?.[0]?.url) {
+						imageMap[item.uri] = item.images[0].url;
+					}
+				}
+				setPlaylistImages(imageMap);
+			})
+			.catch(() => { /* ignore -- cards fall back to initials */ });
+	}, []);
 
 	const folder = Spicetify.Platform.History.location.pathname.split("/")[3];
 
@@ -168,7 +184,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 				uri={item.uri === "spotify:local-files" ? "spotify:collection:local-files" : item.uri}
 				header={item.name}
 				subheader={item.owner?.name || "System Playlist"}
-				imageUrl={item.images?.[0]?.url}
+				imageUrl={item.images?.[0]?.url || playlistImages[item.uri]}
 				badge={item.pinned ? <PinIcon /> : undefined}
 			/>
 	));
