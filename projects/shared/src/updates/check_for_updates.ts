@@ -10,7 +10,7 @@ const checkForUpdates = (
 
 	const processReleases = (result: { name: string | null }[]) => {
 		const releases = result.filter(
-			(release): release is { name: string } => release.name?.startsWith(appName) === true,
+			(release): release is { name: string } => release.name?.startsWith(prefixWithV) === true,
 		);
 		if (releases.length === 0) return;
 		setNewUpdate(releases[0].name.slice(prefixWithV.length) !== version);

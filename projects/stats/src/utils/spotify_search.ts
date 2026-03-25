@@ -11,10 +11,17 @@ function cosmosCacheSet(key: string, value: { uri: string; ts: number }): void {
 	for (const [k, v] of cosmosCache) {
 		if (now - v.ts >= COSMOS_CACHE_TTL_MS) cosmosCache.delete(k);
 	}
-	// If still at capacity, remove the oldest entry
+	// If still at capacity, remove the oldest entry by timestamp
 	if (cosmosCache.size >= COSMOS_CACHE_MAX_SIZE) {
-		const firstKey = cosmosCache.keys().next().value;
-		if (firstKey !== undefined) cosmosCache.delete(firstKey);
+		let oldestKey: string | undefined;
+		let oldestTs = Infinity;
+		for (const [k, v] of cosmosCache) {
+			if (v.ts < oldestTs) {
+				oldestTs = v.ts;
+				oldestKey = k;
+			}
+		}
+		if (oldestKey !== undefined) cosmosCache.delete(oldestKey);
 	}
 	cosmosCache.set(key, value);
 }
