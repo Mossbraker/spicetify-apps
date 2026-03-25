@@ -100,6 +100,12 @@ export async function searchAndNavigate(
 			}
 		}
 	}
+	// window.open is called after async operations. In standard web browsers this risks
+	// losing user-gesture context (popup blockers). This function runs exclusively in
+	// Spotify's Electron shell, where gesture-based popup blocking is not enforced, so
+	// the behaviour is safe. If this code is ever adapted for a web context, switch to
+	// opening a blank window synchronously before the first await and setting its
+	// location here, or return the fallbackUrl to the caller to open synchronously.
 	window.open(fallbackUrl, "_blank", "noopener,noreferrer");
 }
 

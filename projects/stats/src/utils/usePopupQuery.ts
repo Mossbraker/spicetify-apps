@@ -38,7 +38,7 @@ export const usePopupQuery = <T,>(callback: () => Promise<T>, initialData?: T) =
 		return () => {
 			cancelled = true;
 		};
-	}, [callback]); // eslint-disable-line react-hooks/exhaustive-deps -- initialData is captured from the current render; including it would cause spurious re-runs when the cached reference changes without semantic change. When callback changes, the effect re-runs and captures the current initialData naturally.
+	}, [callback]); // eslint-disable-line react-hooks/exhaustive-deps -- initialData is intentionally not a dependency: it is only honored on mount or when `callback` changes. If initialData changes while callback is stable, this effect will not re-run or resync from the new value.
 
 	return { status, error, data };
 };
