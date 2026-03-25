@@ -41,11 +41,33 @@ const TRACK_PREVIEW_COUNT = 10;
 // ── Module-level caches ──────────────────────────────────────────────────────
 // Survive modal close/reopen within the same Spotify session.
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
+const MAX_CACHE_ENTRIES = 50;
 
 const _mainCache     = new Map<string, { data: ArtistData; ts: number }>();
+const _overviewCache = new Map<string, { data: ArtistUnion; ts: number }>();
 const _playlistCache = new Map<string, { data: PlaylistAppearance[]; ts: number }>();
 const _lfmTracksCache = new Map<string, { data: { name: string; playcount: string; listeners: string; url: string; imageUrl?: string }[]; ts: number }>();
 const _userTracksCache = new Map<string, { data: { name: string; url: string; userPlaycount: number; imageUrl?: string }[]; ts: number }>();
+
+/** Remove expired entries and enforce a size cap on any cache map. */
+function pruneCache<T>(map: Map<string, { data: T; ts: number }>): void {
+	const now = Date.now();
+	for (const [key, entry] of map) {
+		if (now - entry.ts >= CACHE_TTL_MS) map.delete(key);
+	}
+	// If still over the cap, drop oldest entries
+	if (map.size > MAX_CACHE_ENTRIES) {
+		const entries = [...map.entries()].sort((a, b) => a[1].ts - b[1].ts);
+		const toDrop = entries.length - MAX_CACHE_ENTRIES;
+		for (let i = 0; i < toDrop; i++) map.delete(entries[i][0]);
+	}
+}
+
+/** Write to a cache map, pruning expired/overflow entries first. */
+function toCache<T>(map: Map<string, { data: T; ts: number }>, key: string, data: T): void {
+	pruneCache(map);
+	map.set(key, { data, ts: Date.now() });
+}
 
 function fromCache<T>(map: Map<string, { data: T; ts: number }>, key: string): T | null {
 	const entry = map.get(key);
@@ -58,6 +80,11 @@ function fromCache<T>(map: Map<string, { data: T; ts: number }>, key: string): T
 export function getCachedArtistName(artistId: string): string | null {
 	const cached = fromCache(_mainCache, artistId);
 	return cached?.overview.profile.name ?? null;
+}
+
+/** Pre-populate the overview cache so ArtistPage skips the redundant GraphQL call. */
+export function populateOverviewCache(artistId: string, overview: ArtistUnion): void {
+	toCache(_overviewCache, artistId, overview);
 }
 
 const TooltipIcon = () => (
@@ -110,11 +137,15 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 	}, []);
 
 	// Read config inside callback body to avoid unstable config reference in deps
+	// Note: getArtistOverview uses Spicetify's internal GraphQL (Spicetify.GraphQL.Request),
+	// not the rate-limited public Spotify Web API. It is intentionally exempt from the
+	// "lastfm-only" setting, which only gates public API calls on Stats chart/list pages.
 	const fetchData = useCallback(async (): Promise<ArtistData> => {
 		const cached = fromCache(_mainCache, artistId);
 		if (cached) return cached;
 
-		const overview = await getArtistOverview(`spotify:artist:${artistId}`);
+		const overview = fromCache(_overviewCache, artistId)
+			?? await getArtistOverview(`spotify:artist:${artistId}`);
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
 
 		let lastfmInfo = null;
@@ -132,7 +163,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			}
 		}
 		const result = { overview, lastfmInfo, lastfmTags };
-		_mainCache.set(artistId, { data: result, ts: Date.now() });
+		toCache(_mainCache, artistId, result);
 		return result;
 	}, [artistId]);
 
@@ -177,7 +208,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 					}
 				}
 				if (isMountedRef.current) {
-					_playlistCache.set(artistUri, { data: results, ts: Date.now() });
+					toCache(_playlistCache, artistUri, results);
 					setPlaylistAppearances(results);
 				}
 			} catch {
@@ -218,7 +249,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 		try {
 			const tracks = await getArtistGlobalTopTracks(config["api-key"], data.overview.profile.name);
 			if (isMountedRef.current) {
-				_lfmTracksCache.set(artistId, { data: tracks, ts: Date.now() });
+				toCache(_lfmTracksCache, artistId, tracks);
 				setLfmTopTracks(tracks);
 			}
 		} catch {
@@ -247,7 +278,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 				config["lastfm-user"],
 			);
 			if (isMountedRef.current) {
-				_userTracksCache.set(artistId, { data: tracks, ts: Date.now() });
+				toCache(_userTracksCache, artistId, tracks);
 				setUserTopTracks(tracks);
 			}
 		} catch {

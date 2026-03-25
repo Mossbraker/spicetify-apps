@@ -1,6 +1,6 @@
 import React from "react";
 import PlaylistPage from "../pages/playlist";
-import ArtistPage, { getCachedArtistName } from "../pages/artist";
+import ArtistPage, { getCachedArtistName, populateOverviewCache } from "../pages/artist";
 import { version as STATS_VERSION } from "../../package.json";
 import ConfigWrapper from "@shared/config/config_wrapper";
 import { startAuthFlow, handleCallback, clearTokens, getConnectionStatus } from "../api/oauth";
@@ -52,7 +52,7 @@ class SpicetifyStats {
 				key: "lastfm-only",
 				type: "toggle",
 				def: true,
-				desc: "Avoid all Spotify API calls. Stats will use LastFM data only without enrichment. Useful if you're rate-limited.",
+				desc: "Avoid Spotify Web API calls for Stats pages and use Last.fm-only conversions. Does not affect Artist Stats, which uses Spicetify's internal GraphQL (not the rate-limited public API).",
 			},
 			{
 				name: "Include MusicBrainz Genre Tags",
@@ -271,6 +271,7 @@ window.SpicetifyStats = new SpicetifyStats();
 		if (!artistName) {
 			try {
 				const overview = await getArtistOverview(artistUri);
+				populateOverviewCache(artistId, overview);
 				artistName = overview.profile.name;
 			} catch {
 				artistName = null;
