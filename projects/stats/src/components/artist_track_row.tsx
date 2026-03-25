@@ -49,7 +49,7 @@ const ArtistTrackRow = ({ index, name, stat, imageUrl, uri, href, onClickOverrid
 				<img
 					aria-hidden="true"
 					draggable="false"
-					loading="eager"
+					loading="lazy"
 					src={imageUrl}
 					alt=""
 					width="40"

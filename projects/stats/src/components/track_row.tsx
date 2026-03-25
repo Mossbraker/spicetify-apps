@@ -58,7 +58,7 @@ const TrackArtwork = ({ image, name }: { image?: string; name: string }) => {
 		<img
 			aria-hidden="true"
 			draggable="false"
-			loading="eager"
+			loading="lazy"
 			src={image}
 			alt=""
 			className="main-image-image main-trackList-rowImage main-image-loaded"

@@ -78,8 +78,23 @@ const flattenOptions = [
 
 // Module-level cache: URIs whose images have already been fetched or attempted.
 // Persists across re-renders and page navigations within the session.
+// Bounded to prevent unbounded memory growth over long sessions.
+const MAX_CACHE_SIZE = 2000;
 const fetchedImageUris = new Set<string>();
 const imageCache: Record<string, string> = {};
+const imageCacheKeys: string[] = [];
+
+function addToImageCache(uri: string, url: string) {
+	if (!(uri in imageCache)) {
+		imageCacheKeys.push(uri);
+		if (imageCacheKeys.length > MAX_CACHE_SIZE) {
+			const oldest = imageCacheKeys.shift()!;
+			delete imageCache[oldest];
+			fetchedImageUris.delete(oldest);
+		}
+	}
+	imageCache[uri] = url;
+}
 
 const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [sortDropdown, sortOption, isReversed] = useSortDropdownMenu(dropdownOptions, "library:playlists-sort");
@@ -193,7 +208,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 				// Commit attempted URIs and image results atomically
 				for (const uri of attemptedUris) fetchedImageUris.add(uri);
 				if (Object.keys(imageMap).length > 0) {
-					Object.assign(imageCache, imageMap);
+					for (const [uri, url] of Object.entries(imageMap)) addToImageCache(uri, url);
 					setPlaylistImages((prev) => ({ ...prev, ...imageMap }));
 				}
 			}

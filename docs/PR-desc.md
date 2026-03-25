@@ -64,6 +64,10 @@
 - **Custom order local album filter (Library)**: Filtered `customOrderStore.reconcile()` to standard albums only (`type === "album"`), excluding local album URIs from persisted custom order to match the reorder modal's filter
 - **Header alignment fix (Library)**: Fixed page header controls (dropdowns, search bar) left-aligning when the header wraps to two lines by adding `margin-left: auto` to `.header-right`
 - **SVG gradient ID fix (Library)**: Replaced inline `<linearGradient id="folderGrad">` in folder card SVGs with `fill="currentColor"` + CSS `color: #1db954` to avoid duplicate DOM IDs when multiple folder cards render
+- **Playlist image flicker fix (shared)**: SpotifyCard now layers the fallback initials behind the `<img>` with opacity crossfade — the fallback stays visible until `onLoad` fires, eliminating the visible DOM-swap flash when images arrive asynchronously
+- **Live config callbacks (Stats)**: "Show Artist Stats Button" toggle now immediately removes/re-inserts the button when toggled (cleans up observer, timers, and fallback); "Button Position" slider updates the button's CSS order live without requiring navigation
+- **Bounded playlist image cache (Library)**: Module-level `fetchedImageUris` and `imageCache` now use FIFO eviction (max 2000 entries) to prevent unbounded memory growth over long sessions
+- **Lazy track artwork loading (Stats)**: Changed `loading="eager"` to `loading="lazy"` on track artwork images in `ArtistTrackRow` and `TrackRow` to defer off-screen image fetches
 
 ### Library: Custom Album Sorting (#76)
 - Adds "Custom Order" sort option to the Albums page with drag-and-drop reorder modal
@@ -305,6 +309,11 @@ Both builds complete successfully.
 - [ ] Verify playlists display actual cover artwork (collages) without needing to scroll the left sidebar first
 - [ ] Verify page header controls align to the right when the header wraps to two lines
 - [ ] Verify multiple folder cards don't produce duplicate SVG gradient IDs in the DOM
+- [ ] Verify Playlists tab does NOT flicker when playlist images load (cards show initials, then fade in artwork)
+- [ ] Verify toggling "Show Artist Stats Button" OFF while on an artist page immediately removes the injected button
+- [ ] Verify toggling "Show Artist Stats Button" ON while on an artist page immediately inserts the button
+- [ ] Verify adjusting "Button Position" slider while on an artist page moves the button live
+- [ ] Verify Artist Stats button and track artwork images use lazy loading (no eager preload)
 
 ## Known limitations
 

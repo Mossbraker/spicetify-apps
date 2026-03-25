@@ -74,6 +74,7 @@ button.stats-plain-card {
     background: rgba(var(--spice-rgb-selected-row), 0.12);
     border-radius: 10px;
     overflow: hidden;
+    position: relative;
     width: 100%;
 }
 
@@ -89,6 +90,12 @@ button.stats-plain-card {
     width: 100%;
 }
 
+.stats-plain-card-image img {
+    inset: 0;
+    position: absolute;
+    transition: opacity 0.15s ease;
+}
+
 .stats-plain-card-imageFallback {
     background: linear-gradient(135deg, rgba(var(--spice-rgb-selected-row), 0.18), rgba(var(--spice-rgb-selected-row), 0.05));
     align-items: center;
@@ -98,6 +105,7 @@ button.stats-plain-card {
     font-size: 2rem;
     font-weight: 700;
     letter-spacing: 0.06em;
+    transition: opacity 0.15s ease;
 }
 
 .stats-folder-icon {

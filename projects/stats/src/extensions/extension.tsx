@@ -161,6 +161,14 @@ class SpicetifyStats {
 				def: true,
 				desc: "Show a button on artist pages to open the Artist Stats popup.",
 				sectionHeader: "Artist Stats",
+				initializeCallback: false,
+				callback: (value: boolean) => {
+					if (value === false) {
+						window.dispatchEvent(new CustomEvent("stats:artist-button-toggle", { detail: false }));
+					} else {
+						window.dispatchEvent(new CustomEvent("stats:artist-button-toggle", { detail: true }));
+					}
+				},
 			},
 			{
 				name: "Button Position",
@@ -171,6 +179,11 @@ class SpicetifyStats {
 				step: 1,
 				def: 0,
 				desc: "Controls where the Artist Stats button appears in the artist page action bar. Lower values move it left, higher values move it right.",
+				initializeCallback: false,
+				callback: (value: number) => {
+					const btn = document.getElementById("stats-artist-inject-btn");
+					if (btn) btn.style.order = String(value);
+				},
 			},
 			{
 				name: "Auto-Load Playlist Appearances",
@@ -291,12 +304,12 @@ window.SpicetifyStats = new SpicetifyStats();
 
 	// Core injection function — called by MutationObserver and navigation handler.
 	// Guards prevent redundant calls. No retry loop — the observer retries for us.
-	function insertArtistButton(): void {
+	function insertArtistButton(force = false): void {
 		if (!currentTargetArtistId) return;
 		if (document.getElementById("stats-artist-inject-btn")) return;
 
 		const config = window.SpicetifyStats?.ConfigWrapper?.Config;
-		if (config?.["show-artist-stats-button"] === false) return;
+		if (!force && config?.["show-artist-stats-button"] === false) return;
 
 		// Find action bar — prioritise the selector sort-play uses successfully
 		const actionBar =
@@ -427,6 +440,35 @@ window.SpicetifyStats = new SpicetifyStats();
 		}, 150);
 	});
 	// Observer starts disconnected — handleNavigation connects it on artist pages
+
+	// Listen for live config toggle of the Artist Stats button
+	window.addEventListener("stats:artist-button-toggle", ((e: CustomEvent<boolean>) => {
+		if (e.detail === false) {
+			// Immediately clean up: remove button, hide fallback, clear timers, disconnect observer
+			removeInjectedArtistButton();
+			artistStats.element.style.display = "none";
+			if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+			if (injectTimer) { clearTimeout(injectTimer); injectTimer = null; }
+			actionBarObserver.disconnect();
+		} else {
+			// Re-enable: if currently on an artist page, re-insert
+			const [, type, uid] = History.location.pathname.split("/");
+			if (type === "artist" && uid) {
+				currentTargetArtistId = uid;
+				actionBarObserver.observe(document.body, { childList: true, subtree: true });
+				// Force bypass config check — Config may not be updated yet when callback fires
+				insertArtistButton(true);
+				// Fallback: if injection fails, show topbar button after 5s
+				const fallbackId = uid;
+				fallbackTimer = setTimeout(() => {
+					fallbackTimer = null;
+					if (currentTargetArtistId === fallbackId && !document.getElementById("stats-artist-inject-btn")) {
+						artistStats.element.style.display = "";
+					}
+				}, 5000);
+			}
+		}
+	}) as EventListener);
 
 	handleNavigation(History.location.pathname);
 
