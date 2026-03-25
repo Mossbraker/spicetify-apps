@@ -265,11 +265,19 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 				imageUrl={images[item.uri]}
 				badge={item.pinned ? <PinIcon /> : undefined}
 			/> :
+		item.uri === "spotify:local-files" ?
+			<CustomCard
+				key={item.uri}
+				type="localfiles"
+				uri="spotify:collection:local-files"
+				header={item.name}
+				subheader={item.owner?.name || "System Playlist"}
+				badge={item.pinned ? <PinIcon /> : undefined}
+			/> :
 			<SpotifyCard
 				key={item.uri}
 				type={item.type}
-				// NOTE: spotify returns the wrong uri for the local files playlist
-				uri={item.uri === "spotify:local-files" ? "spotify:collection:local-files" : item.uri}
+				uri={item.uri}
 				header={item.name}
 				subheader={item.owner?.name || "System Playlist"}
 				imageUrl={playlistImages[item.uri] || item.images?.[0]?.url}

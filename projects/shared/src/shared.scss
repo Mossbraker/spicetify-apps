@@ -109,8 +109,13 @@ button.stats-plain-card {
 }
 
 .stats-folder-icon {
-    background: linear-gradient(135deg, rgba(30, 215, 96, 0.12), rgba(29, 185, 84, 0.04));
+    background: linear-gradient(135deg, rgba(30, 44, 107, 0.55), rgba(30, 44, 107, 0.25));
     color: #1db954;
+}
+
+.stats-localfiles-icon {
+    background: linear-gradient(135deg, rgba(180, 120, 50, 0.45), rgba(180, 120, 50, 0.18));
+    color: #e8a445;
 }
 
 .stats-plain-card-imageFallbackLabel {
