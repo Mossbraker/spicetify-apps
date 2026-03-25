@@ -18,8 +18,8 @@ const SortDropdownMenu = ({ options, activeOption, isReversed, switchCallback }:
 
 	React.useLayoutEffect(() => {
 		if (measureRef.current) {
-			// 32px right padding (arrow area) + 12px left padding + 2px border
-			setSelectWidth(measureRef.current.scrollWidth + 46);
+			// 16px right padding + 12px left padding + 2px border
+			setSelectWidth(measureRef.current.scrollWidth + 30);
 		}
 	}, [activeOption.id]);
 
