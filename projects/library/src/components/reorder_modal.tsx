@@ -46,7 +46,7 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 		btn.addEventListener("click", () => {
 			const uris = itemsRef.current.map((item) => item.uri);
 			onSave(uris);
-			Spicetify.PopupModal.hide();
+			Spicetify.PopupModal.hide?.();
 		});
 
 		// Insert before the close button
@@ -68,7 +68,7 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 		const handleEsc = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
 				e.stopPropagation();
-				Spicetify.PopupModal.hide();
+				Spicetify.PopupModal.hide?.();
 			}
 		};
 		document.addEventListener("keydown", handleEsc);
@@ -138,12 +138,12 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 
 	const handleSave = () => {
 		onSave(items.map((item) => item.uri));
-		Spicetify.PopupModal.hide();
+		Spicetify.PopupModal.hide?.();
 	};
 
 	const handleReset = () => {
 		onReset?.();
-		Spicetify.PopupModal.hide();
+		Spicetify.PopupModal.hide?.();
 	};
 
 	return (
