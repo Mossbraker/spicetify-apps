@@ -52,6 +52,10 @@ function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement
 		.map((part) => part[0]?.toUpperCase() ?? "")
 		.join("") || "?";
 
+	// Convert spotify:type:id URIs to /type/id paths for Spotify's router
+	const parts = uri.split(":");
+	const spotifyPath = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
+
 	const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
 		if (onClickOverride) {
 			event.preventDefault();
@@ -64,13 +68,10 @@ function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement
 		}
 
 		event.preventDefault();
-		// Convert spotify:type:id URIs to /type/id paths for Spotify's router
-		const parts = uri.split(":");
-		const path = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
-		Spicetify.Platform.History.push(path);
+		Spicetify.Platform.History.push(spotifyPath);
 	};
 
-	const cardHref = provider === "lastfm" ? uri : "#";
+	const cardHref = provider === "lastfm" ? uri : spotifyPath;
 
 	return (
 		<div className="stats-plain-card-wrapper">
