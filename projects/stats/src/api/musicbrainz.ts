@@ -78,14 +78,18 @@ export const getArtistGenres = async (artist: string) => {
 	const cached = artistGenresCache.get(normalizedArtist);
 	if (cached) return cached;
 
-	const pending = (async () => {
-		if (isCoolingDown()) return [];
+	if (isCoolingDown()) return [];
 
+	const pending = (async () => {
 		const query = encodeURIComponent(`artist:${artist}`);
 		const payload = await fetchJson<MusicBrainzArtistSearchResponse>(
 			`https://musicbrainz.org/ws/2/artist/?query=${query}&fmt=json&limit=${SEARCH_LIMIT}`,
 		);
-		const artists = payload?.artists ?? [];
+		if (payload === null) {
+			artistGenresCache.delete(normalizedArtist);
+			return [] as MusicBrainzTag[];
+		}
+		const artists = payload.artists ?? [];
 		if (artists.length === 0) return [];
 
 		const target = artists.find((candidate) => normalizeName(candidate.name) === normalizedArtist) ?? artists[0];
