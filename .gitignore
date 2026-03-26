@@ -158,6 +158,7 @@ dist/
 claudekit/
 .claude/
 .mcp.json
+docs/Claude Code Paths.md
 
 # scratch files
 docs/untitty.txt
