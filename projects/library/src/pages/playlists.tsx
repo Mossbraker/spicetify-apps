@@ -207,8 +207,12 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			if (!cancelled) {
 				// Commit all attempted URIs — positive (string URL) or null (no image found)
 				for (const uri of attemptedUris) addToImageCache(uri, imageMap[uri] ?? null);
-				if (Object.keys(imageMap).length > 0) {
-					setPlaylistImages((prev) => ({ ...prev, ...imageMap }));
+				if (attemptedUris.size > 0) {
+					// Derive state directly from imageCache so playlistImages stays bounded
+					// by MAX_CACHE_SIZE and stays consistent with imageCache after evictions.
+					setPlaylistImages(
+						Object.fromEntries(Object.entries(imageCache).filter((e): e is [string, string] => e[1] !== null))
+					);
 				}
 			}
 		};
