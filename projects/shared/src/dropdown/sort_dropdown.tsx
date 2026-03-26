@@ -52,7 +52,8 @@ const SortDropdownMenu = ({ options, activeOption, isReversed, showReverseButton
 				<button
 					className="stats-icon-button"
 					type="button"
-					aria-label={isReversed ? "Sort descending" : "Sort ascending"}
+					aria-label="Reverse sort order"
+					aria-pressed={isReversed}
 					onClick={() => switchCallback(activeOption)}
 				>
 					<svg

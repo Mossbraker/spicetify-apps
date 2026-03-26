@@ -13,6 +13,9 @@ interface CustomCardProps {
 function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> {
 	const { type, header, uri, imageUrl, subheader, badge } = props;
 	const [imageFailed, setImageFailed] = React.useState(false);
+	React.useEffect(() => {
+		setImageFailed(false);
+	}, [imageUrl]);
 	const isCollection = type === "collection" || type === "folder";
 
 	const fallbackLabel = header
