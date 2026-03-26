@@ -204,7 +204,8 @@ const TrackRow = (props: TrackRowProps) => {
 				<Spicetify.ReactComponent.MenuItem
 					divider="before"
 					onClick={() => {
-						Spicetify.Platform.ClipboardAPI?.copy(props.uri);
+						const id = props.uri.split(":")[2];
+						Spicetify.Platform.ClipboardAPI?.copy(`https://open.spotify.com/track/${id}`);
 					}}
 				>
 					Copy song link

@@ -39,7 +39,7 @@
 - **Context menu approach**: `Spicetify.ReactComponent.TrackMenu` is undefined at runtime (Spicetify CLI extraction bug — see `docs/SPICETIFY_LIMITATIONS.md`), so native Spotify track context menu is not available from custom components
 - **Last.fm Global Top Tracks album art**: Enriches tracks missing album art via batched `track.getInfo` calls (concurrency=5) to fetch actual album images instead of showing letter fallback
 - **"Following" button sizing**: Fixes the injected Artist Stats button affecting the flex layout of Spotify's native action bar buttons via `align-self: center` CSS
-- **Prefer Spotify Links** *(Experimental — partially implemented)*: replaces Last.fm track links with Spotify navigation inside the Artist Stats modal (via `resolveTrackUri()` + `searchAndNavigate` fallback). Link replacement across main Stats pages (`SpotifyCard`, `TrackRow`, charts) is not yet complete; toggle is marked as experimental in the settings UI
+- **Prefer Spotify Links** *(not exposed — deferred)*: `resolveTrackUri()` utility and `searchAndNavigate` fallback are implemented; the UI settings toggle has been removed until the feature covers all link types (main Stats pages, SpotifyCard, TrackRow)
 - **Search fallback**: `resolveTrackUri()` utility for background URI resolution with `cosmosCache` and CosmosAsync fallback
 - **TDZ crash fix**: Fixed `ReferenceError: Cannot access 'k' before initialization` caused by `useEffect` referencing `data` variable (from `usePopupQuery`) before its declaration — moved the effect after hook call order
 - **Modal context menu crash**: Removed `RightClickMenu`/`Menu`/`MenuItem` from `ArtistTrackRow` in the popup modal — PopupModal renders outside the main React provider tree, missing `StableUseNavigateProvider` and `PlatformProvider` (see `docs/SPICETIFY_LIMITATIONS.md`)
@@ -286,8 +286,8 @@ Both builds complete successfully.
 - [ ] Verify three-dot button on tracks in Stats Tracks tab shows the same context menu
 - [ ] Verify right-click in Artist Stats modal does NOT crash (no context menu, but no error)
 - [ ] Verify Last.fm Global Top Tracks show album art (not letter fallback)
-- [ ] Verify "Prefer Spotify Links (Experimental)" toggle is visible in settings with a description noting it is experimental and partially implemented
-- [ ] Verify clicking Last.fm track links inside the Artist Stats modal navigates to Spotify (when toggle is on)
+- [ ] ~~Verify "Prefer Spotify Links" toggle in settings~~ (toggle removed — not yet exposed)
+- [ ] ~~Verify clicking Last.fm track links inside the Artist Stats modal navigates to Spotify (when toggle is on)~~ (toggle removed — deferred)
 - [ ] ~~Verify link replacement across main Stats pages (top tracks, artists, charts)~~ (not yet implemented)
 - [ ] Verify "Following" button on artist pages is not missized when Artist Stats button is present
 - [ ] Verify Artist Stats modal opens without TDZ crash ("Cannot access 'k' before initialization")

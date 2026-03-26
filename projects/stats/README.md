@@ -161,7 +161,6 @@ Known limitations:
 - `Auto-Load Playlist Appearances`: automatically scan your playlists for the artist when opening Artist Stats. Disable for a manual load button.
 - `Auto-Load Last.fm Top Tracks`: automatically fetch global top tracks from Last.fm when opening Artist Stats. Requires a Last.fm API key.
 - `Auto-Load My Top Scrobbled Tracks`: automatically fetch your personal top scrobbled tracks when opening Artist Stats. Requires a Last.fm API key and username.
-- `Prefer Spotify Links` *(Experimental — partially implemented)*: replaces Last.fm track links with Spotify navigation in the Artist Stats modal. Link replacement across the main Stats pages (top tracks, top artists, charts) is not yet complete.
 
 #### Diagnostics
 - `Show Debug Console`: show recent request logs, delayed enrichment work, and cache diagnostics inside Stats.
