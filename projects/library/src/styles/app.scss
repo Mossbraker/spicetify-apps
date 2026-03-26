@@ -53,6 +53,16 @@
         justify-content: center;
     }
 
+    button.load-more-card {
+        border: none;
+        background: transparent;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+        width: 100%;
+        text-align: left;
+    }
+
     .x-filterBox-searchIcon {
         --encore-icon-height: var(--encore-graphic-size-decorative-smaller);
         --encore-icon-width: var(--encore-graphic-size-decorative-smaller);
