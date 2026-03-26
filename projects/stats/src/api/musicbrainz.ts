@@ -98,7 +98,10 @@ export const getArtistGenres = async (artist: string) => {
 		const details = await fetchJson<MusicBrainzArtistDetailsResponse>(
 			`https://musicbrainz.org/ws/2/artist/${target.id}?inc=genres+tags&fmt=json`,
 		);
-		if (!details) return sortByCount(mergeTags([...(target.genres ?? []), ...(target.tags ?? [])]));
+		if (details === null) {
+			artistGenresCache.delete(normalizedArtist);
+			return sortByCount(mergeTags([...(target.genres ?? []), ...(target.tags ?? [])]));
+		}
 
 		return sortByCount(mergeTags([...(details.genres ?? []), ...(details.tags ?? [])]));
 	})();
