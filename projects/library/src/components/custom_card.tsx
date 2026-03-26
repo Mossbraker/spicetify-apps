@@ -1,7 +1,7 @@
 import React from "react";
 
 interface CustomCardProps {
-	type: "folder" | "show" | "collection" | "localalbum" | "artist";
+	type: "folder" | "show" | "collection" | "localalbum" | "localfiles" | "artist";
 	uri: string;
 	header: string;
 	subheader: string;
@@ -35,6 +35,12 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 			case "localalbum":
 				Spicetify.Platform.History.push({ pathname: "/better-local-files/album", state: { uri } });
 				break;
+			case "localfiles": {
+				const parts = uri.split(":");
+				const path = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
+				Spicetify.Platform.History.push(path);
+				break;
+			}
 			case "show": {
 				const parts = uri.split(":");
 				const path = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
@@ -57,9 +63,15 @@ function CustomCard(props: CustomCardProps): React.ReactElement<HTMLDivElement> 
 					{imageUrl && !imageFailed ? (
 						<img src={imageUrl} alt="" loading="lazy" onError={() => setImageFailed(true)} />
 					) : isCollection ? (
-						<div className="stats-plain-card-imageFallback" aria-hidden="true">
+						<div className="stats-plain-card-imageFallback stats-folder-icon" aria-hidden="true">
 							<svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
 								<path d="M1 4a2 2 0 0 1 2-2h5.155a3 3 0 0 1 2.598 1.5l.866 1.5H21a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4zm7.155 0H3v16h18V7H10.464L9.021 4.5a1 1 0 0 0-.866-.5z"/>
+							</svg>
+						</div>
+					) : type === "localfiles" ? (
+						<div className="stats-plain-card-imageFallback stats-localfiles-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+								<path d="M6 3h15v15.167a3.5 3.5 0 1 1-3.5-3.5H19V5H8v10.167a3.5 3.5 0 1 1-3.5-3.5H6V3zM4.5 13.667a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm13 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>
 							</svg>
 						</div>
 					) : (

@@ -1,11 +1,25 @@
 :root {
     --library-card-size: 180px;
-    --library-searchbar-size: 200px;
+    --library-searchbar-size: 140px;
 }
 
 #library-app {
-    .header-right .x-filterBox-expandedOrHasFilter .x-filterBox-filterInput {
-        width: var(--library-searchbar-size);
+    .header-right .x-filterBox-expandedOrHasFilter {
+        flex-shrink: 1;
+        min-width: 0;
+
+        .x-filterBox-overlay {
+            pointer-events: none;
+        }
+
+        .x-filterBox-filterInput {
+            width: var(--library-searchbar-size);
+            transition: width 0.2s ease;
+        }
+
+        &:focus-within .x-filterBox-filterInput {
+            width: calc(var(--library-searchbar-size) + 30px);
+        }
     }
 
     .grid {
@@ -275,5 +289,159 @@
         outline: 2px solid var(--spice-button);
         outline-offset: 2px;
         border-radius: 4px;
+    }
+}
+
+// Reorder modal
+.reorder-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.reorder-modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 0;
+}
+
+.reorder-modal-row {
+    align-items: center;
+    background: var(--spice-player);
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: grab;
+    display: flex;
+    gap: 10px;
+    padding: 8px 12px;
+    transition: background 0.1s;
+    user-select: none;
+
+    &:hover {
+        background: rgba(var(--spice-rgb-selected-row), 0.1);
+    }
+
+    &:active {
+        cursor: grabbing;
+        opacity: 0.4;
+    }
+}
+
+.reorder-drop-target {
+    border-top-color: var(--spice-button);
+}
+
+.reorder-modal-drag-handle {
+    color: var(--spice-subtext);
+    flex-shrink: 0;
+    width: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.reorder-modal-image {
+    border-radius: 4px;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.reorder-modal-name {
+    color: var(--spice-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.reorder-modal-artist {
+    color: var(--spice-subtext);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.reorder-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.reorder-modal-save,
+.reorder-modal-reset {
+    background: var(--spice-player);
+    border: 1px solid rgba(var(--spice-rgb-selected-row), 0.25);
+    border-radius: 8px;
+    color: var(--spice-text);
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 8px 16px;
+
+    &:hover {
+        background: rgba(var(--spice-rgb-selected-row), 0.15);
+    }
+}
+
+.reorder-modal-save {
+    background: var(--spice-button);
+    color: var(--spice-player);
+    border-color: transparent;
+
+    &:hover {
+        opacity: 0.9;
+    }
+}
+
+// Save icon button injected into PopupModal title bar
+.reorder-modal-header-save {
+    align-items: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: var(--spice-button);
+    cursor: pointer;
+    display: flex;
+    height: 32px;
+    justify-content: center;
+    margin-left: auto;
+    width: 32px;
+
+    &:hover {
+        color: var(--spice-text);
+        transform: scale(1.1);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--spice-button);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+}
+
+// Normalize close button in Reorder Albums modal to match save button size
+.GenericModal[aria-label="Reorder Albums"] .main-trackCreditsModal-closeBtn {
+    height: 32px;
+    min-height: 32px;
+    min-width: 32px;
+    padding: 0;
+    width: 32px;
+}
+
+// Reorder button in albums header
+.library-reorder-button {
+    align-items: center;
+    background: transparent;
+    border: 1px solid rgba(var(--spice-rgb-selected-row), 0.25);
+    border-radius: 8px;
+    color: var(--spice-text);
+    cursor: pointer;
+    display: flex;
+    height: 32px;
+    justify-content: center;
+    padding: 0 10px;
+
+    &:hover {
+        background: rgba(var(--spice-rgb-selected-row), 0.1);
     }
 }

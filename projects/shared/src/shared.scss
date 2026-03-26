@@ -74,6 +74,7 @@ button.stats-plain-card {
     background: rgba(var(--spice-rgb-selected-row), 0.12);
     border-radius: 10px;
     overflow: hidden;
+    position: relative;
     width: 100%;
 }
 
@@ -89,6 +90,12 @@ button.stats-plain-card {
     width: 100%;
 }
 
+.stats-plain-card-image img {
+    inset: 0;
+    position: absolute;
+    transition: opacity 0.15s ease;
+}
+
 .stats-plain-card-imageFallback {
     background: linear-gradient(135deg, rgba(var(--spice-rgb-selected-row), 0.18), rgba(var(--spice-rgb-selected-row), 0.05));
     align-items: center;
@@ -98,6 +105,17 @@ button.stats-plain-card {
     font-size: 2rem;
     font-weight: 700;
     letter-spacing: 0.06em;
+    transition: opacity 0.15s ease;
+}
+
+.stats-folder-icon {
+    background: linear-gradient(135deg, rgba(30, 44, 107, 0.55), rgba(30, 44, 107, 0.25));
+    color: #1db954;
+}
+
+.stats-localfiles-icon {
+    background: linear-gradient(135deg, rgba(180, 120, 50, 0.45), rgba(180, 120, 50, 0.18));
+    color: #e8a445;
 }
 
 .stats-plain-card-imageFallbackLabel {
@@ -132,10 +150,10 @@ button.stats-plain-card {
 }
 
 .page-header {
-    align-content: space-between;
     align-items: center;
     display: flex;
     flex-wrap: wrap;
+    gap: 8px 12px;
     justify-content: space-between;
     margin: 16px 0;
 
@@ -149,6 +167,9 @@ button.stats-plain-card {
 
     .header-right {
         justify-content: flex-end;
+        flex-shrink: 1;
+        min-width: 0;
+        margin-left: auto;
     }
 
     .header-left {
@@ -184,6 +205,7 @@ button.stats-plain-card {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    position: relative;
 }
 
 .stats-native-select-label {
@@ -199,7 +221,19 @@ button.stats-plain-card {
     color: var(--spice-text);
     cursor: pointer;
     font-size: 0.875rem;
-    padding: 8px 32px 8px 12px;
+    padding: 8px 16px 8px 12px;
+    transition: width 0.15s ease;
+}
+
+// Hidden span used to measure the selected option's text width
+.stats-native-select-measure {
+    font-size: 0.875rem;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    visibility: hidden;
+    white-space: nowrap;
 }
 
 .stats-icon-button {
@@ -243,7 +277,7 @@ button.stats-plain-card {
 }
 
 .stats-nav-shell {
-    margin-top: 8px;
+    margin-top: 0;
 }
 
 .stats-nav-inline {
@@ -279,6 +313,42 @@ button.stats-plain-card {
     margin: 0;
 }
 
+// Spotify's fixed top bar overlays the app scroll area and intercepts pointer
+// events across its entire ~64px height.  Let clicks pass through the empty
+// regions so our navbar underneath remains clickable, then re-enable pointer
+// events on the actual interactive widgets inside the top bar.
+// Scoped to only apply when one of our custom apps is mounted.
+body:has(#library-app), body:has(#stats-app) {
+    header.main-topBar-container {
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        box-shadow: none !important;
+        pointer-events: none;
+
+        // Kill the scroll-driven background on Spotify's inner background div
+        // and any pseudo-elements used for the fade-in overlay.
+        &::before,
+        &::after,
+        > div:not([class*="topbarContent"]):not([class*="ActionBar"]) {
+            background: transparent !important;
+            background-color: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+        }
+
+        button,
+        a,
+        [role="button"],
+        [tabindex]:not([tabindex="-1"]),
+        input,
+        select {
+            pointer-events: auto;
+        }
+    }
+}
+
 #library-app > :first-child, #stats-app > :first-child {
-    margin-top: 64px;
+    margin-top: 16px;
 }

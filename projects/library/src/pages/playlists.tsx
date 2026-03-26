@@ -76,12 +76,33 @@ const flattenOptions = [
 	{ id: "true", name: "Flattened" },
 ];
 
+// Module-level cache: URIs whose images have already been fetched or attempted.
+// Persists across re-renders and page navigations within the session.
+// Bounded to prevent unbounded memory growth over long sessions.
+const MAX_CACHE_SIZE = 2000;
+const fetchedImageUris = new Set<string>();
+const imageCache: Record<string, string> = {};
+const imageCacheKeys: string[] = [];
+
+function addToImageCache(uri: string, url: string) {
+	if (!(uri in imageCache)) {
+		imageCacheKeys.push(uri);
+		if (imageCacheKeys.length > MAX_CACHE_SIZE) {
+			const oldest = imageCacheKeys.shift()!;
+			delete imageCache[oldest];
+			fetchedImageUris.delete(oldest);
+		}
+	}
+	imageCache[uri] = url;
+}
+
 const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [sortDropdown, sortOption, isReversed] = useSortDropdownMenu(dropdownOptions, "library:playlists-sort");
 	const [filterDropdown, filterOption] = useDropdownMenu(filterOptions);
 	const [flattenDropdown, flattenOption] = useDropdownMenu(flattenOptions);
 	const [textFilter, setTextFilter] = React.useState("");
 	const [images, setImages] = React.useState({ ...FolderImageWrapper.getFolderImages() });
+	const [playlistImages, setPlaylistImages] = React.useState<Record<string, string>>({ ...imageCache });
 
 	const folder = Spicetify.Platform.History.location.pathname.split("/")[3];
 
@@ -113,6 +134,89 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		},
 		retry: false,
 	});
+
+	// Fetch playlist cover images using hybrid approach:
+	// 1. Bulk fetch from RootlistAPI (fast, covers already-resolved images)
+	// 2. Per-playlist PlaylistAPI.getMetadata fallback for remaining items
+	// Uses module-level fetchedImageUris set to avoid re-fetching on data changes.
+	useEffect(() => {
+		if (status !== "success" || !data) return;
+
+		const items = data.pages.flatMap((page) => page.items);
+		const missingImages = items.filter(
+			(item): item is PlaylistItem =>
+				item.type === "playlist" &&
+				!item.images?.[0]?.url &&
+				!fetchedImageUris.has(item.uri)
+		);
+
+		if (missingImages.length === 0) return;
+
+		let cancelled = false;
+		const BATCH_SIZE = 10;
+		const BATCH_DELAY = 50;
+
+		const fetchImages = async () => {
+			const imageMap: Record<string, string> = {};
+			// Track attempted URIs locally — only commit to fetchedImageUris
+			// atomically at the end to avoid poisoning on cancellation.
+			const attemptedUris = new Set<string>();
+			const missingUris = new Set(missingImages.map((i) => i.uri));
+
+			// Phase 1: Bulk fetch from RootlistAPI — resolves most images in one call
+			try {
+				const res = await Spicetify.Platform.RootlistAPI.getContents({ flatten: true });
+				for (const item of res.items ?? []) {
+					if (cancelled) return;
+					if (item.type === "playlist" && missingUris.has(item.uri) && item.images?.[0]?.url) {
+						imageMap[item.uri] = item.images[0].url;
+						attemptedUris.add(item.uri);
+					}
+				}
+			} catch { /* ignore — fall through to per-playlist fetch */ }
+
+			if (cancelled) return;
+
+			// Phase 2: Per-playlist fallback for items still missing images
+			const stillMissing = missingImages.filter(
+				(item) => !attemptedUris.has(item.uri)
+			);
+
+			for (let i = 0; i < stillMissing.length; i += BATCH_SIZE) {
+				if (cancelled) return;
+				const batch = stillMissing.slice(i, i + BATCH_SIZE);
+				await Promise.allSettled(
+					batch.map((item) =>
+						Spicetify.Platform.PlaylistAPI.getMetadata(item.uri)
+							.then((meta: { images?: Array<{ url: string }> }) => {
+								attemptedUris.add(item.uri);
+								if (meta?.images?.[0]?.url) {
+									imageMap[item.uri] = meta.images[0].url;
+								}
+							})
+							.catch(() => {
+								attemptedUris.add(item.uri);
+							})
+					)
+				);
+				if (i + BATCH_SIZE < stillMissing.length) {
+					await new Promise((r) => setTimeout(r, BATCH_DELAY));
+				}
+			}
+
+			if (!cancelled) {
+				// Commit attempted URIs and image results atomically
+				for (const uri of attemptedUris) fetchedImageUris.add(uri);
+				if (Object.keys(imageMap).length > 0) {
+					for (const [uri, url] of Object.entries(imageMap)) addToImageCache(uri, url);
+					setPlaylistImages((prev) => ({ ...prev, ...imageMap }));
+				}
+			}
+		};
+
+		fetchImages();
+		return () => { cancelled = true; };
+	}, [status, data]);
 
 	useEffect(() => {
 		const update = (e: UpdateEvent) => refetch();
@@ -161,14 +265,22 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 				imageUrl={images[item.uri]}
 				badge={item.pinned ? <PinIcon /> : undefined}
 			/> :
+		item.uri === "spotify:local-files" ?
+			<CustomCard
+				key={item.uri}
+				type="localfiles"
+				uri="spotify:collection:local-files"
+				header={item.name}
+				subheader={item.owner?.name || "System Playlist"}
+				badge={item.pinned ? <PinIcon /> : undefined}
+			/> :
 			<SpotifyCard
 				key={item.uri}
 				type={item.type}
-				// NOTE: spotify returns the wrong uri for the local files playlist
-				uri={item.uri === "spotify:local-files" ? "spotify:collection:local-files" : item.uri}
+				uri={item.uri}
 				header={item.name}
 				subheader={item.owner?.name || "System Playlist"}
-				imageUrl={item.images?.[0]?.url}
+				imageUrl={playlistImages[item.uri] || item.images?.[0]?.url}
 				badge={item.pinned ? <PinIcon /> : undefined}
 			/>
 	));

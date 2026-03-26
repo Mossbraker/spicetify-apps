@@ -8,11 +8,23 @@ interface SpotifyCardProps {
 	imageUrl?: string;
 	badge?: string | React.ReactElement;
 	provider?: "spotify" | "lastfm";
+	onClickOverride?: (e: React.MouseEvent | React.KeyboardEvent) => void;
 }
 
 function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement> {
-	const { type, header, uri, imageUrl, subheader, badge, provider = "spotify" } = props;
+	const { type, header, uri, imageUrl, subheader, badge, provider = "spotify", onClickOverride } = props;
 	const [imageFailed, setImageFailed] = React.useState(false);
+	const [imageLoaded, setImageLoaded] = React.useState(false);
+	const prevImageUrlRef = React.useRef(imageUrl);
+
+	// Reset load/error state when the URL changes — done during render
+	// (not in useEffect) to avoid racing with synchronous onLoad for cached images.
+	if (prevImageUrlRef.current !== imageUrl) {
+		prevImageUrlRef.current = imageUrl;
+		if (imageFailed) setImageFailed(false);
+		if (imageLoaded) setImageLoaded(false);
+	}
+
 	const fallbackLabel = header
 		.split(/\s+/)
 		.filter(Boolean)
@@ -21,6 +33,12 @@ function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement
 		.join("") || "?";
 
 	const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+		if (onClickOverride) {
+			event.preventDefault();
+			onClickOverride(event);
+			return;
+		}
+
 		if (provider === "lastfm") {
 			return;
 		}
@@ -34,17 +52,24 @@ function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement
 
 	const cardHref = provider === "lastfm" ? uri : "#";
 	const imageClassName = type === "artist" ? "stats-plain-card-image is-circular" : "stats-plain-card-image";
+	const hasImage = imageUrl && !imageFailed;
 
 	return (
 		<div className="stats-plain-card-wrapper">
 			<a className="stats-plain-card" href={cardHref} onClick={handleClick} target={provider === "lastfm" ? "_blank" : undefined} rel={provider === "lastfm" ? "noreferrer" : undefined}>
 				<div className={imageClassName}>
-					{imageUrl && !imageFailed ? (
-						<img src={imageUrl} alt="" loading="lazy" onError={() => setImageFailed(true)} />
-					) : (
-						<div className="stats-plain-card-imageFallback" aria-hidden="true">
-							<span className="stats-plain-card-imageFallbackLabel">{fallbackLabel}</span>
-						</div>
+					<div className="stats-plain-card-imageFallback" aria-hidden="true" style={hasImage && imageLoaded ? { opacity: 0 } : undefined}>
+						<span className="stats-plain-card-imageFallbackLabel">{fallbackLabel}</span>
+					</div>
+					{hasImage && (
+						<img
+							src={imageUrl}
+							alt=""
+							loading="lazy"
+							onLoad={() => setImageLoaded(true)}
+							onError={() => setImageFailed(true)}
+							style={{ opacity: imageLoaded ? 1 : 0 }}
+						/>
 					)}
 				</div>
 				<div className="stats-plain-card-copy">

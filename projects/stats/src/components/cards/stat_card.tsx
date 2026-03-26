@@ -7,7 +7,7 @@ interface StatCardProps {
 
 function StatCard({ label, value }: StatCardProps) {
 	return (
-		<div className="main-card-card">
+		<div className="main-card-card stats-statCard">
 			<div className="stats-statCardValue">{value}</div>
 			<div className="stats-statCardLabel">{label}</div>
 		</div>

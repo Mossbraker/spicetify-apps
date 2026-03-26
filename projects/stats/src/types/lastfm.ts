@@ -108,3 +108,32 @@ interface Streamable {
 	fulltrack: string;
 	"#text": string;
 }
+
+export type ArtistInfoResponse = {
+	artist?: {
+		stats?: {
+			listeners?: string;
+			playcount?: string;
+			userplaycount?: string;
+		};
+		tags?: {
+			tag?: { name: string; url: string }[];
+		};
+		bio?: {
+			summary?: string;
+		};
+	};
+};
+
+export type ArtistTopTracksResponse = {
+	toptracks?: {
+		track?: {
+			name: string;
+			playcount: string;
+			listeners: string;
+			url: string;
+			artist: { name: string; url: string };
+			image?: { "#text": string }[];
+		}[];
+	};
+};

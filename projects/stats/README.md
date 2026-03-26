@@ -45,6 +45,12 @@
 ![preview](previews/top_charts.png)
 
 ---
+
+### Artist Stats
+
+- Toggleable "Artist Stats" button on artist pages that surfaces user scrobble count, total listening time, playlist inclusions, top tracks, top genres, discography, and related artists.
+
+---
 ### Automatic Installation (Linux)
 
 ```sh
@@ -66,9 +72,12 @@ Download the zip file in the [latest release](https://github.com/harbassan/spice
  ┣ 📂marketplace
  ┣ etc...
  ┗ 📂stats
+ ┃ ┣ 📜cache.js
+ ┃ ┣ 📜debug.js
  ┃ ┣ 📜extension.js
  ┃ ┣ 📜index.js
  ┃ ┣ 📜manifest.json
+ ┃ ┣ 📜optional_enrichment.js
  ┃ ┗ 📜style.css
 ```
 
@@ -82,6 +91,8 @@ spicetify apply
 That's it. Enjoy.
 
 For more help on installing visit the [Spicetify Docs](https://spicetify.app/docs/advanced-usage/custom-apps#installing).
+
+For the best experience, you should set up Last.fm and OAuth in the Stats app settings.
 
 ### Optional OAuth Setup
 
@@ -126,13 +137,33 @@ Known limitations:
 
 ### Settings Reference
 
-- `Use OAuth`: uses your Spotify Developer app instead of relying entirely on the built-in Spotify session.
-- `OAuth Status`: shows whether a usable access token is present and whether a refresh token is available for automatic recovery.
-- `Use Direct Fetch (Experimental)`: bypasses `CosmosAsync` and uses direct Spotify Web API requests with the internal Spotify token. This can sometimes help when the built-in request path behaves badly, but it is not guaranteed and is still subject to Spotify limits.
-- `Use Last.fm for Stats`: prefer Last.fm as the main source for top artists and tracks.
-- `LastFM Only (No Spotify API)`: avoid Spotify API calls for Stats pages and use Last.fm-only conversions without Spotify enrichment.
+#### Last.fm Integration
+- `Last.fm API Key`: API key from your [Last.fm API account](https://www.last.fm/api/account/create). Required for genre tags, charts, top albums, and artist scrobble data.
+- `Last.fm Username`: your Last.fm username. Required for per-user scrobble counts and "Your Top Scrobbled Tracks" in Artist Stats.
+- `Use Last.fm for Stats`: prefer Last.fm as the main source for top artists and tracks instead of Spotify.
+- `LastFM Only (No Spotify API)`: avoid Spotify Web API calls for Stats chart and list pages; uses Last.fm-only conversions without Spotify enrichment. Does **not** affect Artist Stats, which uses Spicetify's internal GraphQL API (not the rate-limited public Spotify Web API).
 - `Include MusicBrainz Genre Tags`: augments genre analysis with MusicBrainz tags derived from the current timeframe's top tracks and top artists.
-- Page toggles: show or hide individual Stats pages.
+
+#### OAuth (Bypass Rate Limits)
+- `Spotify Client ID`: Client ID from your Spotify Developer Dashboard app. See [OAuth Setup](#optional-oauth-setup).
+- `Use OAuth`: uses your Spotify Developer app instead of relying entirely on the built-in Spotify session.
+- `Paste Callback URL`: after authorizing, copy the full URL from your browser and paste it here.
+- `OAuth Status`: shows whether Stats currently has a usable access token and whether a refresh token is stored for automatic recovery.
+- `Disconnect OAuth`: toggle to disconnect your Spotify Developer app and clear stored tokens.
+- `Use Direct Fetch (Experimental)`: bypasses `CosmosAsync` and uses direct Spotify Web API requests with the internal Spotify token. This can sometimes help when the built-in request path behaves badly, but it is not guaranteed and is still subject to Spotify limits.
+
+#### Pages
+- `Artists Page`, `Tracks Page`, `Albums Page`, `Genres Page`, `Library Page`, `Charts Page`: show or hide individual Stats pages. Albums and Charts require Last.fm.
+
+#### Artist Stats
+- `Show Artist Stats Button`: show a button on artist pages to open the Artist Stats popup.
+- `Button Position`: controls where the Artist Stats button appears in the artist page action bar (slider, −3 to 5).
+- `Auto-Load Playlist Appearances`: automatically scan your playlists for the artist when opening Artist Stats. Disable for a manual load button.
+- `Auto-Load Last.fm Top Tracks`: automatically fetch global top tracks from Last.fm when opening Artist Stats. Requires a Last.fm API key.
+- `Auto-Load My Top Scrobbled Tracks`: automatically fetch your personal top scrobbled tracks when opening Artist Stats. Requires a Last.fm API key and username.
+
+#### Diagnostics
+- `Show Debug Console`: show recent request logs, delayed enrichment work, and cache diagnostics inside Stats.
 
 ### Uninstallation
 

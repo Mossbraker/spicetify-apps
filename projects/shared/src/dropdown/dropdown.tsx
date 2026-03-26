@@ -12,13 +12,27 @@ interface DropdownMenuProps {
 }
 
 const DropdownMenu = ({ options, activeOption, switchCallback }: DropdownMenuProps) => {
+    const measureRef = React.useRef<HTMLSpanElement>(null);
+    const [selectWidth, setSelectWidth] = React.useState<number | undefined>(undefined);
+
+    React.useLayoutEffect(() => {
+        if (measureRef.current) {
+            // 16px right padding + 12px left padding + 2px border
+            setSelectWidth(measureRef.current.scrollWidth + 30);
+        }
+    }, [activeOption.id]);
+
     return (
         <label className="stats-native-select-wrapper">
             <span className="stats-native-select-label">Range</span>
+            <span className="stats-native-select-measure" ref={measureRef} aria-hidden="true">
+                {activeOption.name}
+            </span>
             <select
                 className="stats-native-select"
                 aria-label="Select option"
                 value={activeOption.id}
+                style={selectWidth ? { width: `${selectWidth}px` } : undefined}
                 onChange={(event) => {
                     const option = options.find((item) => item.id === event.target.value);
                     if (option) switchCallback(option);

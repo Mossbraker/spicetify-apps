@@ -1,13 +1,33 @@
 import React from "react";
 import type { LastFMMinifiedTrack, SpotifyMinifiedTrack } from "../types/stats_types";
 import { formatNumber } from "../pages/charts";
+import { searchAndNavigate } from "../utils/spotify_search";
 
 const ArtistLink = ({ name, uri, index, length }: { name: string; uri: string; index: number; length: number }) => {
+	const isLastFm = uri.startsWith("https://www.last.fm/");
+	const config = window.SpicetifyStats?.ConfigWrapper?.Config;
+	const preferSpotify = isLastFm && config?.["prefer-spotify-links"] === true;
+
 	return (
 		<>
-			<a draggable="true" dir="auto" href={uri} tabIndex={-1}>
-				{name}
-			</a>
+			{preferSpotify ? (
+				<button
+					type="button"
+					className="stats-artistLinkButton"
+					draggable="true"
+					dir="auto"
+					tabIndex={-1}
+					onClick={() => {
+						searchAndNavigate("artist", name, uri);
+					}}
+				>
+					{name}
+				</button>
+			) : (
+				<a draggable="true" dir="auto" href={uri} tabIndex={-1}>
+					{name}
+				</a>
+			)}
 			{index === length ? null : ", "}
 		</>
 	);
@@ -38,7 +58,7 @@ const TrackArtwork = ({ image, name }: { image?: string; name: string }) => {
 		<img
 			aria-hidden="true"
 			draggable="false"
-			loading="eager"
+			loading="lazy"
 			src={image}
 			alt=""
 			className="main-image-image main-trackList-rowImage main-image-loaded"
@@ -118,11 +138,6 @@ const DraggableComponent = ({
 	);
 };
 
-interface AlbumMenuProps extends Spicetify.ReactComponent.MenuProps {
-	uri: string;
-	onRemoveCallback?: (uri: string) => void;
-}
-
 function playAndQueue(uri: string) {
 	Spicetify.Player.playUri(uri);
 }
@@ -136,23 +151,85 @@ const TrackRow = (props: TrackRowProps) => {
 	const albumName = isSpotifyTrack ? props.album.name : "Unknown";
 	const liked = isSpotifyTrack && "liked" in props ? Boolean(props.liked) : false;
 
-	const Menu = React.useMemo(
-		() =>
-			function Menu(menuProps: Spicetify.ReactComponent.MenuProps) {
-				return <Spicetify.ReactComponent.AlbumMenu {...menuProps} uri={props.uri} />;
-			},
-		[props.uri],
+	const isSpotifyUri = props.uri.startsWith("spotify:");
+
+	const trackMenu = (
+		<Spicetify.ReactComponent.Menu>
+			{isSpotifyUri && (
+				<Spicetify.ReactComponent.MenuItem
+					onClick={() => Spicetify.Player.playUri(props.uri)}
+				>
+					Play
+				</Spicetify.ReactComponent.MenuItem>
+			)}
+			{isSpotifyUri && (
+				<Spicetify.ReactComponent.MenuItem
+					onClick={() => Spicetify.addToQueue?.([{ uri: props.uri }])}
+				>
+					Add to queue
+				</Spicetify.ReactComponent.MenuItem>
+			)}
+			{isSpotifyUri && (
+				<Spicetify.ReactComponent.MenuItem
+					divider="before"
+					onClick={() => {
+						const id = props.uri.split(":")[2];
+						Spicetify.Platform.History.push(`/track/${id}`);
+					}}
+				>
+					Go to song
+				</Spicetify.ReactComponent.MenuItem>
+			)}
+			{isSpotifyUri && props.artists?.[0]?.uri?.startsWith("spotify:") && (
+				<Spicetify.ReactComponent.MenuItem
+					onClick={() => {
+						const id = props.artists[0].uri.split(":")[2];
+						Spicetify.Platform.History.push(`/artist/${id}`);
+					}}
+				>
+					Go to artist
+				</Spicetify.ReactComponent.MenuItem>
+			)}
+			{albumUri?.startsWith("spotify:") && (
+				<Spicetify.ReactComponent.MenuItem
+					onClick={() => {
+						const id = albumUri!.split(":")[2];
+						Spicetify.Platform.History.push(`/album/${id}`);
+					}}
+				>
+					Go to album
+				</Spicetify.ReactComponent.MenuItem>
+			)}
+			{isSpotifyUri ? (
+				<Spicetify.ReactComponent.MenuItem
+					divider="before"
+					onClick={() => {
+						const id = props.uri.split(":")[2];
+						Spicetify.Platform.ClipboardAPI?.copy(`https://open.spotify.com/track/${id}`);
+					}}
+				>
+					Copy song link
+				</Spicetify.ReactComponent.MenuItem>
+			) : (
+				<Spicetify.ReactComponent.MenuItem
+					onClick={() => {
+						Spicetify.Platform.ClipboardAPI?.copy(props.uri);
+					}}
+				>
+					Copy link
+				</Spicetify.ReactComponent.MenuItem>
+			)}
+		</Spicetify.ReactComponent.Menu>
 	);
 
 	const ArtistLinks = props.artists.map((artist, index) => {
-		return <ArtistLink index={index} length={props.artists.length - 1} name={artist.name} uri={artist.uri} />;
+		return <ArtistLink key={artist.uri} index={index} length={props.artists.length - 1} name={artist.name} uri={artist.uri} />;
 	});
 
 	return (
-		<>
-			<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="right-click">
-				<div role="row" aria-rowindex={2} aria-selected="false">
-					<DraggableComponent
+		<Spicetify.ReactComponent.RightClickMenu menu={trackMenu}>
+			<div role="row" aria-rowindex={2} aria-selected="false">
+				<DraggableComponent
 						uri={props.uri}
 						title={`${props.name} • ${props.artists.map((artist) => artist.name).join(", ")}`}
 						className="main-trackList-trackListRow main-trackList-trackListRowGrid"
@@ -264,7 +341,7 @@ const TrackRow = (props: TrackRowProps) => {
 								{Spicetify.Player.formatTime(props.duration_ms)}
 							</div>
 
-							<Spicetify.ReactComponent.ContextMenu menu={Menu} trigger="click">
+							<Spicetify.ReactComponent.ContextMenu menu={trackMenu} trigger="click" action="toggle">
 								<button
 									type="button"
 									aria-haspopup="menu"
@@ -294,9 +371,8 @@ const TrackRow = (props: TrackRowProps) => {
 							</Spicetify.ReactComponent.ContextMenu>
 						</div>
 					</DraggableComponent>
-				</div>
-			</Spicetify.ReactComponent.ContextMenu>
-		</>
+			</div>
+		</Spicetify.ReactComponent.RightClickMenu>
 	);
 };
 

@@ -12,6 +12,7 @@ import { statsDebug } from "./extensions/debug";
 import { version } from "../package.json";
 
 import NavigationBar from "@shared/components/navigation/navigation_bar"
+import checkForUpdates from "@shared/updates/check_for_updates"
 
 import "./styles/app.scss";
 import "../../shared/src/config/config_modal.scss";
@@ -19,21 +20,6 @@ import "../../shared/src/shared.scss";
 
 import { ConfigWrapper } from "./types/stats_types";
 
-
-const checkForUpdates = (setNewUpdate: (a: boolean) => void) => {
-	fetch("https://api.github.com/repos/harbassan/spicetify-apps/releases")
-		.then((res) => res.json())
-		.then(
-			(result) => {
-				const releases = result.filter((release: { name: string }) => release.name.startsWith("stats"));
-				if (releases.length === 0) return;
-				setNewUpdate(releases[0].name.slice(7) !== version);
-			},
-			(error) => {
-				console.warn("Failed to check for updates", error);
-			},
-		);
-};
 
 const NavbarContainer = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const pages: Record<string, React.ReactElement> = {
@@ -54,7 +40,7 @@ const NavbarContainer = ({ configWrapper }: { configWrapper: ConfigWrapper }) =>
 	const activePage = Spicetify.Platform.History.location.pathname.split("/")[2];
 
 	React.useEffect(() => {
-		checkForUpdates(setNewUpdate);
+		checkForUpdates(setNewUpdate, "stats", version);
 	}, []);
 
 	React.useEffect(() => {
