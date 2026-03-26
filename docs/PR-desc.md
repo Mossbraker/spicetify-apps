@@ -35,7 +35,7 @@
 - **Settings reorganisation**: Last.fm Integration at top, OAuth section consolidated (Status before Disconnect, Use Direct Fetch folded in), Diagnostics at bottom
 
 ### Stats: Artist Stats page — Bug fixes and polish (recent)
-- **Context menus**: Right-click and three-dot button on tracks in the main Stats Tracks tab show a custom context menu (Play, Add to queue, Go to song/artist/album, Copy song link) using `RightClickMenu` + `Menu`/`MenuItem` JSX element pattern
+- **Context menus**: Right-click and three-dot button on tracks in the main Stats Tracks tab show a custom context menu (Play, Add to queue, Go to song/artist/album, Copy song link) using `RightClickMenu` + `Menu`/`MenuItem` JSX element pattern; "Copy song link" copies `https://open.spotify.com/track/{id}` (web URL, not `spotify:` URI) for Spotify tracks; Last.fm tracks use "Copy link" which copies the Last.fm URL verbatim
 - **Context menu approach**: `Spicetify.ReactComponent.TrackMenu` is undefined at runtime (Spicetify CLI extraction bug — see `docs/SPICETIFY_LIMITATIONS.md`), so native Spotify track context menu is not available from custom components
 - **Last.fm Global Top Tracks album art**: Enriches tracks missing album art via batched `track.getInfo` calls (concurrency=5) to fetch actual album images instead of showing letter fallback
 - **"Following" button sizing**: Fixes the injected Artist Stats button affecting the flex layout of Spotify's native action bar buttons via `align-self: center` CSS
@@ -282,7 +282,7 @@ Both builds complete successfully.
 - [ ] Verify custom order persists across page reloads
 - [ ] Verify filter dropdown works correctly with custom sort
 - [ ] Verify switching between custom and standard sorts preserves state
-- [ ] Verify right-click on tracks in Stats Tracks tab shows context menu (Play, Add to queue, Go to song/artist/album, Copy link)
+- [ ] Verify right-click on tracks in Stats Tracks tab shows context menu (Play, Add to queue, Go to song/artist/album, Copy song link); verify "Copy song link" copies `https://open.spotify.com/track/{id}` web URL
 - [ ] Verify three-dot button on tracks in Stats Tracks tab shows the same context menu
 - [ ] Verify right-click in Artist Stats modal does NOT crash (no context menu, but no error)
 - [ ] Verify Last.fm Global Top Tracks show album art (not letter fallback)

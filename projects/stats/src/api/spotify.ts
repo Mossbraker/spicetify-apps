@@ -56,8 +56,15 @@ function writeExternalCache<T>(url: string, data: T): T {
 		if (now - v.ts >= EXTERNAL_CACHE_TTL_MS) externalFetchCache.delete(k);
 	}
 	if (externalFetchCache.size >= EXTERNAL_CACHE_MAX) {
-		const oldest = externalFetchCache.keys().next().value;
-		if (oldest !== undefined) externalFetchCache.delete(oldest);
+		let oldestKey: string | undefined;
+		let oldestTs = Infinity;
+		for (const [k, v] of externalFetchCache) {
+			if (v.ts < oldestTs) {
+				oldestTs = v.ts;
+				oldestKey = k;
+			}
+		}
+		if (oldestKey !== undefined) externalFetchCache.delete(oldestKey);
 	}
 	externalFetchCache.set(url, { data, ts: now });
 	return data;
