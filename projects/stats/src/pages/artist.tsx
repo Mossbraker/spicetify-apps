@@ -418,6 +418,13 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 	// Related artists
 	const relatedArtists = overview.relatedContent?.relatedArtists?.items ?? [];
 
+	const navigateFromModal = (uri: string) => {
+		Spicetify.PopupModal.hide?.();
+		const parts = uri.split(":");
+		const path = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
+		Spicetify.Platform.History.push(path);
+	};
+
 	const albumCards = albums.slice(0, 10).map((album) => {
 		const release = album.releases?.items?.[0];
 		if (!release) return null;
@@ -429,6 +436,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 				header={release.name}
 				subheader={`${release.date?.year ?? "Unknown"} \u00B7 ${release.tracks?.totalCount ?? 0} tracks`}
 				imageUrl={release.coverArt?.sources?.[0]?.url}
+				onClickOverride={() => navigateFromModal(release.uri)}
 			/>
 		);
 	}).filter(Boolean);
@@ -444,6 +452,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 				header={release.name}
 				subheader={`${release.date?.year ?? "Unknown"}`}
 				imageUrl={release.coverArt?.sources?.[0]?.url}
+				onClickOverride={() => navigateFromModal(release.uri)}
 			/>
 		);
 	}).filter(Boolean);
@@ -456,6 +465,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			header={artist.profile.name}
 			subheader="Related Artist"
 			imageUrl={artist.visuals?.avatarImage?.sources?.[0]?.url}
+			onClickOverride={() => navigateFromModal(artist.uri)}
 		/>
 	));
 
@@ -467,6 +477,7 @@ const ArtistPage = ({ uri }: { uri: string }) => {
 			header={pl.name}
 			subheader={`Appears in ${pl.matchCount} track${pl.matchCount !== 1 ? "s" : ""}`}
 			imageUrl={pl.imageUrl}
+			onClickOverride={() => navigateFromModal(pl.uri)}
 		/>
 	));
 

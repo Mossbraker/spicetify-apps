@@ -13,6 +13,13 @@ const getPlaylist = async (uri: string) => {
 	return parseTracks(contents);
 };
 
+const navigateFromModal = (uri: string) => {
+	Spicetify.PopupModal.hide?.();
+	const parts = uri.split(":");
+	const path = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
+	Spicetify.Platform.History.push(path);
+};
+
 const PlaylistPage = ({ uri }: { uri: string }) => {
 	const query = useCallback(() => getPlaylist(uri), [uri]);
 
@@ -38,6 +45,7 @@ const PlaylistPage = ({ uri }: { uri: string }) => {
 				header={artist.name}
 				subheader={`Appears in ${artist.frequency} tracks`}
 				imageUrl={artist.image}
+				onClickOverride={artist.type !== "lastfm" ? () => navigateFromModal(artist.uri) : undefined}
 			/>
 		);
 	});
@@ -52,6 +60,7 @@ const PlaylistPage = ({ uri }: { uri: string }) => {
 				header={album.name}
 				subheader={`Appears in ${album.frequency} tracks`}
 				imageUrl={album.image}
+				onClickOverride={album.type !== "lastfm" ? () => navigateFromModal(album.uri) : undefined}
 			/>
 		);
 	});
