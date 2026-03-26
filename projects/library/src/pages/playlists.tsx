@@ -80,17 +80,15 @@ const flattenOptions = [
 // Persists across re-renders and page navigations within the session.
 // Bounded to prevent unbounded memory growth over long sessions.
 const MAX_CACHE_SIZE = 2000;
-const fetchedImageUris = new Set<string>();
-const imageCache: Record<string, string> = {};
+const imageCache: Record<string, string | null> = {};
 const imageCacheKeys: string[] = [];
 
-function addToImageCache(uri: string, url: string) {
+function addToImageCache(uri: string, url: string | null) {
 	if (!(uri in imageCache)) {
 		imageCacheKeys.push(uri);
 		if (imageCacheKeys.length > MAX_CACHE_SIZE) {
 			const oldest = imageCacheKeys.shift()!;
 			delete imageCache[oldest];
-			fetchedImageUris.delete(oldest);
 		}
 	}
 	imageCache[uri] = url;
@@ -102,7 +100,9 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const [flattenDropdown, flattenOption] = useDropdownMenu(flattenOptions);
 	const [textFilter, setTextFilter] = React.useState("");
 	const [images, setImages] = React.useState({ ...FolderImageWrapper.getFolderImages() });
-	const [playlistImages, setPlaylistImages] = React.useState<Record<string, string>>({ ...imageCache });
+	const [playlistImages, setPlaylistImages] = React.useState<Record<string, string>>(
+		Object.fromEntries(Object.entries(imageCache).filter((e): e is [string, string] => e[1] !== null))
+	);
 
 	const folder = Spicetify.Platform.History.location.pathname.split("/")[3];
 
@@ -138,7 +138,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	// Fetch playlist cover images using hybrid approach:
 	// 1. Bulk fetch from RootlistAPI (fast, covers already-resolved images)
 	// 2. Per-playlist PlaylistAPI.getMetadata fallback for remaining items
-	// Uses module-level fetchedImageUris set to avoid re-fetching on data changes.
+	// Uses module-level imageCache to avoid re-fetching on data changes.
 	useEffect(() => {
 		if (status !== "success" || !data) return;
 
@@ -147,7 +147,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			(item): item is PlaylistItem =>
 				item.type === "playlist" &&
 				!item.images?.[0]?.url &&
-				!fetchedImageUris.has(item.uri)
+				!(item.uri in imageCache)
 		);
 
 		if (missingImages.length === 0) return;
@@ -158,7 +158,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 		const fetchImages = async () => {
 			const imageMap: Record<string, string> = {};
-			// Track attempted URIs locally — only commit to fetchedImageUris
+			// Track attempted URIs locally — only commit to imageCache
 			// atomically at the end to avoid poisoning on cancellation.
 			const attemptedUris = new Set<string>();
 			const missingUris = new Set(missingImages.map((i) => i.uri));
@@ -205,11 +205,14 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			}
 
 			if (!cancelled) {
-				// Commit attempted URIs and image results atomically
-				for (const uri of attemptedUris) fetchedImageUris.add(uri);
-				if (Object.keys(imageMap).length > 0) {
-					for (const [uri, url] of Object.entries(imageMap)) addToImageCache(uri, url);
-					setPlaylistImages((prev) => ({ ...prev, ...imageMap }));
+				// Commit all attempted URIs — positive (string URL) or null (no image found)
+				for (const uri of attemptedUris) addToImageCache(uri, imageMap[uri] ?? null);
+				if (attemptedUris.size > 0) {
+					// Derive state directly from imageCache so playlistImages stays bounded
+					// by MAX_CACHE_SIZE and stays consistent with imageCache after evictions.
+					setPlaylistImages(
+						Object.fromEntries(Object.entries(imageCache).filter((e): e is [string, string] => e[1] !== null))
+					);
 				}
 			}
 		};
