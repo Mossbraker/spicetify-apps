@@ -181,7 +181,7 @@ const parseTracks = async (
 
 	const analysis =
 		trackIDs.length === 0
-			? { ...(await getMeanAudioFeatures([])), popularity: 0, explicit: 0 }
+			? { ...(await getMeanAudioFeatures([])), popularity: Number.NaN, explicit: Number.NaN }
 			: await (async () => {
 				explicit = explicit / trackIDs.length;
 				popularity = popularity / trackIDs.length;
