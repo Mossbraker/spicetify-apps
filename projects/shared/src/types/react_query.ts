@@ -109,6 +109,7 @@ export const useInfiniteQuery = <TPage,>({
 	const [status, setStatus] = React.useState<QueryStatus>("pending");
 	const [error, setError] = React.useState<Error | null>(null);
 	const requestIdRef = React.useRef(0);
+	const isFetchingNextPageRef = React.useRef(false);
 	const dataRef = React.useRef(data);
 	const queryFnRef = React.useRef(queryFn);
 	const queryKeyRef = React.useRef(queryKey);
@@ -120,6 +121,7 @@ export const useInfiniteQuery = <TPage,>({
 	}, [queryFn, queryKey]);
 
 	const loadInitial = React.useCallback(async () => {
+		isFetchingNextPageRef.current = false;
 		if (!enabled) {
 			setStatus((current) => (current === "success" && dataRef.current !== undefined ? current : "pending"));
 			setError(null);
@@ -161,24 +163,36 @@ export const useInfiniteQuery = <TPage,>({
 
 	const fetchNextPage = React.useCallback(async () => {
 		if (!enabled || !data || data.pages.length === 0) return;
+		if (isFetchingNextPageRef.current) return;
 
 		const nextPageParam = getNextPageParam(data.pages[data.pages.length - 1], data.pages);
 		if (nextPageParam === undefined) return;
 
+		const requestId = requestIdRef.current;
+		isFetchingNextPageRef.current = true;
+
 		try {
 			const nextPage = await queryFnRef.current({ pageParam: nextPageParam, queryKey: queryKeyRef.current });
-			setData((current) => {
-				if (!current) return { pages: [nextPage], pageParams: [nextPageParam] };
-				return {
-					pages: [...current.pages, nextPage],
-					pageParams: [...current.pageParams, nextPageParam],
-				};
-			});
-			setStatus("success");
-			setError(null);
+			if (requestId === requestIdRef.current) {
+				setData((current) => {
+					if (!current) return { pages: [nextPage], pageParams: [nextPageParam] };
+					return {
+						pages: [...current.pages, nextPage],
+						pageParams: [...current.pageParams, nextPageParam],
+					};
+				});
+				setStatus("success");
+				setError(null);
+			}
 		} catch (caughtError) {
-			setError(normalizeError(caughtError));
-			setStatus("error");
+			if (requestId === requestIdRef.current) {
+				setError(normalizeError(caughtError));
+				setStatus("error");
+			}
+		} finally {
+			if (requestId === requestIdRef.current) {
+				isFetchingNextPageRef.current = false;
+			}
 		}
 	}, [data, enabled, getNextPageParam]);
 
