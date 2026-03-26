@@ -38,7 +38,13 @@ const startCooldown = () => {
 	serviceUnavailableUntil = Date.now() + SERVICE_COOLDOWN_MS;
 };
 
-const fetchJson = async <T>(url: string): Promise<T | null> => {
+/**
+ * Fetches a URL and returns the parsed JSON response.
+ * - Returns `T` on success.
+ * - Returns `null` on transient failure (429, 503, network error, cooldown): callers should evict the cache to allow a retry.
+ * - Returns `undefined` on permanent failure (any other non-OK status): callers should keep the cache entry to avoid repeated failed requests.
+ */
+const fetchJson = async <T>(url: string): Promise<T | null | undefined> => {
 	if (isCoolingDown()) return null;
 
 	try {
@@ -54,7 +60,7 @@ const fetchJson = async <T>(url: string): Promise<T | null> => {
 			return null;
 		}
 
-		if (!response.ok) return null;
+		if (!response.ok) return undefined;
 		return (await response.json()) as T;
 	} catch {
 		// Network error after all retries exhausted
@@ -85,8 +91,8 @@ export const getArtistGenres = async (artist: string) => {
 		const payload = await fetchJson<MusicBrainzArtistSearchResponse>(
 			`https://musicbrainz.org/ws/2/artist/?query=${query}&fmt=json&limit=${SEARCH_LIMIT}`,
 		);
-		if (payload === null) {
-			artistGenresCache.delete(normalizedArtist);
+		if (payload == null) {
+			if (payload === null) artistGenresCache.delete(normalizedArtist); // null = transient, evict to allow retry; undefined = permanent, keep cache
 			return [] as MusicBrainzTag[];
 		}
 		const artists = payload.artists ?? [];
@@ -98,8 +104,8 @@ export const getArtistGenres = async (artist: string) => {
 		const details = await fetchJson<MusicBrainzArtistDetailsResponse>(
 			`https://musicbrainz.org/ws/2/artist/${target.id}?inc=genres+tags&fmt=json`,
 		);
-		if (details === null) {
-			artistGenresCache.delete(normalizedArtist);
+		if (details == null) {
+			if (details === null) artistGenresCache.delete(normalizedArtist); // null = transient, evict to allow retry; undefined = permanent, keep cache
 			return sortByCount(mergeTags([...(target.genres ?? []), ...(target.tags ?? [])]));
 		}
 
