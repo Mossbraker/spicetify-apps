@@ -47,6 +47,7 @@ function SpotifyCard(props: SpotifyCardProps): React.ReactElement<HTMLDivElement
 		// Convert spotify:type:id URIs to /type/id paths for Spotify's router
 		const parts = uri.split(":");
 		const path = parts.length >= 3 ? `/${parts[1]}/${parts.slice(2).join(":")}` : uri;
+		Spicetify.PopupModal.hide?.();
 		Spicetify.Platform.History.push(path);
 	};
 
