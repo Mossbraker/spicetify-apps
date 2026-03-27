@@ -1,7 +1,7 @@
 import type * as Spotify from "../types/spotify";
 import { statsDebug, debugLog } from "../extensions/debug";
 import { isOAuthEnabled, hasValidTokens, oauthFetch, getAccessToken } from "./oauth";
-import { fetchWithRetry, parseRetryAfterMs } from "../utils/fetch-with-retry";
+import { fetchWithRetry } from "../utils/fetch-with-retry";
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/";
 
@@ -386,10 +386,9 @@ const externalFetch = async <T>(url: string): Promise<T> => {
 			status: response.status,
 			retryAfter,
 		});
-		const retryAfterMs = retryAfter ? parseRetryAfterMs(retryAfter) : NaN;
 		throw {
 			code: response.status,
-			retryAfter: Number.isFinite(retryAfterMs) ? retryAfterMs / 1000 : undefined,
+			retryAfter: retryAfter ? Number(retryAfter) : undefined,
 			message: response.statusText,
 		};
 	}
@@ -420,12 +419,10 @@ const directFetch = async <T>(url: string): Promise<T> => {
 			url,
 			retryAfter,
 		});
-		const retryAfterMs = retryAfter ? parseRetryAfterMs(retryAfter) : NaN;
-		const retryAfterSec = Number.isFinite(retryAfterMs) ? retryAfterMs / 1000 : undefined;
 		throw {
 			code: 429,
-			retryAfter: retryAfterSec,
-			message: `Rate limited. Retry after ${retryAfterSec ?? "unknown"} seconds`,
+			retryAfter: retryAfter ? Number(retryAfter) : undefined,
+			message: `Rate limited. Retry after ${retryAfter || "unknown"} seconds`,
 		};
 	}
 

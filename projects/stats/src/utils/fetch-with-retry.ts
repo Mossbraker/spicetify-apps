@@ -28,26 +28,6 @@ const DEFAULT_CONFIG: Required<Omit<RetryConfig, "logger">> = {
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
- * Parse a Retry-After header value into milliseconds.
- * Supports both delta-seconds (e.g. "120") and HTTP-date
- * (e.g. "Thu, 27 Mar 2026 21:00:00 GMT") formats per RFC 9110 §10.2.3.
- * Returns NaN if the value cannot be parsed.
- */
-export function parseRetryAfterMs(headerValue: string): number {
-	const trimmed = headerValue.trim();
-	if (trimmed.length === 0) return NaN;
-	const asNumber = Number(trimmed);
-	if (Number.isFinite(asNumber)) {
-		return Math.max(0, asNumber * 1000);
-	}
-	const dateMs = Date.parse(trimmed);
-	if (Number.isFinite(dateMs)) {
-		return Math.max(0, dateMs - Date.now());
-	}
-	return NaN;
-}
-
-/**
  * Fetch with automatic retry and exponential backoff.
  * Respects the Retry-After header on 429 responses.
  *
@@ -75,8 +55,9 @@ export async function fetchWithRetry(
 
 			if (response.status === 429 && attempt < maxRetries) {
 				const retryAfterHeader = response.headers.get("Retry-After");
-				const retryAfterMs = retryAfterHeader != null ? parseRetryAfterMs(retryAfterHeader) : NaN;
-				const waitMs = Math.min(Number.isFinite(retryAfterMs) ? retryAfterMs : backoffMs, maxBackoffMs);
+				const parsed = retryAfterHeader != null ? Number(retryAfterHeader) : NaN;
+				const retryAfterMs = Number.isFinite(parsed) ? parsed * 1000 : backoffMs;
+				const waitMs = Math.min(retryAfterMs, maxBackoffMs);
 
 				logger?.warn(
 					`fetchWithRetry: 429 rate limited, backing off (url=${url}, attempt=${attempt + 1}/${maxRetries + 1}, waitMs=${waitMs})`,
