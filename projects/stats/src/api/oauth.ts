@@ -110,7 +110,7 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 export function isOAuthEnabled(): boolean {
 	const clientId = getConfigValue<string>("oauth-client-id");
 	const useOAuth = getConfigValue<boolean>("use-oauth");
-	return Boolean(useOAuth && clientId && clientId.length > 0);
+	return useOAuth && clientId && clientId.length > 0;
 }
 
 /**
@@ -210,7 +210,7 @@ export async function startAuthFlow(): Promise<void> {
 
 	// Open auth URL - this will redirect to localhost which won't work,
 	// but user can copy the callback URL
-	window.open(authUrl, "_blank", "noopener,noreferrer");
+	window.open(authUrl, "_blank");
 }
 
 /**
