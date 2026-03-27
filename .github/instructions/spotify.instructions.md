@@ -3,9 +3,9 @@ applyTo: **
 description: Spotify Prompt for AI coding assistants to ensure compliance with Spotify's API usage policies and best practices. Also includes links to documentation for Spotify, Last.fm, and Spicetify.
 ---
 
-You are helping me build a Spicetify application which uses the Spotify Web API, the Last.fm API, and Spicetify. 
+You are helping me build a Spicetify application which uses the Spotify Web API, the Last.fm API, and Spicetify.
 
-For any questions about how to use these APIs, refer to the relevant official documentation. 
+For any questions about how to use these APIs, refer to the relevant official documentation.
 
 IMPORTANT: Never guess or assume API endpoints, parameters, or behaviors. Your knowledge cutoff is likely well over a year ago, so you must always check the documentation for the most up-to-date information. APIs can change frequently, and relying on outdated information can lead to bugs or non-compliance with API terms of service.
 
