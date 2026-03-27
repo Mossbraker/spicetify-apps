@@ -51,13 +51,13 @@ const ArtistAlbums = ({
 }: { artist: ArtistItem; onBack: () => void; configWrapper: ConfigWrapper }) => {
 	const [albums, setAlbums] = React.useState<AlbumItem[]>([]);
 	const [loading, setLoading] = React.useState(true);
-	const [resultsCapped, setResultsCapped] = React.useState(false);
+	const [scannedItemCount, setScannedItemCount] = React.useState<number | null>(null);
 
 	React.useEffect(() => {
 		let cancelled = false;
 		const fetchAlbums = async () => {
 			setLoading(true);
-			setResultsCapped(false);
+			setScannedItemCount(null);
 			try {
 				let allItems: AlbumItem[] = [];
 				let offset = 0;
@@ -108,13 +108,13 @@ const ArtistAlbums = ({
 				);
 				if (!cancelled) {
 					setAlbums(artistAlbums);
-					setResultsCapped(hitScanCap);
+					setScannedItemCount(hitScanCap ? offset : null);
 				}
 			} catch (e) {
 				console.error("Failed to fetch artist albums", e);
 				if (!cancelled) {
 					setAlbums([]);
-					setResultsCapped(false);
+					setScannedItemCount(null);
 				}
 			}
 			if (!cancelled) setLoading(false);
@@ -163,15 +163,15 @@ const ArtistAlbums = ({
 				<div className="library-item-count">Loading albums...</div>
 			) : albums.length === 0 ? (
 				<div className="library-item-count">
-					{resultsCapped
-						? `No saved albums found in the first ${artistAlbumScanPageLimit * limit} matching library items.`
+					{scannedItemCount !== null
+						? `No saved albums found in the first ${scannedItemCount} matching library items.`
 						: "No saved albums found for this artist"}
 				</div>
 			) : (
 				<>
-					{resultsCapped ? (
+					{scannedItemCount !== null ? (
 						<div className="library-item-count">
-							Showing albums from the first {artistAlbumScanPageLimit * limit} matching library items to avoid long load times.
+							Showing albums from the first {scannedItemCount} matching library items to avoid long load times.
 						</div>
 					) : null}
 					{configWrapper.config["show-item-count"] ? (
