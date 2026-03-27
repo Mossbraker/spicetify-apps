@@ -9,6 +9,10 @@ interface CardImageProps {
 function CardImage({ imageUrl, type, fallbackLabel }: CardImageProps): React.ReactElement {
 	const [imageFailed, setImageFailed] = React.useState(false);
 	const [imageLoaded, setImageLoaded] = React.useState(false);
+	React.useEffect(() => {
+		setImageFailed(false);
+		setImageLoaded(false);
+	}, [imageUrl]);
 	const imageClassName = type === "artist" ? "stats-plain-card-image is-circular" : "stats-plain-card-image";
 	const hasImage = imageUrl && !imageFailed;
 
