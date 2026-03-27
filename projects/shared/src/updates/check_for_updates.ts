@@ -8,18 +8,18 @@ const checkForUpdates = (
 	const cacheKey = `${appName}:github-releases-cache`;
 	const prefixWithV = `${appName}-v`;
 
-	const processReleases = (result: { name: string | null }[]) => {
+	const processReleases = (result: { tag_name: string | null }[]) => {
 		const releases = result.filter(
-			(release): release is { name: string } => release.name?.startsWith(prefixWithV) === true,
+			(release): release is { tag_name: string } => release.tag_name?.startsWith(prefixWithV) === true,
 		);
 		if (releases.length === 0) return;
-		setNewUpdate(releases[0].name.slice(prefixWithV.length) !== version);
+		setNewUpdate(releases[0].tag_name.slice(prefixWithV.length) !== version);
 	};
 
 	try {
 		const raw = sessionStorage.getItem(cacheKey);
 		if (raw) {
-			const cached = JSON.parse(raw) as { data: { name: string | null }[]; ts: number };
+			const cached = JSON.parse(raw) as { data: { tag_name: string | null }[]; ts: number };
 			if (Date.now() - cached.ts < CACHE_TTL_MS) {
 				processReleases(cached.data);
 				return;
