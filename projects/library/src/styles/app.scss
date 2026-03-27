@@ -43,14 +43,18 @@
             margin: 0 auto;
         }
 
-        &:hover {
-            cursor: pointer;
-        }
-
         display: flex;
         gap: 10px;
         flex-direction: column;
         justify-content: center;
+    }
+
+    button.load-more-card {
+        border: none;
+        font: inherit;
+        cursor: pointer;
+        width: 100%;
+        text-align: left;
     }
 
     .x-filterBox-searchIcon {
