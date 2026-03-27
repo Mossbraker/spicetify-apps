@@ -76,11 +76,7 @@ const ArtistAlbums = ({
 					const pageItems = res.items || [];
 					allItems = allItems.concat(pageItems);
 
-					if (typeof res.totalLength === "number") {
-						total = res.totalLength;
-					} else {
-						total = allItems.length;
-					}
+					total = res.totalLength;
 
 					scannedPages += 1;
 					offset += pageItems.length;
