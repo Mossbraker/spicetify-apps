@@ -160,6 +160,12 @@ claudekit/
 .mcp.json
 docs/Claude Code Paths.md
 
+# GitHub Copilot agent files
+.github/instructions/superpowers.md
+.github/skills/address-review/SKILL.md
+.github/agents/typescript-pro.md
+.github/agents/code-reviewer.md
+
 # scratch files
 docs/untitty.txt
 docs/squanch-pad.md

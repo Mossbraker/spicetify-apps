@@ -37,6 +37,7 @@ function isValidArtist(artist: ArtistItem) {
 }
 
 const limit = 200;
+const artistAlbumScanPageLimit = 5;
 
 const sortOptions = [
 	{ id: "0", name: "Name" },
@@ -50,17 +51,20 @@ const ArtistAlbums = ({
 }: { artist: ArtistItem; onBack: () => void; configWrapper: ConfigWrapper }) => {
 	const [albums, setAlbums] = React.useState<AlbumItem[]>([]);
 	const [loading, setLoading] = React.useState(true);
+	const [scannedItemCount, setScannedItemCount] = React.useState<number | null>(null);
 
 	React.useEffect(() => {
 		let cancelled = false;
 		const fetchAlbums = async () => {
 			setLoading(true);
+			setScannedItemCount(null);
 			try {
 				let allItems: AlbumItem[] = [];
 				let offset = 0;
 				let total = Infinity;
+				let scannedPages = 0;
 
-				while (!cancelled && offset < total) {
+				while (!cancelled && offset < total && scannedPages < artistAlbumScanPageLimit) {
 					const res = (await Spicetify.Platform.LibraryAPI.getContents({
 						filters: ["0"],
 						sortOrder: "0",
@@ -72,15 +76,14 @@ const ArtistAlbums = ({
 					const pageItems = res.items || [];
 					allItems = allItems.concat(pageItems);
 
-					if (typeof res.totalLength === "number") {
-						total = res.totalLength;
-					} else {
-						total = allItems.length;
-					}
+					total = res.totalLength;
 
+					scannedPages += 1;
 					offset += pageItems.length;
 					if (pageItems.length === 0) break;
 				}
+
+				const hitScanCap = scannedPages === artistAlbumScanPageLimit && offset < total;
 
 				// Filter to only albums by this specific artist
 				const normalizedArtistName = artist.name?.trim().toLowerCase();
@@ -99,10 +102,16 @@ const ArtistAlbums = ({
 						);
 					}),
 				);
-				if (!cancelled) setAlbums(artistAlbums);
+				if (!cancelled) {
+					setAlbums(artistAlbums);
+					setScannedItemCount(hitScanCap ? offset : null);
+				}
 			} catch (e) {
 				console.error("Failed to fetch artist albums", e);
-				if (!cancelled) setAlbums([]);
+				if (!cancelled) {
+					setAlbums([]);
+					setScannedItemCount(null);
+				}
 			}
 			if (!cancelled) setLoading(false);
 		};
@@ -149,9 +158,18 @@ const ArtistAlbums = ({
 			{loading ? (
 				<div className="library-item-count">Loading albums...</div>
 			) : albums.length === 0 ? (
-				<div className="library-item-count">No saved albums found for this artist</div>
+				<div className="library-item-count">
+					{scannedItemCount !== null
+						? `No saved albums found in the first ${scannedItemCount} matching library items.`
+						: "No saved albums found for this artist"}
+				</div>
 			) : (
 				<>
+					{scannedItemCount !== null ? (
+						<div className="library-item-count">
+							Showing albums from the first {scannedItemCount} matching library items to avoid long load times.
+						</div>
+					) : null}
 					{configWrapper.config["show-item-count"] ? (
 						<div className="library-item-count">{albums.length} albums</div>
 					) : null}
