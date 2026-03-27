@@ -424,7 +424,7 @@
 }
 
 // Normalize close button in Reorder Albums modal to match save button size
-.GenericModal[aria-label="Reorder Albums"] .main-trackCreditsModal-closeBtn {
+.GenericModal:has(.reorder-modal) .main-trackCreditsModal-closeBtn {
     height: 32px;
     min-height: 32px;
     min-width: 32px;

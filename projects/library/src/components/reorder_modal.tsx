@@ -21,10 +21,11 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 	const rowRefs = React.useRef<(HTMLDivElement | null)[]>([]);
 	const itemsRef = React.useRef(items);
 	itemsRef.current = items;
+	const containerRef = React.useRef<HTMLDivElement | null>(null);
 
 	// Inject a save icon button into the PopupModal title bar
 	React.useEffect(() => {
-		const modal = document.querySelector('.GenericModal[aria-label="Reorder Albums"]');
+		const modal = containerRef.current?.closest(".GenericModal");
 		if (!modal) return;
 		const header = modal.querySelector(".main-trackCreditsModal-header") ?? modal.querySelector("header");
 		if (!header) return;
@@ -147,7 +148,7 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 	};
 
 	return (
-		<div className="reorder-modal">
+		<div className="reorder-modal" ref={containerRef}>
 			<div className="reorder-modal-list" role="list" aria-label="Album order">
 				{items.map((item, index) => (
 					<div
