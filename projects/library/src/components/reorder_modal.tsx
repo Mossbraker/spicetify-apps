@@ -19,7 +19,7 @@ const ReorderModal = ({ items: initialItems, onSave, onReset }: ReorderModalProp
 	const dropTargetRef = React.useRef<number | null>(null);
 	const [dropTarget, setDropTarget] = React.useState<number | null>(null);
 	const rowRefs = React.useRef<(HTMLDivElement | null)[]>([]);
-	const containerRef = React.useRef<HTMLDivElement>(null);
+	const containerRef = React.useRef<HTMLDivElement | null>(null);
 	const itemsRef = React.useRef(items);
 	itemsRef.current = items;
 
