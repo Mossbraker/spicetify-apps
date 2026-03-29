@@ -19,6 +19,7 @@ import { convertArtist, convertTrack, getThrottledMapOptions, throttledMap } fro
 import useStatus from "@shared/status/useStatus";
 import { useQuery } from "@shared/types/react_query";
 import { cacher, invalidator } from "../extensions/cache";
+import CreatePlaylistButton from "../components/buttons/create_playlist_button";
 // @ts-ignore
 import _ from "lodash";
 import { parseLiked } from "../utils/track_helper";
@@ -146,15 +147,15 @@ const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	if (!isArtistChart) {
 		const spotifyUris = items.map((track) => track.uri).filter((uri) => uri.startsWith("spotify:track:"));
 		if (spotifyUris.length > 0) {
-			// @ts-ignore
-			props.infoToCreatePlaylist = {
-				playlistName: `Top Track Chart - ${getDate()}`,
-				itemsUris: spotifyUris,
-			};
+			props.rhs.push(
+				<CreatePlaylistButton infoToCreatePlaylist={{
+					playlistName: `Top Track Chart - ${getDate()}`,
+					itemsUris: spotifyUris,
+				}} />,
+			);
 		}
 	}
 
-	// @ts-ignore
 	const chartToRender = isArtistChart ? <ArtistChart artists={items} /> : <TrackChart tracks={items} />;
 
 	return <PageContainer {...props}>{chartToRender}</PageContainer>;
