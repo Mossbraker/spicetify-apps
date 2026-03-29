@@ -386,7 +386,8 @@ const externalFetch = async <T>(url: string): Promise<T> => {
 			status: response.status,
 			retryAfter,
 		});
-		const retryAfterSeconds = retryAfter != null ? Number(retryAfter) : NaN;
+		const trimmed = retryAfter?.trim();
+		const retryAfterSeconds = trimmed ? Number(trimmed) : NaN;
 		throw {
 			code: response.status,
 			retryAfter: Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0 ? retryAfterSeconds : undefined,
@@ -420,7 +421,8 @@ const directFetch = async <T>(url: string): Promise<T> => {
 			url,
 			retryAfter,
 		});
-		const retryAfterSeconds = retryAfter != null ? Number(retryAfter) : NaN;
+		const trimmed = retryAfter?.trim();
+		const retryAfterSeconds = trimmed ? Number(trimmed) : NaN;
 		const isValidRetryAfter = Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0;
 		throw {
 			code: 429,
