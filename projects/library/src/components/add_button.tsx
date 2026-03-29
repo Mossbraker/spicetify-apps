@@ -152,7 +152,14 @@ function AddButton({ menuItems }: AddButtonProps): React.ReactElement {
 					aria-haspopup="menu"
 					aria-expanded={isOpen}
 					aria-controls={isOpen ? menuId : undefined}
-					onClick={() => setIsOpen((v) => !v)}
+					onClick={() => {
+						if (isOpen) {
+							closeMenu();
+						} else {
+							initialFocusRef.current = 0;
+							setIsOpen(true);
+						}
+					}}
 					onKeyDown={onTriggerKeyDown}
 				>
 					<AddIcon />
