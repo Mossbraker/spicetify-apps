@@ -53,8 +53,8 @@ function AddButton({ menuItems }: AddButtonProps): React.ReactElement {
 	const containerRef = React.useRef<HTMLDivElement>(null);
 	const triggerRef = React.useRef<HTMLButtonElement>(null);
 	const menuRef = React.useRef<HTMLDivElement>(null);
-	const menuId = React.useId();
 	const initialFocusRef = React.useRef(0);
+	const menuId = React.useId();
 
 	const focusMenuItem = React.useCallback((index: number) => {
 		const items = menuRef.current?.querySelectorAll<HTMLButtonElement>("[role='menuitem']");
@@ -63,6 +63,7 @@ function AddButton({ menuItems }: AddButtonProps): React.ReactElement {
 
 	const closeMenu = React.useCallback((focusTrigger = true) => {
 		setIsOpen(false);
+		initialFocusRef.current = 0;
 		if (focusTrigger) {
 			requestAnimationFrame(() => triggerRef.current?.focus());
 		}
@@ -151,7 +152,14 @@ function AddButton({ menuItems }: AddButtonProps): React.ReactElement {
 					aria-haspopup="menu"
 					aria-expanded={isOpen}
 					aria-controls={isOpen ? menuId : undefined}
-					onClick={() => { initialFocusRef.current = 0; setIsOpen((v) => !v); }}
+					onClick={() => {
+						if (isOpen) {
+							closeMenu();
+						} else {
+							initialFocusRef.current = 0;
+							setIsOpen(true);
+						}
+					}}
 					onKeyDown={onTriggerKeyDown}
 				>
 					<AddIcon />

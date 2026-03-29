@@ -12,14 +12,6 @@ function CardImage({ imageUrl, type, fallbackLabel }: CardImageProps): React.Rea
 	const imageClassName = type === "artist" ? "stats-plain-card-image is-circular" : "stats-plain-card-image";
 	const hasImage = imageUrl && !imageFailed;
 
-	// Reset loading/error state when imageUrl changes
-	const prevUrlRef = React.useRef(imageUrl);
-	if (prevUrlRef.current !== imageUrl) {
-		prevUrlRef.current = imageUrl;
-		setImageFailed(false);
-		setImageLoaded(false);
-	}
-
 	return (
 		<div className={imageClassName}>
 			<div className="stats-plain-card-imageFallback" aria-hidden="true" style={hasImage && imageLoaded ? { opacity: 0 } : undefined}>

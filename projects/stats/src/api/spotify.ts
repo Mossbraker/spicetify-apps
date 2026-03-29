@@ -1,7 +1,7 @@
 import type * as Spotify from "../types/spotify";
 import { statsDebug, debugLog } from "../extensions/debug";
 import { isOAuthEnabled, hasValidTokens, oauthFetch, getAccessToken } from "./oauth";
-import { fetchWithRetry, parseRetryAfterMs } from "../utils/fetch-with-retry";
+import { fetchWithRetry } from "../utils/fetch-with-retry";
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/";
 
@@ -386,10 +386,11 @@ const externalFetch = async <T>(url: string): Promise<T> => {
 			status: response.status,
 			retryAfter,
 		});
-		const retryAfterMs = retryAfter ? parseRetryAfterMs(retryAfter) : NaN;
+		const trimmed = retryAfter?.trim();
+		const retryAfterSeconds = trimmed ? Number(trimmed) : NaN;
 		throw {
 			code: response.status,
-			retryAfter: Number.isFinite(retryAfterMs) ? retryAfterMs / 1000 : undefined,
+			retryAfter: Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0 ? retryAfterSeconds : undefined,
 			message: response.statusText,
 		};
 	}
@@ -420,12 +421,15 @@ const directFetch = async <T>(url: string): Promise<T> => {
 			url,
 			retryAfter,
 		});
-		const retryAfterMs = retryAfter ? parseRetryAfterMs(retryAfter) : NaN;
-		const retryAfterSec = Number.isFinite(retryAfterMs) ? retryAfterMs / 1000 : undefined;
+		const trimmed = retryAfter?.trim();
+		const retryAfterSeconds = trimmed ? Number(trimmed) : NaN;
+		const isValidRetryAfter = Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0;
 		throw {
 			code: 429,
-			retryAfter: retryAfterSec,
-			message: `Rate limited. Retry after ${retryAfterSec ?? "unknown"} seconds`,
+			retryAfter: isValidRetryAfter ? retryAfterSeconds : undefined,
+			message: isValidRetryAfter
+				? `Rate limited. Retry after ${retryAfterSeconds} seconds`
+				: "Rate limited. Retry after unknown delay",
 		};
 	}
 
