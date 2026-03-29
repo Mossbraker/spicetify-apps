@@ -54,10 +54,21 @@ export async function fetchWithRetry(
 			const response = await fetch(url, options);
 
 			if (response.status === 429 && attempt < maxRetries) {
+				let retryAfterMs: number | undefined;
+
 				const retryAfterHeader = response.headers.get("Retry-After");
-				const parsed = retryAfterHeader != null ? Number(retryAfterHeader) : NaN;
-				const retryAfterMs = Number.isFinite(parsed) ? parsed * 1000 : backoffMs;
-				const waitMs = Math.min(retryAfterMs, maxBackoffMs);
+				if (retryAfterHeader != null) {
+					const trimmed = retryAfterHeader.trim();
+					if (trimmed !== "") {
+						const parsed = Number(trimmed);
+						if (Number.isFinite(parsed) && parsed >= 0) {
+							retryAfterMs = parsed * 1000;
+						}
+					}
+				}
+
+				const effectiveRetryMs = retryAfterMs ?? backoffMs;
+				const waitMs = Math.min(effectiveRetryMs, maxBackoffMs);
 
 				logger?.warn(
 					`fetchWithRetry: 429 rate limited, backing off (url=${url}, attempt=${attempt + 1}/${maxRetries + 1}, waitMs=${waitMs})`,

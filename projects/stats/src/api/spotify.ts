@@ -386,9 +386,10 @@ const externalFetch = async <T>(url: string): Promise<T> => {
 			status: response.status,
 			retryAfter,
 		});
+		const retryAfterSeconds = retryAfter != null ? Number(retryAfter) : NaN;
 		throw {
 			code: response.status,
-			retryAfter: retryAfter ? Number(retryAfter) : undefined,
+			retryAfter: Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0 ? retryAfterSeconds : undefined,
 			message: response.statusText,
 		};
 	}
@@ -419,10 +420,14 @@ const directFetch = async <T>(url: string): Promise<T> => {
 			url,
 			retryAfter,
 		});
+		const retryAfterSeconds = retryAfter != null ? Number(retryAfter) : NaN;
+		const isValidRetryAfter = Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0;
 		throw {
 			code: 429,
-			retryAfter: retryAfter ? Number(retryAfter) : undefined,
-			message: `Rate limited. Retry after ${retryAfter || "unknown"} seconds`,
+			retryAfter: isValidRetryAfter ? retryAfterSeconds : undefined,
+			message: isValidRetryAfter
+				? `Rate limited. Retry after ${retryAfterSeconds} seconds`
+				: "Rate limited. Retry after unknown delay",
 		};
 	}
 
