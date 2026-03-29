@@ -16,6 +16,7 @@ import useStatus from "@shared/status/useStatus";
 import { cacher, invalidator } from "../extensions/cache";
 import { parseLiked } from "../utils/track_helper";
 import { getConfigCacheKey } from "../utils/config_cache";
+import CreatePlaylistButton from "../components/buttons/create_playlist_button";
 
 const hasLastFmCredentials = (config: Config) => Boolean(config["api-key"] && config["lastfm-user"]);
 
@@ -65,17 +66,22 @@ const TracksPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	const topTracks = data as NonNullable<typeof data>;
 
-	const infoToCreatePlaylist = {
-		playlistName: `Top Songs - ${activeOption.name}`,
-		itemsUris: topTracks.map((track) => track.uri),
-	};
+	const spotifyUris = topTracks.map((track) => track.uri).filter((uri) => uri.startsWith("spotify:track:"));
+	if (spotifyUris.length > 0) {
+		props.rhs.push(
+			<CreatePlaylistButton infoToCreatePlaylist={{
+				playlistName: `Top Songs - ${activeOption.name}`,
+				itemsUris: spotifyUris,
+			}} />,
+		);
+	}
 
 	const trackRows = topTracks.map((track, index) => (
 		<TrackRow index={index + 1} {...track} uris={topTracks.map((track) => track.uri)} />
 	));
 
 	return (
-		<PageContainer {...props} infoToCreatePlaylist={infoToCreatePlaylist}>
+		<PageContainer {...props}>
 			<Tracklist playcount={Boolean(topTracks[0]?.playcount)}>{trackRows}</Tracklist>
 		</PageContainer>
 	);
