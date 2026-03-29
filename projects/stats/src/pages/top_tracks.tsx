@@ -65,10 +65,13 @@ const TracksPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	const topTracks = data as NonNullable<typeof data>;
 
-	const infoToCreatePlaylist = {
-		playlistName: `Top Songs - ${activeOption.name}`,
-		itemsUris: topTracks.map((track) => track.uri),
-	};
+	const spotifyUris = topTracks.map((track) => track.uri).filter((uri) => uri.startsWith("spotify:track:"));
+	const infoToCreatePlaylist = spotifyUris.length > 0
+		? {
+			playlistName: `Top Songs - ${activeOption.name}`,
+			itemsUris: spotifyUris,
+		}
+		: undefined;
 
 	const trackRows = topTracks.map((track, index) => (
 		<TrackRow index={index + 1} {...track} uris={topTracks.map((track) => track.uri)} />

@@ -143,14 +143,15 @@ const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const items = chartData.items;
 	if (!items.length) return <PageContainer {...props}><div>No chart data available.</div></PageContainer>;
 
-	const infoToCreatePlaylist = {
-		playlistName: `Top Track Chart - ${getDate()}`,
-		itemsUris: items.map((track) => track.uri),
-	};
-
 	if (!isArtistChart) {
-		// @ts-ignore
-		props.infoToCreatePlaylist = infoToCreatePlaylist;
+		const spotifyUris = items.map((track) => track.uri).filter((uri) => uri.startsWith("spotify:track:"));
+		if (spotifyUris.length > 0) {
+			// @ts-ignore
+			props.infoToCreatePlaylist = {
+				playlistName: `Top Track Chart - ${getDate()}`,
+				itemsUris: spotifyUris,
+			};
+		}
 	}
 
 	// @ts-ignore
