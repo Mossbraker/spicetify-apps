@@ -142,7 +142,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	useEffect(() => {
 		if (status !== "success" || !data) return;
 
-		const items = data.pages.flatMap((page) => page.items);
+		const items = data.pages.flatMap((page) => page.items ?? []);
 		const missingImages = items.filter(
 			(item): item is PlaylistItem =>
 				item.type === "playlist" &&
@@ -253,7 +253,7 @@ const PlaylistsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 
 	const contents = data as NonNullable<typeof data>;
 
-	const items = contents.pages.flatMap((page) => page.items);
+	const items = contents.pages.flatMap((page) => page.items ?? []);
 
 	const rootlistCards = items.filter(isValidRootlistItem).map((item) => (
 		item.type === "folder" ?
