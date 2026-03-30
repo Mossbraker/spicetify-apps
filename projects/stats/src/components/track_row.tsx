@@ -130,15 +130,17 @@ const DraggableComponent = ({
 	title,
 	...props
 }: { uri: string; title: string } & React.HTMLProps<HTMLDivElement>) => {
-	const dragHandler = Spicetify.ReactHook.DragHandler?.([uri], title);
+	const isSpotifyUri = uri.startsWith("spotify:");
+	const dragHandler = isSpotifyUri ? Spicetify.ReactHook.DragHandler?.([uri], title) : undefined;
 	return (
-		<div onDragStart={dragHandler} draggable="true" {...props}>
+		<div onDragStart={dragHandler} draggable={isSpotifyUri} {...props}>
 			{props.children}
 		</div>
 	);
 };
 
 function playAndQueue(uri: string) {
+	if (!uri.startsWith("spotify:")) return;
 	Spicetify.Player.playUri(uri);
 }
 
@@ -234,7 +236,7 @@ const TrackRow = (props: TrackRowProps) => {
 						title={`${props.name} • ${props.artists.map((artist) => artist.name).join(", ")}`}
 						className="main-trackList-trackListRow main-trackList-trackListRowGrid"
 						role="presentation"
-						onClick={(event) => event.detail === 2 && playAndQueue(props.uri)}
+						onClick={(event) => event.detail === 2 && isSpotifyUri && playAndQueue(props.uri)}
 						style={{
 							height: 56,
 							gridTemplateColumns: "[index] var(--tracklist-index-column-width,16px) [first] minmax(120px,var(--col1,6fr)) [var1] minmax(120px,var(--col2,4fr)) [var2] minmax(120px,var(--col3,3fr)) [last] minmax(120px,var(--col4,1fr))"
@@ -256,6 +258,7 @@ const TrackRow = (props: TrackRowProps) => {
 										aria-label={`Play ${props.name}`}
 										tabIndex={-1}
 										onClick={() => playAndQueue(props.uri)}
+										disabled={!isSpotifyUri}
 									>
 										<svg
 											role="img"
@@ -333,7 +336,7 @@ const TrackRow = (props: TrackRowProps) => {
 							</span>
 						</div>
 						<div className="main-trackList-rowSectionEnd" role="gridcell" aria-colindex={5} tabIndex={-1}>
-							{<LikedIcon active={liked} uri={props.uri} />}
+							{isSpotifyUri && <LikedIcon active={liked} uri={props.uri} />}
 							<div
 								className="TypeElement-mesto-textSubdued TypeElement-mesto-textSubdued-type main-trackList-rowDuration"
 								data-encore-id="type"
