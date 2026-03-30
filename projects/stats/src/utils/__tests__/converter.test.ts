@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { throttledMap, getThrottledMapOptions, minifyArtist, minifyAlbum, minifyTrack, convertArtistLastFMOnly, convertAlbumLastFMOnly } from "../converter";
 
 vi.mock("../../api/spotify", () => ({
@@ -23,6 +23,8 @@ vi.mock("../../api/lastfm", () => ({
 }));
 
 describe("throttledMap", () => {
+	afterEach(() => vi.useRealTimers());
+
 	it("maps all items with default options (sequential, no delay)", async () => {
 		const result = await throttledMap([1, 2, 3], async (n) => n * 2);
 		expect(result).toEqual([2, 4, 6]);
@@ -62,7 +64,6 @@ describe("throttledMap", () => {
 		expect(fn).toHaveBeenCalledTimes(3);
 
 		await promise;
-		vi.useRealTimers();
 	});
 
 	it("does not delay after the last batch", async () => {
@@ -75,7 +76,6 @@ describe("throttledMap", () => {
 		const result = await promise;
 		expect(result).toEqual([1, 2]);
 		expect(fn).toHaveBeenCalledTimes(2);
-		vi.useRealTimers();
 	});
 
 	it("propagates errors from the mapping function", async () => {

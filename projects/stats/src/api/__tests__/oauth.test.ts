@@ -229,22 +229,27 @@ describe("oauthFetch", () => {
 			status: 401,
 		} as any);
 
-		// Mock global fetch for token refresh
-		const refreshData = { access_token: "new-token", refresh_token: "new-ref", expires_in: 3600 };
-		globalThis.fetch = vi.fn().mockResolvedValueOnce({
-			ok: true,
-			json: () => Promise.resolve(refreshData),
-		});
+		const originalFetch = globalThis.fetch;
+		try {
+			// Mock global fetch for token refresh
+			const refreshData = { access_token: "new-token", refresh_token: "new-ref", expires_in: 3600 };
+			globalThis.fetch = vi.fn().mockResolvedValueOnce({
+				ok: true,
+				json: () => Promise.resolve(refreshData),
+			});
 
-		// Retry after refresh succeeds
-		mockedFetchWithRetry.mockResolvedValueOnce({
-			ok: true,
-			status: 200,
-			json: () => Promise.resolve({ data: "refreshed" }),
-		} as any);
+			// Retry after refresh succeeds
+			mockedFetchWithRetry.mockResolvedValueOnce({
+				ok: true,
+				status: 200,
+				json: () => Promise.resolve({ data: "refreshed" }),
+			} as any);
 
-		const result = await oauthFetch("https://api.spotify.com/v1/me/top/tracks");
-		expect(result).toEqual({ data: "refreshed" });
+			const result = await oauthFetch("https://api.spotify.com/v1/me/top/tracks");
+			expect(result).toEqual({ data: "refreshed" });
+		} finally {
+			globalThis.fetch = originalFetch;
+		}
 	});
 
 	it("throws OAuthError for non-OK non-401 responses", async () => {
@@ -273,27 +278,32 @@ describe("concurrent refresh guard (C-2)", () => {
 		localStorage.setItem(KEYS.refreshToken, "ref");
 		localStorage.setItem("stats:config:oauth-client-id", JSON.stringify("cid"));
 
-		let resolveRefresh!: (value: Response) => void;
-		const refreshPromise = new Promise<Response>((resolve) => {
-			resolveRefresh = resolve;
-		});
-		globalThis.fetch = vi.fn().mockReturnValue(refreshPromise);
+		const originalFetch = globalThis.fetch;
+		try {
+			let resolveRefresh!: (value: Response) => void;
+			const refreshPromise = new Promise<Response>((resolve) => {
+				resolveRefresh = resolve;
+			});
+			globalThis.fetch = vi.fn().mockReturnValue(refreshPromise);
 
-		// Launch two concurrent token requests
-		const p1 = getAccessToken();
-		const p2 = getAccessToken();
+			// Launch two concurrent token requests
+			const p1 = getAccessToken();
+			const p2 = getAccessToken();
 
-		// Only one fetch call should have been made
-		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+			// Only one fetch call should have been made
+			expect(globalThis.fetch).toHaveBeenCalledTimes(1);
 
-		// Resolve the refresh
-		resolveRefresh({
-			ok: true,
-			json: () => Promise.resolve({ access_token: "shared-new", refresh_token: "r", expires_in: 3600 }),
-		} as Response);
+			// Resolve the refresh
+			resolveRefresh({
+				ok: true,
+				json: () => Promise.resolve({ access_token: "shared-new", refresh_token: "r", expires_in: 3600 }),
+			} as Response);
 
-		const [t1, t2] = await Promise.all([p1, p2]);
-		expect(t1).toBe("shared-new");
-		expect(t2).toBe("shared-new");
+			const [t1, t2] = await Promise.all([p1, p2]);
+			expect(t1).toBe("shared-new");
+			expect(t2).toBe("shared-new");
+		} finally {
+			globalThis.fetch = originalFetch;
+		}
 	});
 });
