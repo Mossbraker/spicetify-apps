@@ -109,19 +109,24 @@ describe("getAccessToken", () => {
 		localStorage.setItem(KEYS.refreshToken, "refresh-tok");
 		localStorage.setItem("stats:config:oauth-client-id", JSON.stringify("client-id"));
 
-		// Mock the token refresh fetch
-		const mockFetch = vi.fn().mockResolvedValueOnce({
-			ok: true,
-			json: () => Promise.resolve({
-				access_token: "new-token",
-				refresh_token: "new-refresh",
-				expires_in: 3600,
-			}),
-		});
-		globalThis.fetch = mockFetch;
+		const originalFetch = globalThis.fetch;
+		try {
+			// Mock the token refresh fetch
+			const mockFetch = vi.fn().mockResolvedValueOnce({
+				ok: true,
+				json: () => Promise.resolve({
+					access_token: "new-token",
+					refresh_token: "new-refresh",
+					expires_in: 3600,
+				}),
+			});
+			globalThis.fetch = mockFetch;
 
-		const result = await getAccessToken();
-		expect(result).toBe("new-token");
+			const result = await getAccessToken();
+			expect(result).toBe("new-token");
+		} finally {
+			globalThis.fetch = originalFetch;
+		}
 	});
 
 	it("clears tokens and returns null on failed refresh", async () => {
@@ -130,15 +135,20 @@ describe("getAccessToken", () => {
 		localStorage.setItem(KEYS.refreshToken, "invalid-refresh");
 		localStorage.setItem("stats:config:oauth-client-id", JSON.stringify("client-id"));
 
-		const mockFetch = vi.fn().mockResolvedValueOnce({
-			ok: false,
-			json: () => Promise.resolve({ error: "invalid_grant" }),
-		});
-		globalThis.fetch = mockFetch;
+		const originalFetch = globalThis.fetch;
+		try {
+			const mockFetch = vi.fn().mockResolvedValueOnce({
+				ok: false,
+				json: () => Promise.resolve({ error: "invalid_grant" }),
+			});
+			globalThis.fetch = mockFetch;
 
-		const result = await getAccessToken();
-		expect(result).toBeNull();
-		expect(localStorage.getItem(KEYS.accessToken)).toBeNull();
+			const result = await getAccessToken();
+			expect(result).toBeNull();
+			expect(localStorage.getItem(KEYS.accessToken)).toBeNull();
+		} finally {
+			globalThis.fetch = originalFetch;
+		}
 	});
 });
 

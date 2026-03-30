@@ -51,7 +51,8 @@ class CollectionsWrapper extends EventTarget {
 		const localAlbumsIntegration = window.localTracksService;
 		if (!localAlbumsIntegration) return new Map<string, AlbumItem>();
 		if (!localAlbumsIntegration.isReady) {
-			let subscription: any;
+			let subscription: { unsubscribe: () => void } | undefined;
+			let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
 			try {
 				const ready = await Promise.race([
 					new Promise((resolve) => {
@@ -60,7 +61,9 @@ class CollectionsWrapper extends EventTarget {
 						});
 						localAlbumsIntegration.init();
 					}),
-					new Promise((resolve) => setTimeout(() => resolve(false), 5000)),
+					new Promise((resolve) => {
+						timeoutHandle = setTimeout(() => resolve(false), 5000);
+					}),
 				]);
 				if (!ready) {
 					console.warn("Library: localTracksService timed out after 5s");
@@ -68,6 +71,7 @@ class CollectionsWrapper extends EventTarget {
 				}
 			} finally {
 				if (subscription) subscription.unsubscribe();
+				if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
 			}
 		}
 		return localAlbumsIntegration.getAlbums();

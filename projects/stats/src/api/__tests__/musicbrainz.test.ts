@@ -106,13 +106,13 @@ describe("musicbrainz — getArtistGenres", () => {
 			mockJsonResponse(null, 429) as any,
 		);
 
-		const result = await getArtistGenres("CooldownArtist");
-		expect(result).toEqual([]);
+		const first = await getArtistGenres("CooldownArtist");
+		const second = await getArtistGenres("CooldownArtist2"); // different artist, not cached
 
-		// Subsequent call should also return empty (cooling down)
-		// Reset modules to get a fresh import but preserve the cooldown state
-		// Actually, we already reset modules per test, so we test that the
-		// initial call returns empty on 429
+		expect(first).toEqual([]);
+		expect(second).toEqual([]);
+		// Second call is short-circuited by cooldown and must not hit fetch again
+		expect(mockedFetchWithRetry).toHaveBeenCalledTimes(1);
 	});
 
 	it("starts cooldown on 503 response", async () => {
