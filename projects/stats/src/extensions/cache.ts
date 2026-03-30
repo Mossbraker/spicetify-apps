@@ -119,7 +119,7 @@ export const getCacheDiagnostics = (): CacheDiagnostic[] => {
 
 // cache a specific function
 export const cacher = <T>(cb: () => Promise<T>) => {
-	return async ({ queryKey }: { queryKey: string[] }) => {
+	return async ({ queryKey }: { queryKey: unknown[] }) => {
 		const key = JSON.stringify(queryKey);
 		const cachedEntry = touch<T>(key);
 		if (cachedEntry) return cachedEntry.value;
@@ -150,7 +150,7 @@ export const batchCacher = <T>(prefix: string, cb: (ids: string[]) => Promise<(T
 	};
 };
 
-export const invalidator = async <T>(queryKey: string[], refetch: () => Promise<T>) => {
+export const invalidator = async <T>(queryKey: unknown[], refetch: () => Promise<T>) => {
 	invalidate(JSON.stringify(queryKey));
 	return refetch();
 };
