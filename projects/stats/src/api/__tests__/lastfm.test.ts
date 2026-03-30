@@ -70,20 +70,14 @@ describe("getLastFmImageUrl", () => {
 		expect(getLastFmImageUrl(images)).toBeUndefined();
 	});
 
-	it("falls back when largest image is placeholder but smaller is real", () => {
+	it("returns undefined when largest image is a placeholder, even if a smaller real image exists", () => {
 		const images: LastFmImage[] = [
 			{ "#text": "https://real-image.jpg" },
 			{ "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png" },
 		];
-		// Reversed: placeholder first (skipped as placeholder after being found by trim check),
-		// wait — the function finds the first non-empty from reversed, but then checks placeholder.
-		// Actually: reverse finds placeholder first (it has text), converts to https, then isPlaceholder => true => returns undefined
-		// Hmm, let me re-read the code:
-		// 1. Reverse the array: [placeholder, real]
-		// 2. Find first with non-empty #text => placeholder
-		// 3. toHttpsUrl => placeholder url
-		// 4. isPlaceholder => true => return undefined
-		// So the real image is NOT used as fallback. This is the actual behavior.
+		// Reversed: [placeholder, real-image]. The function picks the first non-empty from the
+		// reversed array (the placeholder), identifies it as a placeholder, and returns undefined.
+		// The smaller real image is not used as a fallback.
 		expect(getLastFmImageUrl(images)).toBeUndefined();
 	});
 
