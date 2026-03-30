@@ -20,7 +20,7 @@ vi.mock("../../utils/fetch-with-retry", () => ({
 	fetchWithRetry: vi.fn(),
 }));
 
-vi.mock("./oauth", () => ({
+vi.mock("../oauth", () => ({
 	isOAuthEnabled: vi.fn(() => false),
 	hasValidTokens: vi.fn(() => false),
 	oauthFetch: vi.fn(),
