@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 // Mock the debug module before importing cache
 vi.mock("../debug", () => ({
@@ -12,17 +12,6 @@ vi.mock("../debug", () => ({
 import { set, cacher, invalidator, getCacheDiagnostics } from "../cache";
 
 describe("cache", () => {
-	beforeEach(() => {
-		// Clear cache state between tests by invalidating everything
-		const diagnostics = getCacheDiagnostics();
-		for (const entry of diagnostics) {
-			if (entry.status === "fresh") {
-				// re-import invalidator uses the internal invalidate
-				// We'll just set fresh entries to ensure clean state
-			}
-		}
-	});
-
 	describe("set and cacher", () => {
 		it("cacher returns cached value on cache hit", async () => {
 			let callCount = 0;

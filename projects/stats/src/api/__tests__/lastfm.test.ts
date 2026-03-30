@@ -1,9 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { getLastFmImageUrl } from "../lastfm";
 
 // We test getLastFmImageUrl directly without mocking since it's pure logic.
 // The module also exports functions that call apiFetch, so we mock that.
-import { vi } from "vitest";
 
 vi.mock("../spotify", () => ({
 	apiFetch: vi.fn(),

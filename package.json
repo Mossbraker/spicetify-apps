@@ -4,6 +4,9 @@
     "version": "1.0.0",
     "author": "harbassan",
     "license": "MIT",
+    "engines": {
+        "node": "^20.19.0 || >=22.12.0"
+    },
     "scripts": {
         "test": "vitest run",
         "test:watch": "vitest"
