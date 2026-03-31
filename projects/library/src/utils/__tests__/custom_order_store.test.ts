@@ -129,7 +129,7 @@ describe("CustomOrderStore", () => {
 			const listener = vi.fn();
 			store.addEventListener("change", listener);
 			store.reconcile(["spotify:album:a", "spotify:album:b"]);
-			// The setOrder above fires one event; reconcile should not fire another
+			// Listener is registered after setOrder; reconcile should not fire any change event when order is unchanged
 			expect(listener).not.toHaveBeenCalled();
 			store.removeEventListener("change", listener);
 		});
