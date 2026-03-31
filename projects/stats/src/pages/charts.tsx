@@ -96,10 +96,11 @@ const ArtistChart = ({ artists }: { artists: (LastFMMinifiedArtist | SpotifyMini
 };
 
 const TrackChart = ({ tracks }: { tracks: (LastFMMinifiedTrack | SpotifyMinifiedTrack)[] }) => {
+	const spotifyUris = tracks.map((t) => t.uri).filter((uri) => uri.startsWith("spotify:track:"));
 	return (
 		<Tracklist playcount>
 			{tracks.map((track, index) => (
-				<TrackRow index={index + 1} {...track} uris={tracks.map((track) => track.uri)} />
+				<TrackRow index={index + 1} {...track} uris={spotifyUris} />
 			))}
 		</Tracklist>
 	);

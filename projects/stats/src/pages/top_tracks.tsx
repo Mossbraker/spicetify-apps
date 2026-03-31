@@ -77,7 +77,7 @@ const TracksPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	}
 
 	const trackRows = topTracks.map((track, index) => (
-		<TrackRow index={index + 1} {...track} uris={topTracks.map((track) => track.uri)} />
+		<TrackRow index={index + 1} {...track} uris={spotifyUris} />
 	));
 
 	return (
