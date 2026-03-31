@@ -19,6 +19,9 @@ const TrackContextMenu = ({
 	const ref = React.useRef<HTMLUListElement>(null);
 
 	React.useEffect(() => {
+		// Save focused element so we can restore it when the menu closes.
+		const previouslyFocused = document.activeElement;
+
 		// Focus the first menu item when the menu opens.
 		const firstItem = ref.current?.querySelector<HTMLElement>('[role="menuitem"]');
 		firstItem?.focus();
@@ -42,7 +45,8 @@ const TrackContextMenu = ({
 				if (e.key === "ArrowDown") {
 					items[(idx + 1) % items.length].focus();
 				} else {
-					items[(idx - 1 + items.length) % items.length].focus();
+					// When idx is -1 (no item focused), ArrowUp goes to the last item.
+					items[idx <= 0 ? items.length - 1 : idx - 1].focus();
 				}
 			}
 		};
@@ -51,6 +55,10 @@ const TrackContextMenu = ({
 		return () => {
 			document.removeEventListener("mousedown", onMouseDown, true);
 			document.removeEventListener("keydown", onKeyDown);
+			// Restore focus to the element that was focused before the menu opened.
+			if (previouslyFocused instanceof HTMLElement) {
+				previouslyFocused.focus();
+			}
 		};
 	}, [onClose]);
 
