@@ -110,6 +110,7 @@ export const useInfiniteQuery = <TPage,>({
 	const [error, setError] = React.useState<Error | null>(null);
 	const requestIdRef = React.useRef(0);
 	const isFetchingNextPageRef = React.useRef(false);
+	const fetchNextPageIdRef = React.useRef(0);
 	const dataRef = React.useRef(data);
 	const queryFnRef = React.useRef(queryFn);
 	const queryKeyRef = React.useRef(queryKey);
@@ -169,6 +170,7 @@ export const useInfiniteQuery = <TPage,>({
 		if (nextPageParam === undefined) return;
 
 		const requestId = requestIdRef.current;
+		const fetchId = ++fetchNextPageIdRef.current;
 		isFetchingNextPageRef.current = true;
 
 		try {
@@ -190,7 +192,7 @@ export const useInfiniteQuery = <TPage,>({
 				setStatus("error");
 			}
 		} finally {
-			if (requestId === requestIdRef.current) {
+			if (fetchId === fetchNextPageIdRef.current) {
 				isFetchingNextPageRef.current = false;
 			}
 		}
