@@ -1,7 +1,8 @@
 import React from "react";
 
 let activeRoot: any = null;
-const MODAL_CONTAINER_ID = "spicetify-stats-modal-root";
+const MODAL_CONTAINER_ID = "spicetify-shared-modal-root";
+let previousPopupModalHide: (() => void) | undefined;
 
 function closeModal(): void {
     if (activeRoot) {
@@ -9,6 +10,12 @@ function closeModal(): void {
         activeRoot = null;
     }
     document.getElementById(MODAL_CONTAINER_ID)?.remove();
+    // Restore the original PopupModal.hide that was saved before patching.
+    if (previousPopupModalHide !== undefined) {
+        // @ts-ignore
+        Spicetify.PopupModal.hide = previousPopupModalHide;
+        previousPopupModalHide = undefined;
+    }
 }
 
 // Inline styles guarantee visibility even when Spicetify's CSS class-name mapping
@@ -87,12 +94,56 @@ function ModalChrome({
     isLarge?: boolean;
     onClose: () => void;
 }): React.ReactElement {
+    const titleId = React.useId();
+    const dialogRef = React.useRef<HTMLDivElement>(null);
+    const previouslyFocused = React.useRef<Element | null>(null);
+
     React.useEffect(() => {
+        // Save the element that had focus before the modal opened so we can restore it on close.
+        previouslyFocused.current = document.activeElement;
+
+        // Focus the first focusable element inside the dialog.
+        const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        firstFocusable?.focus();
+
         const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") onClose();
+            if (e.key === "Escape") {
+                onClose();
+                return;
+            }
+            // Focus trap: keep keyboard focus inside the dialog.
+            if (e.key === "Tab" && dialogRef.current) {
+                const focusables = Array.from(
+                    dialogRef.current.querySelectorAll<HTMLElement>(
+                        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                    )
+                );
+                if (focusables.length === 0) return;
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                if (e.shiftKey) {
+                    if (document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    }
+                } else {
+                    if (document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
         };
         document.addEventListener("keydown", onKeyDown);
-        return () => document.removeEventListener("keydown", onKeyDown);
+        return () => {
+            document.removeEventListener("keydown", onKeyDown);
+            // Restore focus to the element that was focused before the modal opened.
+            if (previouslyFocused.current instanceof HTMLElement) {
+                previouslyFocused.current.focus();
+            }
+        };
     }, [onClose]);
 
     return (
@@ -104,6 +155,10 @@ function ModalChrome({
             }}
         >
             <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
                 className="GenericModal"
                 style={isLarge ? modalStyleLarge : modalStyle}
             >
@@ -117,6 +172,7 @@ function ModalChrome({
                 >
                     <div className="main-trackCreditsModal-header" style={headerStyle}>
                         <h1
+                            id={titleId}
                             className="TypeElement-cello-textBase-type"
                             data-encore-id="type"
                             style={titleStyle}
@@ -184,6 +240,10 @@ export function displayPopupModal({
             />,
         );
 
+        // Save and replace PopupModal.hide so callers that use the Spicetify API also
+        // close our custom modal.  The original is restored inside closeModal().
+        // @ts-ignore
+        previousPopupModalHide = Spicetify.PopupModal.hide as (() => void) | undefined;
         // @ts-ignore
         Spicetify.PopupModal.hide = closeModal;
     } catch (e) {

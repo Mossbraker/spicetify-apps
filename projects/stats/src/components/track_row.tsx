@@ -19,10 +19,33 @@ const TrackContextMenu = ({
 	const ref = React.useRef<HTMLUListElement>(null);
 
 	React.useEffect(() => {
+		// Focus the first menu item when the menu opens.
+		const firstItem = ref.current?.querySelector<HTMLElement>('[role="menuitem"]');
+		firstItem?.focus();
+
 		const onMouseDown = (e: MouseEvent) => {
 			if (!ref.current?.contains(e.target as Node)) onClose();
 		};
-		const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				onClose();
+				return;
+			}
+			// Arrow key navigation between menu items.
+			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+				e.preventDefault();
+				const items = Array.from(
+					ref.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []
+				);
+				if (items.length === 0) return;
+				const idx = items.indexOf(document.activeElement as HTMLElement);
+				if (e.key === "ArrowDown") {
+					items[(idx + 1) % items.length].focus();
+				} else {
+					items[(idx - 1 + items.length) % items.length].focus();
+				}
+			}
+		};
 		document.addEventListener("mousedown", onMouseDown, true);
 		document.addEventListener("keydown", onKeyDown);
 		return () => {
@@ -38,6 +61,7 @@ const TrackContextMenu = ({
 			className="main-contextMenu-menu"
 			role="menu"
 			style={{ position: "fixed", left: x, top: y, zIndex: 9999 }}
+			onContextMenu={(e) => { e.preventDefault(); }}
 		>
 			{items.map((item, i) => (
 				<React.Fragment key={i}>
@@ -45,6 +69,7 @@ const TrackContextMenu = ({
 					<li role="presentation">
 						<button
 							role="menuitem"
+							tabIndex={0}
 							className="main-contextMenu-menuItemButton"
 							onClick={() => { item.onClick(); onClose(); }}
 						>
@@ -251,7 +276,12 @@ const TrackRow = (props: TrackRowProps) => {
 	const handleMoreClick = (e: React.MouseEvent) => {
 		e.stopPropagation();
 		const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-		setMenuPos({ x: rect.left, y: rect.bottom });
+		// Toggle: if the menu is already open at this button's position, close it.
+		if (menuPos && menuPos.x === rect.left && menuPos.y === rect.bottom) {
+			closeMenu();
+		} else {
+			setMenuPos({ x: rect.left, y: rect.bottom });
+		}
 	};
 
 	const ArtistLinks = props.artists.map((artist, index) => {
