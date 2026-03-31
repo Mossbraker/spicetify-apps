@@ -193,7 +193,7 @@ const ConfigModal = (props: ConfigModalProps) => {
                 case "toggle":
                     return <ToggleInput storageKey={key} value={currentValue} callback={updateItem} />;
                 case "text":
-                    return <TextInput storageKey={key} value={currentValue} callback={updateItem} />;
+                    return <TextInput storageKey={key} value={currentValue} callback={updateItem} placeholder={modalRow.placeholder} />;
                 case "dropdown":
                     return (
                         <Dropdown
