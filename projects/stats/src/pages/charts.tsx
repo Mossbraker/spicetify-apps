@@ -95,11 +95,11 @@ const ArtistChart = ({ artists }: { artists: (LastFMMinifiedArtist | SpotifyMini
 	);
 };
 
-const TrackChart = ({ tracks }: { tracks: (LastFMMinifiedTrack | SpotifyMinifiedTrack)[] }) => {
+const TrackChart = ({ tracks, spotifyUris }: { tracks: (LastFMMinifiedTrack | SpotifyMinifiedTrack)[]; spotifyUris: string[] }) => {
 	return (
 		<Tracklist playcount>
 			{tracks.map((track, index) => (
-				<TrackRow index={index + 1} {...track} uris={tracks.map((track) => track.uri)} />
+				<TrackRow index={index + 1} {...track} uris={spotifyUris} />
 			))}
 		</Tracklist>
 	);
@@ -144,8 +144,9 @@ const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 	const items = chartData.items;
 	if (!items.length) return <PageContainer {...props}><div>No chart data available.</div></PageContainer>;
 
+	let spotifyUris: string[] = [];
 	if (!isArtistChart) {
-		const spotifyUris = items.map((track) => track.uri).filter((uri) => uri.startsWith("spotify:track:"));
+		spotifyUris = items.map((track) => track.uri).filter((uri) => uri.startsWith("spotify:track:"));
 		if (spotifyUris.length > 0) {
 			props.rhs.push(
 				<CreatePlaylistButton infoToCreatePlaylist={{
@@ -156,7 +157,7 @@ const ChartsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 		}
 	}
 
-	const chartToRender = isArtistChart ? <ArtistChart artists={items} /> : <TrackChart tracks={items} />;
+	const chartToRender = isArtistChart ? <ArtistChart artists={items} /> : <TrackChart tracks={items} spotifyUris={spotifyUris} />;
 
 	return <PageContainer {...props}>{chartToRender}</PageContainer>;
 };
