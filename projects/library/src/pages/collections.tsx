@@ -7,6 +7,7 @@ import AddButton from "../components/add_button";
 import type { ConfigWrapper } from "../types/library_types";
 import LoadMoreCard from "../components/load_more_card";
 import TextInputDialog from "../components/text_input_dialog";
+import { displayPopupModal } from "@shared/utils/popup_modal";
 import { useInfiniteQuery } from "@shared/types/react_query";
 import useStatus from "@shared/status/useStatus";
 import useSortDropdownMenu from "@shared/dropdown/useSortDropdownMenu";
@@ -20,7 +21,7 @@ const getAddMenuItems = (collection?: string) => {
 			CollectionsWrapper.createCollection(value || "New Collection", collection);
 		};
 
-		Spicetify.PopupModal.display({
+		displayPopupModal({
 			title: "Create Collection",
 			content: <TextInputDialog def={"New Collection"} placeholder="Collection Name" onSave={onSave} />,
 		});
@@ -31,7 +32,7 @@ const getAddMenuItems = (collection?: string) => {
 			CollectionsWrapper.createCollectionFromDiscog(value);
 		};
 
-		Spicetify.PopupModal.display({
+		displayPopupModal({
 			title: "Create Discog Collection",
 			content: <TextInputDialog def={""} placeholder="Artist URI" onSave={onSave} />,
 		});
@@ -43,7 +44,7 @@ const getAddMenuItems = (collection?: string) => {
 			CollectionsWrapper.addAlbumToCollection(collection, value);
 		};
 
-		Spicetify.PopupModal.display({
+		displayPopupModal({
 			title: "Add Album",
 			content: <TextInputDialog def={""} placeholder="Album URI" onSave={onSave} />,
 		});

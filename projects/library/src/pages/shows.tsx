@@ -6,6 +6,7 @@ import type { ConfigWrapper } from "../types/library_types";
 import LoadMoreCard from "../components/load_more_card";
 import AddButton from "../components/add_button";
 import TextInputDialog from "../components/text_input_dialog";
+import { displayPopupModal } from "@shared/utils/popup_modal";
 import { useInfiniteQuery } from "@shared/types/react_query";
 import type { GetContentsResponse, ShowItem, UpdateEvent } from "../types/platform";
 import useStatus from "@shared/status/useStatus";
@@ -54,9 +55,8 @@ const getAddMenuItems = () => {
 			Spicetify.Platform.LibraryAPI.add({ uris: [value] });
 		};
 
-		Spicetify.PopupModal.display({
+		displayPopupModal({
 			title: "Add Show",
-			// @ts-ignore
 			content: <TextInputDialog def={""} placeholder="Show URI" onSave={onSave} />,
 		});
 	};

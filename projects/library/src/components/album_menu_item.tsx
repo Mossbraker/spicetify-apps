@@ -2,13 +2,14 @@ import React from "react";
 import LeadingIcon from "./leading_icon";
 import TextInputDialog from "./text_input_dialog";
 import SearchBar from "./searchbar";
+import { displayPopupModal } from "@shared/utils/popup_modal";
 
 const createCollection = () => {
 	const onSave = (value: string) => {
 		CollectionsWrapper.createCollection(value);
 	};
 
-	Spicetify.PopupModal.display({
+	displayPopupModal({
 		title: "Create Collection",
 		content: <TextInputDialog def={"New Collection"} placeholder="Collection Name" onSave={onSave} />,
 	});

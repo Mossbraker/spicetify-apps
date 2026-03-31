@@ -3,6 +3,61 @@ import type { LastFMMinifiedTrack, SpotifyMinifiedTrack } from "../types/stats_t
 import { formatNumber } from "../pages/charts";
 import { searchAndNavigate } from "../utils/spotify_search";
 
+type MenuItemDef = { label: string; onClick: () => void; divider?: boolean };
+
+const TrackContextMenu = ({
+	x,
+	y,
+	items,
+	onClose,
+}: {
+	x: number;
+	y: number;
+	items: MenuItemDef[];
+	onClose: () => void;
+}) => {
+	const ref = React.useRef<HTMLUListElement>(null);
+
+	React.useEffect(() => {
+		const onMouseDown = (e: MouseEvent) => {
+			if (!ref.current?.contains(e.target as Node)) onClose();
+		};
+		const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+		document.addEventListener("mousedown", onMouseDown, true);
+		document.addEventListener("keydown", onKeyDown);
+		return () => {
+			document.removeEventListener("mousedown", onMouseDown, true);
+			document.removeEventListener("keydown", onKeyDown);
+		};
+	}, [onClose]);
+
+	// @ts-ignore - createPortal is available on Spicetify.ReactDOM
+	return Spicetify.ReactDOM.createPortal(
+		<ul
+			ref={ref}
+			className="main-contextMenu-menu"
+			role="menu"
+			style={{ position: "fixed", left: x, top: y, zIndex: 9999 }}
+		>
+			{items.map((item, i) => (
+				<React.Fragment key={i}>
+					{item.divider && <li role="separator" className="main-contextMenu-divider" />}
+					<li role="presentation">
+						<button
+							role="menuitem"
+							className="main-contextMenu-menuItemButton"
+							onClick={() => { item.onClick(); onClose(); }}
+						>
+							{item.label}
+						</button>
+					</li>
+				</React.Fragment>
+			))}
+		</ul>,
+		document.body
+	);
+};
+
 const ArtistLink = ({ name, uri, index, length }: { name: string; uri: string; index: number; length: number }) => {
 	const isLastFm = uri.startsWith("https://www.last.fm/");
 	const config = window.SpicetifyStats?.ConfigWrapper?.Config;
@@ -155,82 +210,56 @@ const TrackRow = (props: TrackRowProps) => {
 
 	const isSpotifyUri = props.uri.startsWith("spotify:");
 
-	const trackMenu = (
-		<Spicetify.ReactComponent.Menu>
-			{isSpotifyUri && (
-				<Spicetify.ReactComponent.MenuItem
-					onClick={() => Spicetify.Player.playUri(props.uri)}
-				>
-					Play
-				</Spicetify.ReactComponent.MenuItem>
-			)}
-			{isSpotifyUri && (
-				<Spicetify.ReactComponent.MenuItem
-					onClick={() => Spicetify.addToQueue?.([{ uri: props.uri }])}
-				>
-					Add to queue
-				</Spicetify.ReactComponent.MenuItem>
-			)}
-			{isSpotifyUri && (
-				<Spicetify.ReactComponent.MenuItem
-					divider="before"
-					onClick={() => {
-						const id = props.uri.split(":")[2];
-						Spicetify.Platform.History.push(`/track/${id}`);
-					}}
-				>
-					Go to song
-				</Spicetify.ReactComponent.MenuItem>
-			)}
-			{isSpotifyUri && props.artists?.[0]?.uri?.startsWith("spotify:") && (
-				<Spicetify.ReactComponent.MenuItem
-					onClick={() => {
-						const id = props.artists[0].uri.split(":")[2];
-						Spicetify.Platform.History.push(`/artist/${id}`);
-					}}
-				>
-					Go to artist
-				</Spicetify.ReactComponent.MenuItem>
-			)}
-			{albumUri?.startsWith("spotify:") && (
-				<Spicetify.ReactComponent.MenuItem
-					onClick={() => {
-						const id = albumUri!.split(":")[2];
-						Spicetify.Platform.History.push(`/album/${id}`);
-					}}
-				>
-					Go to album
-				</Spicetify.ReactComponent.MenuItem>
-			)}
-			{isSpotifyUri ? (
-				<Spicetify.ReactComponent.MenuItem
-					divider="before"
-					onClick={() => {
-						const id = props.uri.split(":")[2];
-						Spicetify.Platform.ClipboardAPI?.copy(`https://open.spotify.com/track/${id}`);
-					}}
-				>
-					Copy song link
-				</Spicetify.ReactComponent.MenuItem>
-			) : (
-				<Spicetify.ReactComponent.MenuItem
-					onClick={() => {
-						Spicetify.Platform.ClipboardAPI?.copy(props.uri);
-					}}
-				>
-					Copy link
-				</Spicetify.ReactComponent.MenuItem>
-			)}
-		</Spicetify.ReactComponent.Menu>
-	);
+	const [menuPos, setMenuPos] = React.useState<{ x: number; y: number } | null>(null);
+	const closeMenu = React.useCallback(() => setMenuPos(null), []);
+
+	const menuItems: MenuItemDef[] = [];
+	if (isSpotifyUri) {
+		menuItems.push({ label: "Play", onClick: () => Spicetify.Player.playUri(props.uri) });
+		menuItems.push({ label: "Add to queue", onClick: () => Spicetify.addToQueue?.([{ uri: props.uri }]) });
+		menuItems.push({
+			label: "Go to song",
+			divider: true,
+			onClick: () => { const id = props.uri.split(":")[2]; Spicetify.Platform.History.push(`/track/${id}`); },
+		});
+		if (props.artists?.[0]?.uri?.startsWith("spotify:")) {
+			menuItems.push({
+				label: "Go to artist",
+				onClick: () => { const id = props.artists[0].uri.split(":")[2]; Spicetify.Platform.History.push(`/artist/${id}`); },
+			});
+		}
+		if (albumUri?.startsWith("spotify:")) {
+			menuItems.push({
+				label: "Go to album",
+				onClick: () => { const id = albumUri!.split(":")[2]; Spicetify.Platform.History.push(`/album/${id}`); },
+			});
+		}
+		menuItems.push({
+			label: "Copy song link",
+			divider: true,
+			onClick: () => { const id = props.uri.split(":")[2]; Spicetify.Platform.ClipboardAPI?.copy(`https://open.spotify.com/track/${id}`); },
+		});
+	} else {
+		menuItems.push({ label: "Copy link", onClick: () => Spicetify.Platform.ClipboardAPI?.copy(props.uri) });
+	}
+
+	const handleContextMenu = (e: React.MouseEvent) => {
+		e.preventDefault();
+		setMenuPos({ x: e.clientX, y: e.clientY });
+	};
+
+	const handleMoreClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+		setMenuPos({ x: rect.left, y: rect.bottom });
+	};
 
 	const ArtistLinks = props.artists.map((artist, index) => {
 		return <ArtistLink key={artist.uri} index={index} length={props.artists.length - 1} name={artist.name} uri={artist.uri} />;
 	});
 
 	return (
-		<Spicetify.ReactComponent.RightClickMenu menu={trackMenu}>
-			<div role="row" aria-rowindex={2} aria-selected="false">
+		<div role="row" aria-rowindex={2} aria-selected="false" onContextMenu={handleContextMenu}>
 				<DraggableComponent
 						uri={props.uri}
 						title={`${props.name} • ${props.artists.map((artist) => artist.name).join(", ")}`}
@@ -344,38 +373,37 @@ const TrackRow = (props: TrackRowProps) => {
 								{Spicetify.Player.formatTime(props.duration_ms)}
 							</div>
 
-							<Spicetify.ReactComponent.ContextMenu menu={trackMenu} trigger="click" action="toggle">
-								<button
-									type="button"
-									aria-haspopup="menu"
-									aria-label={`More options for ${props.name}`}
-									className="main-moreButton-button Button-sm-16-buttonTertiary-iconOnly-condensed-useBrowserDefaultFocusStyle Button-small-small-buttonTertiary-iconOnly-condensed-useBrowserDefaultFocusStyle main-trackList-rowMoreButton"
-									tabIndex={-1}
+							<button
+								type="button"
+								aria-haspopup="menu"
+								aria-label={`More options for ${props.name}`}
+								className="main-moreButton-button Button-sm-16-buttonTertiary-iconOnly-condensed-useBrowserDefaultFocusStyle Button-small-small-buttonTertiary-iconOnly-condensed-useBrowserDefaultFocusStyle main-trackList-rowMoreButton"
+								tabIndex={-1}
+								onClick={handleMoreClick}
+							>
+								<Spicetify.ReactComponent.TooltipWrapper
+									label={`More options for ${props.name} by ${props.artists.map((artist) => artist.name).join(", ")}`}
+									placement="top"
 								>
-									<Spicetify.ReactComponent.TooltipWrapper
-										label={`More options for ${props.name} by ${props.artists.map((artist) => artist.name).join(", ")}`}
-										placement="top"
-									>
-										<span>
-											<svg
-												role="img"
-												height="16"
-												width="16"
-												aria-hidden="true"
-												viewBox="0 0 16 16"
-												data-encore-id="icon"
-												className="Svg-img-16 Svg-img-16-icon Svg-img-icon Svg-img-icon-small"
-											>
-												<path d="M3 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm6.5 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM16 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
-											</svg>
-										</span>
-									</Spicetify.ReactComponent.TooltipWrapper>
-								</button>
-							</Spicetify.ReactComponent.ContextMenu>
+									<span>
+										<svg
+											role="img"
+											height="16"
+											width="16"
+											aria-hidden="true"
+											viewBox="0 0 16 16"
+											data-encore-id="icon"
+											className="Svg-img-16 Svg-img-16-icon Svg-img-icon Svg-img-icon-small"
+										>
+											<path d="M3 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm6.5 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM16 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+										</svg>
+									</span>
+								</Spicetify.ReactComponent.TooltipWrapper>
+							</button>
 						</div>
 					</DraggableComponent>
-			</div>
-		</Spicetify.ReactComponent.RightClickMenu>
+			{menuPos && <TrackContextMenu x={menuPos.x} y={menuPos.y} items={menuItems} onClose={closeMenu} />}
+		</div>
 	);
 };
 
