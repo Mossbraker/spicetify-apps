@@ -25,6 +25,7 @@ type MusicBrainzArtistDetailsResponse = {
 
 const SEARCH_LIMIT = 3;
 const SERVICE_COOLDOWN_MS = 10 * 60 * 1000;
+const MAX_CACHE_SIZE = 200;
 const artistGenresCache = new Map<string, Promise<MusicBrainzTag[]>>();
 let serviceUnavailableUntil = 0;
 
@@ -112,6 +113,10 @@ export const getArtistGenres = async (artist: string) => {
 		return sortByCount(mergeTags([...(details.genres ?? []), ...(details.tags ?? [])]));
 	})();
 
+	if (artistGenresCache.size >= MAX_CACHE_SIZE) {
+		const oldest = artistGenresCache.keys().next().value;
+		if (oldest !== undefined) artistGenresCache.delete(oldest);
+	}
 	artistGenresCache.set(normalizedArtist, pending);
 	return pending;
 };
