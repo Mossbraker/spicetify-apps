@@ -5,6 +5,7 @@ import { version as STATS_VERSION } from "../../package.json";
 import ConfigWrapper from "@shared/config/config_wrapper";
 import { startAuthFlow, handleCallback, clearTokens, getConnectionStatus } from "../api/oauth";
 import { getArtistOverview } from "../api/platform";
+import { displayPopupModal } from "@shared/utils/popup_modal";
 
 const getOAuthStatusLabel = () => {
 	const { connected, expiresAt } = getConnectionStatus();
@@ -253,8 +254,7 @@ window.SpicetifyStats = new SpicetifyStats();
 
 	const playlistEdit = new Topbar.Button("playlist-stats", "visualizer", () => {
 		const playlistUri = `spotify:playlist:${History.location.pathname.split("/")[2]}`;
-		// @ts-ignore
-		PopupModal.display({ title: "Playlist Stats", content: <PlaylistPage uri={playlistUri} />, isLarge: true });
+		displayPopupModal({ title: "Playlist Stats", content: <PlaylistPage uri={playlistUri} />, isLarge: true });
 	}, false);
 	playlistEdit.element.classList.add("playlist-stats-button");
 	playlistEdit.element.style.display = "none";
@@ -284,8 +284,7 @@ window.SpicetifyStats = new SpicetifyStats();
 			}
 		}
 		const title = artistName ? `${artistName} Stats` : "Artist Stats";
-		// @ts-ignore
-		PopupModal.display({ title, content: <ArtistPage uri={artistUri} />, isLarge: true });
+		displayPopupModal({ title, content: <ArtistPage uri={artistUri} />, isLarge: true });
 	}
 
 	function removeInjectedArtistButton(): void {

@@ -8,6 +8,7 @@ import AddButton from "../components/add_button";
 import type { ConfigWrapper } from "../types/library_types";
 import LoadMoreCard from "../components/load_more_card";
 import TextInputDialog from "../components/text_input_dialog";
+import { displayPopupModal } from "@shared/utils/popup_modal";
 import { useInfiniteQuery } from "@shared/types/react_query";
 import type { FolderItem, GetContentsResponse, PlaylistItem, UpdateEvent } from "../types/platform";
 import useStatus from "@shared/status/useStatus";
@@ -25,9 +26,8 @@ const getAddMenuItems = (folder?: string) => {
 			RootlistAPI.createFolder(value || "New Folder", { after: insertLocation });
 		};
 
-		Spicetify.PopupModal.display({
+		displayPopupModal({
 			title: "Create Folder",
-			// @ts-ignore
 			content: <TextInputDialog def={"New Folder"} placeholder="Folder Name" onSave={onSave} />,
 		});
 	};
@@ -37,9 +37,8 @@ const getAddMenuItems = (folder?: string) => {
 			RootlistAPI.createPlaylist(value || "New Playlist", { after: insertLocation });
 		};
 
-		Spicetify.PopupModal.display({
+		displayPopupModal({
 			title: "Create Playlist",
-			// @ts-ignore
 			content: <TextInputDialog def={"New Playlist"} placeholder="Playlist Name" onSave={onSave} />,
 		});
 	};

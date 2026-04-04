@@ -1,6 +1,7 @@
 import React from "react";
 import ConfigModal from "./config_modal";
 import { ConfigProps, ModalStructureProps } from "./config_types";
+import { displayPopupModal } from "../utils/popup_modal";
 
 // works with both extensions and custom apps
 
@@ -28,9 +29,8 @@ class ConfigWrapper {
                 callback?.(config);
             };
 
-            Spicetify.PopupModal.display({
+            displayPopupModal({
                 title: `${key.charAt(0).toUpperCase() + key.slice(1)} Settings`,
-                // @ts-ignore
                 content: (
                     <ConfigModal
                         config={this.Config}
@@ -39,7 +39,6 @@ class ConfigWrapper {
                         updateAppConfig={updateConfig}
                     />
                 ),
-                isLarge: true,
             });
         };
     }

@@ -17,7 +17,7 @@ import useSortDropdownMenu from "@shared/dropdown/useSortDropdownMenu";
 import collectionSort from "../utils/collection_sort";
 import customOrderStore from "../utils/custom_order_store";
 import ReorderModal from "../components/reorder_modal";
-
+import { displayPopupModal } from "@shared/utils/popup_modal";
 import { libraryDebug } from "../extensions/debug";
 
 const getAddMenuItems = () => {
@@ -26,9 +26,8 @@ const getAddMenuItems = () => {
 			Spicetify.Platform.LibraryAPI.add({ uris: [value] });
 		};
 
-		Spicetify.PopupModal.display({
+		displayPopupModal({
 			title: "Add Album",
-			// @ts-ignore
 			content: <TextInputDialog def={""} placeholder="Album URI" onSave={onSave} />,
 		});
 	};
@@ -223,8 +222,7 @@ const AlbumsPage = ({ configWrapper }: { configWrapper: ConfigWrapper }) => {
 			customOrderStore.setOrder([]);
 		};
 
-		// @ts-ignore — Spicetify types expect DOM element, not JSX
-		Spicetify.PopupModal.display({
+		displayPopupModal({
 			title: "Reorder Albums",
 			content: <ReorderModal items={validItems} onSave={onSave} onReset={onReset} />,
 			isLarge: true,
