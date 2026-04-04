@@ -34,7 +34,7 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const modalStyle: React.CSSProperties = {
-    backgroundColor: "#121212",
+    backgroundColor: "var(--spice-card, #121212)",
     borderRadius: 8,
     maxWidth: "90vw",
     maxHeight: "80vh",
@@ -102,11 +102,20 @@ function ModalChrome({
         // Save the element that had focus before the modal opened so we can restore it on close.
         previouslyFocused.current = document.activeElement;
 
-        // Focus the first focusable element inside the dialog.
-        const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
-            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-        firstFocusable?.focus();
+        // Prefer any element that explicitly requests focus via [autofocus].
+        const dialog = dialogRef.current;
+        if (dialog) {
+            const autoFocusElement = dialog.querySelector<HTMLElement>("[autofocus]");
+            if (autoFocusElement && document.activeElement !== autoFocusElement) {
+                autoFocusElement.focus();
+            } else if (!dialog.contains(document.activeElement)) {
+                // Fall back to the first focusable element inside the dialog.
+                const firstFocusable = dialog.querySelector<HTMLElement>(
+                    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                );
+                firstFocusable?.focus();
+            }
+        }
 
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
